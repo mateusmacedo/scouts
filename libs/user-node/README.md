@@ -127,35 +127,6 @@ await userService.update(user.id, {
 });
 ```
 
-## Integração com Outras Bibliotecas
-
-### logger-node
-
-```typescript
-import { nodeUser } from '@scouts/user-node';
-import { createLogger } from '@scouts/logger-node';
-
-const logger = createLogger();
-logger.info('User operation', { operation: nodeUser() });
-```
-
-### utils-nest
-
-```typescript
-import { nodeUser } from '@scouts/user-node';
-import { LoggerModule } from '@scouts/utils-nest';
-
-@Module({
-  imports: [LoggerModule.forRoot()],
-  providers: [
-    {
-      provide: 'USER_SERVICE',
-      useValue: nodeUser
-    }
-  ]
-})
-export class UserModule {}
-```
 
 ## Contribuição
 
