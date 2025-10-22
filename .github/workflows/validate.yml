@@ -1,12 +1,11 @@
-name: Reusable Validation
+name: Validate
 
 on:
   workflow_call:
-    inputs:
-      base-ref:
-        required: false
-        type: string
-        default: 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
