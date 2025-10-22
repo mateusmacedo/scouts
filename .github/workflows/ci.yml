@@ -1,0 +1,189 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  validate:
+    name: Validate & Test
+    uses: ./.github/workflows/reusable-validate.yml
+
+  trigger-release:
+    name: Trigger Release (if on main)
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Trigger Release Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('🚀 Triggering release workflow...');
+            
+            try {
+              const response = await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'release.yml',
+                ref: 'main',
+                inputs: {
+                  'dry-run': 'true',
+                  'skip-validation': 'false'
+                }
+              });
+              
+              console.log('✅ Release workflow triggered successfully');
+              console.log('📋 Response status:', response.status);
+              console.log('📋 Workflow dispatch created');
+            } catch (error) {
+              console.error('❌ Failed to trigger release workflow:', error.message);
+              throw error;
+            }
+
+  dry-run-release:
+    name: Dry Run Release
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.base_ref == 'main'
+    env:
+      NODE_VERSION: '20'
+      PNPM_VERSION: '9'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+          filter: tree:0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Detect first release
+        id: first-release
+        run: |
+          echo "🔍 Verificando se é primeira release dos projetos..."
+          FIRST_RELEASE=true
+          
+          for project in logger-node utils-nest user-node; do
+            PACKAGE_NAME="@scouts/$project"
+            if npm view "$PACKAGE_NAME" version > /dev/null 2>&1; then
+              echo "📦 $PACKAGE_NAME já existe no registry"
+              FIRST_RELEASE=false
+            else
+              echo "🆕 $PACKAGE_NAME será publicado pela primeira vez"
+            fi
+          done
+          
+          echo "first_release=$FIRST_RELEASE" >> $GITHUB_OUTPUT
+          if [[ "$FIRST_RELEASE" == "true" ]]; then
+            echo "🎉 Esta será a PRIMEIRA RELEASE dos projetos!"
+          else
+            echo "🔄 Release subsequente dos projetos"
+          fi
+
+      - name: Dry run release
+        run: pnpm nx release --dry-run
+
+      - name: Validate npm packages (real validation)
+        run: |
+          set -e
+          for project in logger-node utils-nest user-node; do
+            DIST_PATH="dist/libs/$project"
+            PKG_JSON="$DIST_PATH/package.json"
+            
+            # 1. Verificar estrutura buildada
+            if [[ ! -d "$DIST_PATH" ]]; then
+              echo "❌ Build não encontrado: $DIST_PATH"
+              exit 1
+            fi
+            
+            if [[ ! -f "$PKG_JSON" ]]; then
+              echo "❌ package.json não encontrado: $PKG_JSON"
+              exit 1
+            fi
+            
+            # 2. Schema validation (campos obrigatórios)
+            node -e "
+              const pkg = require('./$PKG_JSON');
+              const required = ['name', 'version', 'main', 'types'];
+              const missing = required.filter(f => !pkg[f]);
+              if (missing.length) {
+                console.error('❌ Campos obrigatórios ausentes em $project:', missing);
+                process.exit(1);
+              }
+            " || exit 1
+            
+            # 3. Validar arquivos referenciados existem
+            MAIN=$(node -p "require('./$PKG_JSON').main || 'index.js'")
+            TYPES=$(node -p "require('./$PKG_JSON').types || 'index.d.ts'")
+            
+            if [[ ! -f "$DIST_PATH/$MAIN" ]]; then
+              echo "❌ main não existe: $DIST_PATH/$MAIN"
+              exit 1
+            fi
+            
+            if [[ ! -f "$DIST_PATH/$TYPES" ]]; then
+              echo "❌ types não existe: $DIST_PATH/$TYPES"
+              exit 1
+            fi
+            
+            # 4. Testar empacotamento (não publica)
+            cd "$DIST_PATH"
+            if ! npm pack --dry-run > /dev/null 2>&1; then
+              echo "❌ npm pack falhou para $project"
+              exit 1
+            fi
+            cd -
+            
+            # 5. Verificar acesso ao registry (apenas check, não publica)
+            PACKAGE_NAME=$(node -p "require('./$PKG_JSON').name")
+            if npm view "$PACKAGE_NAME" version > /dev/null 2>&1; then
+              echo "ℹ️  Package $PACKAGE_NAME já existe no registry"
+            else
+              if [[ "${{ steps.first-release.outputs.first_release }}" == "true" ]]; then
+                echo "🆕 Package $PACKAGE_NAME será publicado pela primeira vez (OK para primeira release)"
+              else
+                echo "⚠️  Package $PACKAGE_NAME não existe ainda (verificar se é primeira release)"
+              fi
+            fi
+            
+            echo "✅ $project validado com sucesso"
+          done

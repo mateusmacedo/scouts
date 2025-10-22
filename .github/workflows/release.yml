@@ -1,0 +1,278 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+    tags:
+      - 'v*'
+  workflow_call:
+    inputs:
+      dry-run:
+        description: 'Executar em modo dry-run (não publica)'
+        type: boolean
+        default: true
+      version-specifier:
+        description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
+        type: string
+        required: false
+      skip-validation:
+        description: 'Pular validações de consistência (não recomendado)'
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Executar em modo dry-run (não publica)'
+        type: boolean
+        default: true
+      version-specifier:
+        description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
+        type: string
+        required: false
+      skip-validation:
+        description: 'Pular validações de consistência (não recomendado)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  actions: read
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.23'
+  PNPM_VERSION: '9'
+
+jobs:
+  validate:
+    name: Validate Release Consistency
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip-validation }}
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Detect first release
+        id: first-release
+        run: |
+          echo "🔍 Verificando se é primeira release dos projetos..."
+          FIRST_RELEASE=true
+          
+          for project in logger-node utils-nest user-node; do
+            PACKAGE_NAME="@scouts/$project"
+            if npm view "$PACKAGE_NAME" version > /dev/null 2>&1; then
+              echo "📦 $PACKAGE_NAME já existe no registry"
+              FIRST_RELEASE=false
+            else
+              echo "🆕 $PACKAGE_NAME será publicado pela primeira vez"
+            fi
+          done
+          
+          echo "first_release=$FIRST_RELEASE" >> $GITHUB_OUTPUT
+          if [[ "$FIRST_RELEASE" == "true" ]]; then
+            echo "🎉 Esta será a PRIMEIRA RELEASE dos projetos!"
+            echo "ℹ️  Validações serão ajustadas para primeira release"
+          else
+            echo "🔄 Release subsequente dos projetos"
+          fi
+
+      - name: Run validation script
+        run: |
+          chmod +x scripts/validate-release-consistency.sh
+          ./scripts/validate-release-consistency.sh
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || inputs.skip-validation == true)
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@scouts'
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Print Environment Info
+        run: pnpm nx report
+
+      - name: Build affected projects
+        run: pnpm nx affected -t build --parallel=3
+
+      - name: Release (Version & Changelog)
+        run: |
+          if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+            echo "🔍 Executando em modo dry-run..."
+            pnpm nx release --dry-run
+          else
+            if [[ "${{ needs.validate.outputs.first_release }}" == "true" ]]; then
+              echo "🎉 Executando PRIMEIRA RELEASE dos projetos..."
+              echo "ℹ️  Esta é a primeira publicação dos packages no NPM"
+            else
+              echo "🔄 Executando release subsequente..."
+            fi
+            pnpm nx release --skip-publish
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Sync Go dependencies
+        if: ${{ inputs.dry-run != 'true' }}
+        run: |
+          chmod +x scripts/sync-go-versions.sh
+          ./scripts/sync-go-versions.sh
+
+          # Commit se houver mudanças
+          if [[ -n $(git status -s apps/user-go-service/) ]]; then
+            GO_USER_VERSION=$(node -p "require('./libs/user-go/package.json').version")
+            git add apps/user-go-service/go.mod apps/user-go-service/go.sum
+            git commit -m "chore(user-go-service): sync user-go dependency to v${GO_USER_VERSION}"
+          fi
+
+      - name: Publish packages
+        if: ${{ inputs.dry-run != 'true' }}
+        run: pnpm nx release publish --force
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Push changes and tags
+        if: ${{ inputs.dry-run != 'true' }}
+        run: |
+          git push origin ${{ github.ref_name }}
+          git push --tags
+
+      - name: Create GitHub Release
+        if: ${{ inputs.dry-run != 'true' }}
+        run: |
+          echo "📝 GitHub Release será criado automaticamente pelo Nx Release"
+          echo "Verifique em: https://github.com/${{ github.repository }}/releases"
+
+  rollback:
+    name: Rollback (if needed)
+    runs-on: ubuntu-latest
+    needs: [release]
+    if: failure() && inputs.dry-run != 'true'
+    timeout-minutes: 3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Capture current state
+        id: current
+        run: |
+          echo "tags=$(git tag --points-at HEAD | grep '@scouts/' | tr '\n' ' ' || echo '')" >> $GITHUB_OUTPUT
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "is_release_commit=$(git log -1 --pretty=%B | grep -q 'chore(release)' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: Rollback changes
+        run: |
+          TAGS="${{ steps.current.outputs.tags }}"
+          IS_RELEASE="${{ steps.current.outputs.is_release_commit }}"
+          
+          echo "🔄 Executando rollback seguro..."
+          
+          # 1. Deletar apenas tags criadas NESTE release (apontam para HEAD)
+          if [[ -n "$TAGS" ]]; then
+            echo "Deletando tags criadas nesta execução:"
+            for tag in $TAGS; do
+              echo "  - $tag"
+              git push --delete origin "$tag" 2>/dev/null || true
+              git tag -d "$tag"
+            done
+          else
+            echo "ℹ️  Nenhuma tag criada nesta execução"
+          fi
+          
+          # 2. Reverter commit apenas se for commit de release
+          if [[ "$IS_RELEASE" == "true" ]]; then
+            echo "Revertendo commit de release..."
+            git revert HEAD --no-edit
+            git push origin ${{ github.ref_name }}
+          else
+            echo "ℹ️  Último commit não é de release, nada a reverter"
+          fi
+          
+          echo "✅ Rollback concluído"
+
+      - name: Final notification
+        run: |
+          echo "❌ Release falhou e foi revertido"
+          echo "📋 Tags deletadas: ${{ steps.current.outputs.tags }}"
+          echo "🔍 Verifique os logs para identificar o problema"
+          echo "🔄 Execute novamente após correções"

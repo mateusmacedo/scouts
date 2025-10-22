@@ -1,0 +1,97 @@
+name: Reusable Validation
+
+on:
+  workflow_call:
+    inputs:
+      base-ref:
+        required: false
+        type: string
+        default: 'main'
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.23'
+  PNPM_VERSION: '9'
+
+jobs:
+  validate:
+    name: Validate Affected
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, test, build]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Run ${{ matrix.task }}
+        run: pnpm nx affected -t ${{ matrix.task }}
+
+      - name: Upload coverage (test only)
+        if: matrix.task == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  check-go-sync:
+    name: Check Go Dependencies Sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check sync
+        run: |
+          chmod +x scripts/sync-go-versions.sh
+          ./scripts/sync-go-versions.sh
+
+          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
+            echo "❌ go.mod está desatualizado!"
+            echo "Execute: pnpm nx run @scouts/user-go-service:sync-go-deps"
+            git diff apps/user-go-service/go.mod
+            exit 1
+          fi
+          echo "✅ go.mod está sincronizado"
