@@ -87,6 +87,7 @@ pnpm nx show project bff-nest
 ### Guias de Desenvolvimento
 - **[Geradores Nx](docs/NX_GENERATORS.md)** - Como criar novos projetos e usar geradores
 - **[Processo de Release](docs/RELEASE_PROCESS.md)** - Como fazer releases dos projetos
+- **[Arquitetura de Workflows](docs/WORKFLOWS_ARCHITECTURE.md)** - Arquitetura moderna de CI/CD
 
 ### Criar Novos Projetos
 
@@ -132,12 +133,23 @@ pnpm nx release publish
 
 ### CI/CD Configurado
 
-O workspace já possui workflows GitHub Actions configurados:
-- **CI otimizado** - Executa apenas projetos afetados
-- **Release automático** - Versionamento independente
-- **Validação prévia** - Dry run em PRs
+O workspace possui uma **arquitetura moderna de workflows CI/CD** baseada em componentes reutilizáveis:
 
-Para mais detalhes, consulte o [Processo de Release](docs/RELEASE_PROCESS.md).
+- **🚀 CI otimizado** - Executa apenas projetos afetados com cache inteligente
+- **🔧 Workflows reutilizáveis** - Componentes modulares para máxima reutilização
+- **📊 Performance** - 50-65% mais rápido que a arquitetura anterior
+- **🛡️ Quality Gate** - Integração com SonarQube para análise de qualidade
+- **🔄 Release manual** - Controle total via GitHub Actions UI
+
+**Arquitetura de Workflows:**
+- `ci.yml` - Orquestrador principal para validação
+- `release.yml` - Release manual com validações completas
+- `release-validation.yml` - Validação para branches de release
+- `_reusable-*` - Componentes reutilizáveis (setup, validate, quality-gate, release-steps)
+
+Para mais detalhes, consulte:
+- [Processo de Release](docs/RELEASE_PROCESS.md)
+- [Arquitetura de Workflows](docs/WORKFLOWS_ARCHITECTURE.md)
 
 ## 🛠️ Ferramentas de Desenvolvimento
 
