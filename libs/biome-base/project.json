@@ -1,0 +1,8 @@
+{
+	"name": "@scouts/base-biome",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "library",
+	"sourceRoot": "libs/base-biome",
+	"tags": ["type:lib", "scope:internal"],
+	"targets": {}
+}

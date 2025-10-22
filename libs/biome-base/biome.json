@@ -1,0 +1,111 @@
+{
+	"root": false,
+	"$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedImports": "error",
+				"noUndeclaredVariables": "error",
+				"noUnusedLabels": "error",
+				"noUnusedFunctionParameters": "warn",
+				"noGlobalObjectCalls": "error",
+				"noUnsafeFinally": "error",
+				"noUnsafeOptionalChaining": "error",
+				"useValidForDirection": "error"
+			},
+			"suspicious": {
+				"useAwait": "warn",
+				"noExplicitAny": "warn",
+				"noArrayIndexKey": "warn",
+				"noAssignInExpressions": "warn",
+				"noAsyncPromiseExecutor": "error",
+				"noCatchAssign": "error",
+				"noClassAssign": "error",
+				"noCompareNegZero": "error",
+				"noControlCharactersInRegex": "error",
+				"noDebugger": "error",
+				"noDuplicateCase": "error",
+				"noDuplicateClassMembers": "error",
+				"noDuplicateObjectKeys": "error",
+				"noDuplicateParameters": "error",
+				"noEmptyBlockStatements": "warn",
+				"noExtraNonNullAssertion": "error",
+				"noFallthroughSwitchClause": "error",
+				"noFunctionAssign": "error",
+				"noImportAssign": "error",
+				"noMisleadingCharacterClass": "error",
+				"noMisleadingInstantiator": "error",
+				"noPrototypeBuiltins": "error",
+				"noRedeclare": "error",
+				"noShadowRestrictedNames": "error",
+				"noVar": "error"
+			},
+			"style": {
+				"useImportType": "off",
+				"noNonNullAssertion": "warn",
+				"useNodejsImportProtocol": "warn",
+				"useConst": "warn",
+				"useTemplate": "warn"
+			},
+			"complexity": {
+				"useArrowFunction": "warn",
+				"noForEach": "warn",
+				"noBannedTypes": "warn",
+				"noUselessFragments": "warn",
+				"noUselessTypeConstraint": "warn",
+				"noArguments": "error"
+			},
+			"performance": {
+				"noDelete": "warn",
+				"noAccumulatingSpread": "warn"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "warn"
+			}
+		},
+		"includes": [
+			"**",
+			"!**/dist/**/*",
+			"!**/node_modules/**/*",
+			"!**/*.spec.ts",
+			"!**/*.test.ts",
+			"!**/*.e2e-spec.ts",
+			"!**/support/**/*",
+			"!**/coverage/**/*",
+			"!**/*.config.{js,ts}",
+			"!**/jest.config.{js,ts}",
+			"!**/jest.preset.{js,ts}",
+			"!**/jest.setup.{js,ts}"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineWidth": 100
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always",
+			"trailingCommas": "es5"
+		},
+		"globals": [
+			"beforeAll",
+			"afterAll",
+			"beforeEach",
+			"afterEach",
+			"describe",
+			"it",
+			"test",
+			"expect",
+			"jest"
+		],
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	}
+}
