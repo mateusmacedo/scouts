@@ -1,1 +1,1 @@
-export * from './lib/user-node';
+export * from './lib/node-user';

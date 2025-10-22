@@ -2,6 +2,6 @@ go 1.23
 
 
 use (
-	./apps/go-user-service
+	./apps/user-go-service
 	./libs/user-go
 )
