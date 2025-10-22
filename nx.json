@@ -1,0 +1,199 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/**/*.md"
+    ],
+    "testing": [
+      "{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?",
+      "{projectRoot}/jest.config.[jt]s",
+      "{projectRoot}/tsconfig.spec.json"
+    ],
+    "go": [
+      "{projectRoot}/**/*.go",
+      "{projectRoot}/go.mod",
+      "{projectRoot}/go.sum",
+      "{workspaceRoot}/go.work"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/go.work",
+      "{workspaceRoot}/pnpm-lock.yaml"
+    ]
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/webpack/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "buildDepsTargetName": "build-deps",
+        "watchDepsTargetName": "watch-deps"
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      },
+      "exclude": ["*-e2e/**/*"]
+    },
+    "@nx-go/nx-go",
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "eslint:lint"
+      }
+    }
+  ],
+  "targetDefaults": {
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "outputs": ["{options.outputPath}"]
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}", "{projectRoot}/dist"]
+    },
+    "test": {
+      "cache": true,
+      "inputs": ["default", "^production", "testing"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "biome lint {projectRoot} --write",
+          "eslint {projectRoot} --fix"
+        ],
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/biome.json",
+        "{workspaceRoot}/libs/base-biome/biome.json",
+        "{workspaceRoot}/eslint.config.mjs"
+      ]
+    },
+    "biome": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome lint {projectRoot}",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/biome.json",
+        "{workspaceRoot}/libs/base-biome/biome.json"
+      ]
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format {projectRoot} --write",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/biome.json",
+        "{workspaceRoot}/libs/base-biome/biome.json"
+      ]
+    },
+    "check-boundaries": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint {projectRoot} --rule '@nx/enforce-module-boundaries:error'",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true,
+      "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
+    },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+    },
+    "sync-go-deps": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/libs/user-go/package.json",
+        "{workspaceRoot}/apps/user-go-service/go.mod"
+      ],
+      "outputs": [
+        "{workspaceRoot}/apps/user-go-service/go.mod",
+        "{workspaceRoot}/apps/user-go-service/go.sum"
+      ],
+      "options": {
+        "command": "./scripts/sync-go-versions.sh",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    }
+  },
+  "neverConnectToCloud": true,
+  "release": {
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "{projectName}@v{version}",
+    "projects": ["@scouts/*", "!@scouts/source"],
+    "version": {
+      "preVersionCommand": "pnpm nx run-many -t build",
+      "conventionalCommits": true,
+      "generatorOptions": {
+        "fallbackCurrentVersionResolver": "disk"
+      }
+    },
+    "git": {
+      "commit": true,
+      "tag": true,
+      "commitMessage": "chore(release): publish {version}",
+      "tagMessage": "chore(release): publish {version}"
+    },
+    "publish": {
+      "projects": ["@scouts/logger-node", "@scouts/user-node", "@scouts/utils-nest", "@scouts/base-biome"]
+    },
+    "changelog": {
+      "automaticFromRef": true,
+      "createRelease": "github",
+      "projectChangelogs": {
+        "renderOptions": {
+          "authors": true,
+          "commitReferences": true,
+          "versionTitleDate": true
+        }
+      },
+      "workspaceChangelog": {
+        "renderOptions": {
+          "authors": true,
+          "commitReferences": true,
+          "versionTitleDate": true
+        }
+      }
+    }
+  }
+}
