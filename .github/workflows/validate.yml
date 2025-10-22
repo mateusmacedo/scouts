@@ -3,10 +3,6 @@ name: Validate
 on:
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   NODE_VERSION: '20'
   GO_VERSION: '1.23'
