@@ -40,7 +40,7 @@ export class HealthService {
 			async () => await this.checkMemory(),
 			async () => await this.checkDisk(),
 			async () => await this.checkHttpDependencies(),
-			async () => await this.checkCustomIndicators(),
+			async () => this.checkCustomIndicators(),
 		]);
 	}
 
@@ -93,9 +93,8 @@ export class HealthService {
 	/**
 	 * Check custom indicators (prepared for future circuit breaker integration)
 	 */
-	private async checkCustomIndicators(): Promise<HealthIndicatorResult> {
-		const healthResult: HealthIndicatorResult = { custom: { status: 'up' } };
-		return await Promise.resolve(healthResult);
+	private checkCustomIndicators(): HealthIndicatorResult {
+		return { custom: { status: 'up' } };
 	}
 
 	/**
