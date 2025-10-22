@@ -1,0 +1,23 @@
+registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+
+# Configurações de desenvolvimento
+save-exact=true
+save-prefix=""
+engine-strict=true
+audit-level=moderate
+fund=false
+
+# Configurações de cache para melhor performance
+cache=.npm
+cache-max=3600000
+cache-min=60000
+
+# Configurações de fallback e retry
+fetch-retry-mintimeout=10000
+fetch-retry-maxtimeout=60000
+fetch-retries=3
+
+# Configurações de workspace
+workspace-concurrency=4
+workspace-packages-concurrency=4

@@ -1,0 +1,24 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@scouts/utils-nest": ["libs/utils-nest/src/index.ts"],
+      "@scouts/logger-node": ["libs/logger-node/src/index.ts"],
+      "@scouts/user-node": ["libs/user-node/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

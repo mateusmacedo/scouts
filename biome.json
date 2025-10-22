@@ -1,0 +1,17 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
+	"extends": ["libs/base-biome/biome.json"],
+	"files": {
+		"includes": [
+			"**/apps/**/*",
+			"**/libs/**/*",
+			"!**/dist",
+			"!**/.docusaurus",
+			"!**/build",
+			"!**/.nx",
+			"!**/coverage/**/*",
+			"!**/node_modules/**/*",
+			"!**/draft/**/*"
+		]
+	}
+}
