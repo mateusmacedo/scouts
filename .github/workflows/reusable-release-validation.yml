@@ -2,31 +2,30 @@ name: Reusable Release Validation
 
 on:
   workflow_call:
+    inputs:
+      dry-run:
+        description: 'Executar em modo dry-run (não publica)'
+        type: boolean
+        default: true
+      version-specifier:
+        description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
+        type: string
+        required: false
+      skip-validation:
+        description: 'Pular validações de consistência (não recomendado)'
+        type: boolean
+        default: false
+    outputs:
+      first-release:
+        description: 'Se é a primeira release dos projetos'
+        value: ${{ jobs.validate.outputs.first-release }}
+      validation-result:
+        description: 'Resultado da validação'
+        value: ${{ jobs.validate.result }}
 
 concurrency:
   group: release-validation-${{ github.ref }}
   cancel-in-progress: true
-
-inputs:
-  dry-run:
-    description: 'Executar em modo dry-run (não publica)'
-    type: boolean
-    default: true
-  version-specifier:
-    description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
-    type: string
-    required: false
-  skip-validation:
-    description: 'Pular validações de consistência (não recomendado)'
-    type: boolean
-    default: false
-outputs:
-  first-release:
-    description: 'Se é a primeira release dos projetos'
-    value: ${{ jobs.validate.outputs.first-release }}
-  validation-result:
-    description: 'Resultado da validação'
-    value: ${{ jobs.validate.result }}
 
 env:
   NODE_VERSION: '20'

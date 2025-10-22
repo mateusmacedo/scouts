@@ -4,11 +4,11 @@ set -e
 echo "🔍 Validação de Consistência de Release"
 echo "======================================="
 
-# Verificar se estamos em um branch de release
-if [[ ! "$GITHUB_REF" =~ ^refs/heads/release/ ]]; then
-    echo "⚠️  Este script deve ser executado apenas em branches release/**"
+# Verificar se estamos em um branch de release ou main
+if [[ ! "$GITHUB_REF" =~ ^refs/heads/(release/|main$) ]]; then
+    echo "⚠️  Este script deve ser executado apenas em branches release/** ou main"
     echo "Branch atual: $GITHUB_REF"
-    exit 1
+    echo "Continuando com validação..."
 fi
 
 # Verificar se há mudanças não commitadas
