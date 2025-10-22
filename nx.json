@@ -65,12 +65,23 @@
     "build": {
       "cache": true,
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
+      "inputs": [
+        "production",
+        "^production",
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/tsconfig.base.json"
+      ],
       "outputs": ["{workspaceRoot}/dist/{projectRoot}", "{projectRoot}/dist"]
     },
     "test": {
       "cache": true,
-      "inputs": ["default", "^production", "testing"],
+      "inputs": [
+        "default",
+        "^production",
+        "testing",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/jest.preset.js"
+      ],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
     },
     "lint": {
@@ -156,6 +167,7 @@
       "inputs": ["production", "^production"]
     }
   },
+  "cacheDirectory": ".nx/cache",
   "neverConnectToCloud": true,
   "release": {
     "projectsRelationship": "independent",
