@@ -1,14 +1,43 @@
 # utils-nest
 
-This library was generated with [Nx](https://nx.dev).
+Biblioteca de utilitários para NestJS com módulos de health checks, swagger e logging integrado.
+
+## Características
+
+- **Health Checks**: Módulo completo de health checks com Terminus
+- **Swagger**: Configuração avançada de documentação OpenAPI
+- **Logger Integration**: Adapter para `@scouts/logger-node` com NestJS
+- **Type-Safe**: Totalmente tipado com TypeScript
+- **Modular**: Arquitetura modular para fácil extensão
+
+## Instalação
+
+```bash
+npm install @scouts/utils-nest @nestjs/terminus @nestjs/swagger @scouts/logger-node
+```
 
 ## Building
 
-Run `nx build utils-nest` to build the library.
+```bash
+# Build da biblioteca
+pnpm nx build utils-nest
+
+# Build com watch mode
+pnpm nx build utils-nest --watch
+```
 
 ## Running unit tests
 
-Run `nx test utils-nest` to execute the unit tests via [Jest](https://jestjs.io).
+```bash
+# Executar testes
+pnpm nx test utils-nest
+
+# Testes com coverage
+pnpm nx test utils-nest --coverage
+
+# Testes em watch mode
+pnpm nx test utils-nest --watch
+```
 
 ## Health Check Module
 
