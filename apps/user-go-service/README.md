@@ -299,46 +299,6 @@ func main() {
 }
 ```
 
-## Integração com Outras Aplicações
-
-### nest-bff (NestJS)
-
-```bash
-# Executar ambos os serviços
-pnpm nx serve nest-bff &
-pnpm nx serve user-go-service &
-
-# Testar integração
-curl http://localhost:3000/api/users
-curl http://localhost:8080/
-```
-
-### user-node (Node.js Library)
-
-```go
-// Exemplo de integração futura
-package main
-
-import (
-    "encoding/json"
-    "fmt"
-    "net/http"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
-)
-
-func main() {
-    // Chamada para API Node.js
-    resp, err := http.Get("http://localhost:3000/api/users")
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close()
-    
-    // Processar com user-go
-    result := gouser.GoUser("Processed User")
-    fmt.Println(result)
-}
-```
 
 ## Performance
 
