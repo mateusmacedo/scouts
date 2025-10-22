@@ -7,20 +7,21 @@ Monorepo Nx para desenvolvimento de aplicações e bibliotecas com suporte a Typ
 ## 🏗️ Estrutura do Workspace
 
 ### Aplicações
-- **`apps/nest-bff`** - Backend for Frontend em NestJS
+- **`apps/bff-nest`** - Backend for Frontend em NestJS
 - **`apps/user-go-service`** - Serviço de usuários em Go
 
 ### Bibliotecas
 - **`libs/logger-node`** - Sistema de logging modular com padrão Proxy, correlation IDs, redação de dados sensíveis e métricas - `npm:public`
 - **`libs/utils-nest`** - Utilitários para NestJS (health checks, swagger, logger adapter para logger-node) - `npm:public`
 - **`libs/user-node`** - Biblioteca de usuários para Node.js - `npm:public`
-- **`libs/user-go`** - Biblioteca de usuários para Go - `npm:public`
+- **`libs/user-go`** - Biblioteca de usuários para Go - `go:public`
 - **`libs/base-biome`** - Configuração base do Biome - `npm:private`
 
 ### Sistema de Tags
 Os projetos utilizam tags para categorização e controle de publicação:
 - **`npm:public`** - Publicado no npm registry (npmjs.org)
 - **`npm:private`** - Não publicado, uso interno
+- **`go:public`** - Biblioteca Go versionada via git tags
 - **`type:lib`** - Biblioteca
 - **`type:app`** - Aplicação
 - **`scope:internal`** - Escopo interno do workspace
@@ -31,7 +32,7 @@ O workspace implementa uma stack completa de logging estruturado:
 
 - **`logger-node`**: Biblioteca base com padrão Proxy para composição modular
 - **`utils-nest`**: Adapter NestJS que integra logger-node com decorators e middleware
-- **`nest-bff`**: Aplicação de demonstração da integração completa
+- **`bff-nest`**: Aplicação de demonstração da integração completa
 
 **Características principais:**
 - Logging estruturado com correlation IDs
@@ -46,7 +47,7 @@ O workspace implementa uma stack completa de logging estruturado:
 
 ```bash
 # NestJS BFF
-pnpm nx serve nest-bff
+pnpm nx serve bff-nest
 
 # Go User Service
 pnpm nx serve user-go-service
@@ -78,7 +79,7 @@ pnpm nx affected -t check-boundaries
 pnpm nx show projects
 
 # Ver detalhes de um projeto específico
-pnpm nx show project nest-bff
+pnpm nx show project bff-nest
 ```
 
 ## 📚 Documentação
