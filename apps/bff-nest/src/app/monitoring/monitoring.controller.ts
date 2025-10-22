@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Inject } from '@nestjs/common';
-import { Log, LogInfo, LogDebug } from '@scouts/logger-node';
-import { MonitoringService } from './monitoring.service';
-import { NestLoggerService, LOGGER_TOKEN } from '@scouts/utils-nest';
+import { Controller, Get, Inject, Post } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
+import { Log, LogDebug, LogInfo } from '@scouts/logger-node';
+import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
+import { MonitoringService } from './monitoring.service';
 
 @Controller('monitoring')
 export class MonitoringController {
@@ -33,31 +33,13 @@ export class MonitoringController {
 		return this.monitoringService.getHealthStatus();
 	}
 
-	@Post('simulate-error')
-	@Log({ level: 'error', includeArgs: true })
-	async simulateError() {
-		this.logger.warn('Simulating error for testing', 'MonitoringController');
-
-		try {
-			await this.monitoringService.simulateError();
-		} catch (error) {
-			this.nodeLogger.error('Error simulation completed', {
-				error: error.message,
-			});
-			return {
-				success: false,
-				message: 'Error simulated successfully',
-				error: error.message,
-			};
-		}
-	}
 
 	@Get('logger-stats')
 	@LogInfo({ includeResult: true })
-	async getLoggerStats() {
+	getLoggerStats() {
 		this.logger.debug('Retrieving logger statistics', 'MonitoringController');
 
-		const metrics = await this.monitoringService.getLoggerMetrics();
+		const metrics = this.monitoringService.getLoggerMetrics();
 
 		return {
 			summary: {

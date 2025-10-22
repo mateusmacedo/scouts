@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
+import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
 import { AppService } from './app.service';
-import { LoggerModule, LOGGER_TOKEN } from '@scouts/utils-nest';
 
 describe('AppService', () => {
 	let service: AppService;

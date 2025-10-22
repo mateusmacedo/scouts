@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MonitoringService, LoggerMetrics, RedactionTestData } from './monitoring.service';
-import { LoggerModule, LOGGER_TOKEN } from '@scouts/utils-nest';
+import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
+import { LoggerMetrics, MonitoringService, RedactionTestData } from './monitoring.service';
 
 describe('MonitoringService', () => {
 	let service: MonitoringService;
@@ -244,58 +244,6 @@ describe('MonitoringService', () => {
 		});
 	});
 
-	describe('simulateError', () => {
-		it('should throw error and log it', async () => {
-			// Clear any previous calls
-			jest.clearAllMocks();
-			
-			await expect(service.simulateError()).rejects.toThrow('Simulated error for testing purposes');
-
-			expect(logger.error).toHaveBeenCalledWith('Simulated error occurred', {
-				error: 'Simulated error for testing purposes',
-				stack: expect.any(String),
-			});
-		});
-
-		it('should log error with stack trace', async () => {
-			try {
-				await service.simulateError();
-			} catch (error) {
-				// Expected to throw
-			}
-
-			expect(logger.error).toHaveBeenCalledWith('Simulated error occurred', {
-				error: 'Simulated error for testing purposes',
-				stack: expect.stringContaining('Error: Simulated error for testing purposes'),
-			});
-		});
-
-		it('should preserve original error', async () => {
-			let caughtError: Error | null = null;
-
-			try {
-				await service.simulateError();
-			} catch (error) {
-				caughtError = error as Error;
-			}
-
-			expect(caughtError).toBeInstanceOf(Error);
-			expect(caughtError?.message).toBe('Simulated error for testing purposes');
-			expect(caughtError?.stack).toContain('Simulated error for testing purposes');
-		});
-
-		it('should log warning before throwing', async () => {
-			const warnSpy = jest.spyOn(service['logger'], 'warn');
-
-			try {
-				await service.simulateError();
-			} catch (error) {
-				// Expected to throw
-			}
-
-			expect(warnSpy).toHaveBeenCalledWith('Simulating error for testing', 'MonitoringService');
-		});
-	});
 
 	describe('logger integration', () => {
 		it('should have logger injected', () => {

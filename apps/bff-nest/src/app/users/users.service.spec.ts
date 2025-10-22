@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService, User } from './users.service';
-import { LoggerModule, LOGGER_TOKEN } from '@scouts/utils-nest';
+import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User, UsersService } from './users.service';
 
 describe('UsersService', () => {
 	let service: UsersService;

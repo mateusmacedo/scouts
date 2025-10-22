@@ -1,6 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { NestLoggerService, LOGGER_TOKEN } from '@scouts/utils-nest';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
+import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
 
 export interface LoggerMetrics {
 	logsWritten: number;
@@ -30,10 +30,10 @@ export class MonitoringService {
 		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
 	) {}
 
-	getLoggerMetrics(): Promise<LoggerMetrics> {
+	getLoggerMetrics(): LoggerMetrics {
 		this.logger.debug('Retrieving logger metrics', 'MonitoringService');
 
-		// Check if getMetrics method exists
+		// Check if getMetrics method exists - it's always synchronous
 		const metrics =
 			typeof this.nodeLogger.getMetrics === 'function' ? this.nodeLogger.getMetrics() : null;
 
@@ -48,7 +48,7 @@ export class MonitoringService {
 		};
 	}
 
-	testRedaction(): Promise<{ original: RedactionTestData; redacted: string }> {
+	testRedaction(): { original: RedactionTestData; redacted: string } {
 		this.logger.log('Testing data redaction', 'MonitoringService');
 
 		const testData: RedactionTestData = {
@@ -76,17 +76,17 @@ export class MonitoringService {
 		};
 	}
 
-	async getHealthStatus(): Promise<{
+	getHealthStatus(): {
 		status: string;
 		logger: {
 			status: string;
 			metrics: LoggerMetrics;
 		};
 		timestamp: string;
-	}> {
+	} {
 		this.logger.debug('Checking health status', 'MonitoringService');
 
-		const metrics = await this.getLoggerMetrics();
+		const metrics = this.getLoggerMetrics();
 
 		return {
 			status: 'healthy',
@@ -98,17 +98,4 @@ export class MonitoringService {
 		};
 	}
 
-	simulateError(): Promise<void> {
-		this.logger.warn('Simulating error for testing', 'MonitoringService');
-
-		try {
-			throw new Error('Simulated error for testing purposes');
-		} catch (error) {
-			this.nodeLogger.error('Simulated error occurred', {
-				error: error.message,
-				stack: error.stack,
-			});
-			throw error;
-		}
-	}
 }

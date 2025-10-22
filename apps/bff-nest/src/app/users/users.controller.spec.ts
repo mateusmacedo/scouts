@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersController } from './users.controller';
-import { UsersService } from './users.service';
 import { LoggerModule } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
 
 describe('UsersController', () => {
 	let controller: UsersController;
@@ -244,11 +244,11 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for activation', async () => {
+		it('should return error when user not found for activation', () => {
 			const userId = '999';
-			mockUsersService.findOne.mockResolvedValue(null);
+			mockUsersService.findOne.mockReturnValue(null);
 
-			const result = await controller.activate(userId);
+			const result = controller.activate(userId);
 
 			expect(service.findOne).toHaveBeenCalledWith(userId);
 			expect(result).toEqual({
@@ -280,11 +280,11 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for deactivation', async () => {
+		it('should return error when user not found for deactivation', () => {
 			const userId = '999';
-			mockUsersService.findOne.mockResolvedValue(null);
+			mockUsersService.findOne.mockReturnValue(null);
 
-			const result = await controller.deactivate(userId);
+			const result = controller.deactivate(userId);
 
 			expect(service.findOne).toHaveBeenCalledWith(userId);
 			expect(result).toEqual({

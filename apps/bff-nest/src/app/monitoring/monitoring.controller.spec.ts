@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MonitoringController } from './monitoring.controller';
-import { MonitoringService, LoggerMetrics } from './monitoring.service';
 import { LoggerModule } from '@scouts/utils-nest';
+import { MonitoringController } from './monitoring.controller';
+import { LoggerMetrics, MonitoringService } from './monitoring.service';
 
 describe('MonitoringController', () => {
 	let controller: MonitoringController;
@@ -50,7 +50,6 @@ describe('MonitoringController', () => {
 		getLoggerMetrics: jest.fn(),
 		testRedaction: jest.fn(),
 		getHealthStatus: jest.fn(),
-		simulateError: jest.fn(),
 	};
 
 	beforeEach(async () => {
@@ -165,53 +164,12 @@ describe('MonitoringController', () => {
 		});
 	});
 
-	describe('simulateError', () => {
-		it('should handle error simulation successfully', async () => {
-			const error = new Error('Simulated error for testing purposes');
-			mockMonitoringService.simulateError.mockRejectedValue(error);
-
-			const result = await controller.simulateError();
-
-			expect(service.simulateError).toHaveBeenCalled();
-			expect(result).toEqual({
-				success: false,
-				message: 'Error simulated successfully',
-				error: 'Simulated error for testing purposes',
-			});
-		});
-
-		it('should handle different error types', async () => {
-			const customError = new Error('Custom test error');
-			mockMonitoringService.simulateError.mockRejectedValue(customError);
-
-			const result = await controller.simulateError();
-
-			expect(result).toEqual({
-				success: false,
-				message: 'Error simulated successfully',
-				error: 'Custom test error',
-			});
-		});
-
-		it('should handle error without message', async () => {
-			const error = new Error();
-			mockMonitoringService.simulateError.mockRejectedValue(error);
-
-			const result = await controller.simulateError();
-
-			expect(result).toEqual({
-				success: false,
-				message: 'Error simulated successfully',
-				error: '',
-			});
-		});
-	});
 
 	describe('getLoggerStats', () => {
-		it('should return formatted logger statistics', async () => {
-			mockMonitoringService.getLoggerMetrics.mockResolvedValue(mockLoggerMetrics);
+		it('should return formatted logger statistics', () => {
+			mockMonitoringService.getLoggerMetrics.mockReturnValue(mockLoggerMetrics);
 
-			const result = await controller.getLoggerStats();
+			const result = controller.getLoggerStats();
 
 			expect(service.getLoggerMetrics).toHaveBeenCalled();
 			expect(result).toEqual({
@@ -229,7 +187,7 @@ describe('MonitoringController', () => {
 			});
 		});
 
-		it('should format memory usage correctly', async () => {
+		it('should format memory usage correctly', () => {
 			const customMetrics: LoggerMetrics = {
 				logsWritten: 1000,
 				errorCount: 0,
@@ -244,9 +202,9 @@ describe('MonitoringController', () => {
 				timestamp: '2024-01-01T00:00:00.000Z',
 			};
 
-			mockMonitoringService.getLoggerMetrics.mockResolvedValue(customMetrics);
+			mockMonitoringService.getLoggerMetrics.mockReturnValue(customMetrics);
 
-			const result = await controller.getLoggerStats();
+			const result = controller.getLoggerStats();
 
 			expect(result.summary.memoryUsage).toEqual({
 				rss: '100MB',
@@ -256,7 +214,7 @@ describe('MonitoringController', () => {
 			expect(result.summary.uptime).toBe('7200s');
 		});
 
-		it('should handle zero values', async () => {
+		it('should handle zero values', () => {
 			const zeroMetrics: LoggerMetrics = {
 				logsWritten: 0,
 				errorCount: 0,
@@ -271,9 +229,9 @@ describe('MonitoringController', () => {
 				timestamp: '2024-01-01T00:00:00.000Z',
 			};
 
-			mockMonitoringService.getLoggerMetrics.mockResolvedValue(zeroMetrics);
+			mockMonitoringService.getLoggerMetrics.mockReturnValue(zeroMetrics);
 
-			const result = await controller.getLoggerStats();
+			const result = controller.getLoggerStats();
 
 			expect(result.summary).toEqual({
 				totalLogs: 0,

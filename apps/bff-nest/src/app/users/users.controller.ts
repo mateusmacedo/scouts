@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
-import { Log, LogInfo, LogDebug, LogWarn } from '@scouts/logger-node';
-import { UsersService } from './users.service';
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
+import type { Logger } from '@scouts/logger-node';
+import { Log, LogDebug, LogInfo, LogWarn } from '@scouts/logger-node';
+import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { NestLoggerService, LOGGER_TOKEN } from '@scouts/utils-nest';
-import type { Logger } from '@scouts/logger-node';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
@@ -52,11 +52,11 @@ export class UsersController {
 
 	@Post(':id/activate')
 	@LogInfo({ includeArgs: true, includeResult: true })
-	async activate(@Param('id') id: string) {
+	activate(@Param('id') id: string) {
 		this.logger.log(`Activating user with id: ${id}`, 'UsersController');
 
 		// Simulate activation logic
-		const user = await this.usersService.findOne(id);
+		const user = this.usersService.findOne(id);
 		if (!user) {
 			this.nodeLogger.error('User not found for activation', { userId: id });
 			return { success: false, message: 'User not found' };
@@ -68,11 +68,11 @@ export class UsersController {
 
 	@Post(':id/deactivate')
 	@LogWarn({ includeArgs: true, includeResult: true })
-	async deactivate(@Param('id') id: string) {
+	deactivate(@Param('id') id: string) {
 		this.logger.log(`Deactivating user with id: ${id}`, 'UsersController');
 
 		// Simulate deactivation logic
-		const user = await this.usersService.findOne(id);
+		const user = this.usersService.findOne(id);
 		if (!user) {
 			this.nodeLogger.error('User not found for deactivation', { userId: id });
 			return { success: false, message: 'User not found' };

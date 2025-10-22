@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { nodeUser } from '@scouts/user-node';
 import { Log } from '@scouts/logger-node';
+import { nodeUser } from '@scouts/user-node';
 
 @Injectable()
 export class AppService {
-
 	@Log({ level: 'info', includeResult: true })
 	getData(): { message: string } {
 		const user = nodeUser();

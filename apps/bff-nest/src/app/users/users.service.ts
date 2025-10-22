@@ -1,6 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { NestLoggerService, LOGGER_TOKEN } from '@scouts/utils-nest';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
+import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -24,7 +24,7 @@ export class UsersService {
 		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
 	) {}
 
-	create(createUserDto: CreateUserDto): Promise<User> {
+	create(createUserDto: CreateUserDto): User {
 		this.logger.log('Creating new user', 'UsersService');
 
 		const user: User = {
@@ -49,7 +49,7 @@ export class UsersService {
 		return user;
 	}
 
-	findAll(): Promise<User[]> {
+	findAll(): User[] {
 		this.logger.debug('Finding all users', 'UsersService');
 
 		this.nodeLogger.debug('Users retrieved', {
@@ -59,7 +59,7 @@ export class UsersService {
 		return this.users;
 	}
 
-	findOne(id: string): Promise<User | null> {
+	findOne(id: string): User | null {
 		this.logger.debug(`Finding user with id: ${id}`, 'UsersService');
 
 		const user = this.users.find((u) => u.id === id);
@@ -74,7 +74,7 @@ export class UsersService {
 		return user;
 	}
 
-	update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+	update(id: string, updateUserDto: UpdateUserDto): User | null {
 		this.logger.log(`Updating user with id: ${id}`, 'UsersService');
 
 		const userIndex = this.users.findIndex((u) => u.id === id);
@@ -102,7 +102,7 @@ export class UsersService {
 		return updatedUser;
 	}
 
-	remove(id: string): Promise<boolean> {
+	remove(id: string): boolean {
 		this.logger.log(`Removing user with id: ${id}`, 'UsersService');
 
 		const userIndex = this.users.findIndex((u) => u.id === id);
