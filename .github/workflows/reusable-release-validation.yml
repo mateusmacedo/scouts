@@ -96,10 +96,11 @@ jobs:
             echo "🔄 Release subsequente dos projetos"
           fi
 
+      - name: Setup script permissions
+        run: chmod +x scripts/validate-release-consistency.sh
+
       - name: Run validation script
-        run: |
-          chmod +x scripts/validate-release-consistency.sh
-          ./scripts/validate-release-consistency.sh
+        run: ./scripts/validate-release-consistency.sh
 
       - name: Dry run release
         if: ${{ inputs.dry-run == 'true' }}

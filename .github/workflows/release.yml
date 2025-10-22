@@ -1,26 +1,10 @@
 name: Release
 
+# Comportamento do workflow:
+# - workflow_dispatch: Execução manual com opção de dry-run
+# - pull_request (main): Sempre dry-run para validação
+# - push (main): Execução real do release
 on:
-  push:
-    branches:
-      - main
-      - 'release/**'
-    tags:
-      - 'v*'
-  workflow_call:
-    inputs:
-      dry-run:
-        description: 'Executar em modo dry-run (não publica)'
-        type: boolean
-        default: true
-      version-specifier:
-        description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
-        type: string
-        required: false
-      skip-validation:
-        description: 'Pular validações de consistência (não recomendado)'
-        type: boolean
-        default: false
   workflow_dispatch:
     inputs:
       dry-run:
@@ -35,6 +19,13 @@ on:
         description: 'Pular validações de consistência (não recomendado)'
         type: boolean
         default: false
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 concurrency:
   group: release-${{ github.ref }}
@@ -54,11 +45,67 @@ env:
 jobs:
   validate:
     name: Validate Release Consistency
-    uses: ./.github/workflows/reusable-release-validation.yml
-    with:
-      dry-run: ${{ inputs.dry-run }}
-      version-specifier: ${{ inputs.version-specifier }}
-      skip-validation: ${{ inputs.skip-validation }}
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip-validation }}
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Detect First Release & Check NPM
+        id: release-type
+        run: |
+          echo "🔍 Verificando se é primeira release dos projetos..."
+          FIRST_RELEASE=true
+          
+          for pkg in logger-node utils-nest user-node; do
+            if npm view "@scouts/$pkg" version > /dev/null 2>&1; then
+              echo "📦 Package @scouts/$pkg já existe no NPM"
+              FIRST_RELEASE=false
+            fi
+          done
+          
+          echo "first_release=$FIRST_RELEASE" >> $GITHUB_OUTPUT
+          
+          if [[ "$FIRST_RELEASE" == "true" ]]; then
+            echo "🎉 PRIMEIRA RELEASE detectada"
+          else
+            echo "🔄 Release subsequente dos projetos"
+          fi
+
+      - name: Setup script permissions
+        run: chmod +x scripts/validate-release-consistency.sh
+
+      - name: Run validation script
+        run: ./scripts/validate-release-consistency.sh
 
   release:
     name: Release
@@ -112,9 +159,34 @@ jobs:
       - name: Build affected projects
         run: pnpm nx affected -t build --parallel=3
 
+      - name: Determine execution mode
+        id: execution-mode
+        run: |
+          # Para workflow_dispatch, usar input do usuário
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "mode=dry-run" >> $GITHUB_OUTPUT
+              echo "🔍 Modo dry-run selecionado manualmente"
+            else
+              echo "mode=release" >> $GITHUB_OUTPUT
+              echo "🚀 Modo release selecionado manualmente"
+            fi
+          # Para PRs, sempre dry-run
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "mode=dry-run" >> $GITHUB_OUTPUT
+            echo "🔍 PR detectado - executando em modo dry-run"
+          # Para push na main, executar release real
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "mode=release" >> $GITHUB_OUTPUT
+            echo "🚀 Push na main detectado - executando release real"
+          else
+            echo "mode=dry-run" >> $GITHUB_OUTPUT
+            echo "🔍 Trigger não reconhecido - executando em modo dry-run por segurança"
+          fi
+
       - name: Release (Version & Changelog)
         run: |
-          if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+          if [[ "${{ steps.execution-mode.outputs.mode }}" == "dry-run" ]]; then
             echo "🔍 Executando em modo dry-run..."
             pnpm nx release --dry-run
           else
@@ -129,10 +201,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
+      - name: Setup sync script permissions
+        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
+        run: chmod +x scripts/sync-go-versions.sh
+
       - name: Sync Go dependencies
-        if: ${{ inputs.dry-run != 'true' }}
+        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
         run: |
-          chmod +x scripts/sync-go-versions.sh
           ./scripts/sync-go-versions.sh
 
           # Commit se houver mudanças
@@ -143,20 +218,20 @@ jobs:
           fi
 
       - name: Publish packages
-        if: ${{ inputs.dry-run != 'true' }}
+        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
         run: pnpm nx release publish --force
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push changes and tags
-        if: ${{ inputs.dry-run != 'true' }}
+        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
         run: |
           git push origin ${{ github.ref_name }}
           git push --tags
 
       - name: Create GitHub Release
-        if: ${{ inputs.dry-run != 'true' }}
+        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
         run: |
           echo "📝 GitHub Release será criado automaticamente pelo Nx Release"
           echo "Verifique em: https://github.com/${{ github.repository }}/releases"
@@ -165,7 +240,7 @@ jobs:
     name: Rollback (if needed)
     runs-on: ubuntu-latest
     needs: [release]
-    if: failure() && inputs.dry-run != 'true'
+    if: failure() && steps.execution-mode.outputs.mode == 'release'
     timeout-minutes: 3
     steps:
       - name: Checkout
