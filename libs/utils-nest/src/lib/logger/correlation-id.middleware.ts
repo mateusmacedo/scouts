@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { runWithCidAsync, ensureCid } from '@scouts/logger-node';
+import { ensureCid, runWithCidAsync } from '@scouts/logger-node';
+import { NextFunction, Request, Response } from 'express';
 
 /**
  * Middleware for automatic correlation ID handling
@@ -25,7 +25,7 @@ export class CorrelationIdMiddleware implements NestMiddleware {
 		const correlationId = this.extractCorrelationId(req);
 
 		// Run the request handler with correlation ID context
-		runWithCidAsync(() => {
+		runWithCidAsync(async () => {
 			// Add correlation ID to response headers for client tracking
 			res.setHeader('x-correlation-id', correlationId);
 

@@ -1,5 +1,5 @@
-import { CustomHealthIndicator } from './custom-health.indicator';
 import { HealthIndicatorResult } from '@nestjs/terminus';
+import { CustomHealthIndicator } from './custom-health.indicator';
 
 describe('CustomHealthIndicator', () => {
 	describe('Interface', () => {

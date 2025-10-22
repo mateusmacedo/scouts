@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { LOGGER_TOKEN } from './constants';
 import { LoggerModule } from './logger.module';
 import { NestLoggerService } from './nest-logger.service';
-import { LOGGER_TOKEN } from './constants';
 
 describe('LoggerModule', () => {
 	describe('forRoot', () => {

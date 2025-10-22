@@ -1,8 +1,7 @@
-import { Injectable, Inject, Logger, Optional } from '@nestjs/common';
-import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule, OpenAPIObject } from '@nestjs/swagger';
+import { INestApplication, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { SWAGGER_OPTIONS_TOKEN } from './constants';
-import { SwaggerModuleOptions, DocumentConfig, SecuritySchemeConfig } from './swagger.interface';
+import { DocumentConfig, SecuritySchemeConfig, SwaggerModuleOptions } from './swagger.interface';
 
 /**
  * Service that orchestrates Swagger/OpenAPI configuration and setup

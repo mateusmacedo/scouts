@@ -1,4 +1,4 @@
-import { PaginationMeta, PaginatedDto } from './paginated.dto';
+import { PaginatedDto, PaginationMeta } from './paginated.dto';
 
 describe('PaginationMeta', () => {
 	describe('class structure', () => {

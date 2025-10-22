@@ -1,5 +1,5 @@
 import { applyDecorators, Type } from '@nestjs/common';
-import { ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
 import { PaginatedDto } from '../dto/paginated.dto';
 
 /**

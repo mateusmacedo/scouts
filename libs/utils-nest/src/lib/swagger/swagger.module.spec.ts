@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { SWAGGER_OPTIONS_TOKEN } from './constants';
+import { SwaggerModuleAsyncOptions, SwaggerModuleOptions } from './swagger.interface';
 import { SwaggerModule } from './swagger.module';
 import { SwaggerService } from './swagger.service';
-import { SWAGGER_OPTIONS_TOKEN } from './constants';
-import { SwaggerModuleOptions, SwaggerModuleAsyncOptions } from './swagger.interface';
 
 // Mock SwaggerService since it depends on @nestjs/swagger
 jest.mock('./swagger.service', () => ({

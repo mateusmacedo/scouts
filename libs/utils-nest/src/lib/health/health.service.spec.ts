@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
+	DiskHealthIndicator,
 	HealthCheckService,
 	HttpHealthIndicator,
 	MemoryHealthIndicator,
-	DiskHealthIndicator,
 } from '@nestjs/terminus';
-import { HealthService } from './health.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { HEALTH_OPTIONS_TOKEN } from './constants';
 import { HealthCheckOptions } from './health.interface';
+import { HealthService } from './health.service';
 
 describe('HealthService', () => {
 	let service: HealthService;

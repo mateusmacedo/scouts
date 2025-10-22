@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NextFunction, Request, Response } from 'express';
 import { CorrelationIdMiddleware } from './correlation-id.middleware';
-import { Request, Response, NextFunction } from 'express';
 
 // Mock the logger-node functions
 jest.mock('@scouts/logger-node', () => ({

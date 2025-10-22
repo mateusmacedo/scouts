@@ -1,3 +1,3 @@
 export * from './lib/health';
-export * from './lib/swagger';
 export * from './lib/logger';
+export * from './lib/swagger';

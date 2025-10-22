@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NestLoggerService } from './nest-logger.service';
-import { LOGGER_TOKEN } from './constants';
 import type { Logger } from '@scouts/logger-node';
+import { LOGGER_TOKEN } from './constants';
+import { NestLoggerService } from './nest-logger.service';
 
 describe('NestLoggerService', () => {
 	let service: NestLoggerService;

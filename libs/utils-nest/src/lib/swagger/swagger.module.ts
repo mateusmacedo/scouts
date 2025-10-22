@@ -1,7 +1,7 @@
-import { Module, DynamicModule } from '@nestjs/common';
-import { SwaggerService } from './swagger.service';
+import { DynamicModule, Module } from '@nestjs/common';
 import { SWAGGER_OPTIONS_TOKEN } from './constants';
-import { SwaggerModuleOptions, SwaggerModuleAsyncOptions } from './swagger.interface';
+import { SwaggerModuleAsyncOptions, SwaggerModuleOptions } from './swagger.interface';
+import { SwaggerService } from './swagger.service';
 
 /**
  * Dynamic module for Swagger/OpenAPI configuration

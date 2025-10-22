@@ -1,8 +1,8 @@
-import { Module, DynamicModule } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { createComposedLogger, createRedactor } from '@scouts/logger-node';
+import { LOGGER_OPTIONS_TOKEN, LOGGER_TOKEN } from './constants';
+import { NestLoggerModuleAsyncOptions, NestLoggerModuleOptions } from './logger.interface';
 import { NestLoggerService } from './nest-logger.service';
-import { LOGGER_TOKEN, LOGGER_OPTIONS_TOKEN } from './constants';
-import { NestLoggerModuleOptions, NestLoggerModuleAsyncOptions } from './logger.interface';
 
 /**
  * Dynamic module for NestJS Logger integration with @scouts/logger-node
@@ -33,9 +33,9 @@ export class LoggerModule {
 								keys: allRedactKeys,
 							}),
 							sinkOptions: {
-								service: opts.service || process.env.SERVICE_NAME || 'nestjs-app',
-								environment: opts.environment || process.env.NODE_ENV || 'development',
-								version: opts.version || process.env.SERVICE_VERSION || '1.0.0',
+								service: opts.service || process.env['SERVICE_NAME'] || 'nestjs-app',
+								environment: opts.environment || process.env['NODE_ENV'] || 'development',
+								version: opts.version || process.env['SERVICE_VERSION'] || '1.0.0',
 							},
 						});
 					},
@@ -72,9 +72,9 @@ export class LoggerModule {
 								keys: allRedactKeys,
 							}),
 							sinkOptions: {
-								service: opts.service || process.env.SERVICE_NAME || 'nestjs-app',
-								environment: opts.environment || process.env.NODE_ENV || 'development',
-								version: opts.version || process.env.SERVICE_VERSION || '1.0.0',
+								service: opts.service || process.env['SERVICE_NAME'] || 'nestjs-app',
+								environment: opts.environment || process.env['NODE_ENV'] || 'development',
+								version: opts.version || process.env['SERVICE_VERSION'] || '1.0.0',
 							},
 						});
 					},

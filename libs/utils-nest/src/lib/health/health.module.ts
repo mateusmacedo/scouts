@@ -1,10 +1,10 @@
-import { Module, DynamicModule } from '@nestjs/common';
-import { TerminusModule } from '@nestjs/terminus';
 import { HttpModule } from '@nestjs/axios';
-import { HealthController } from './health.controller';
-import { HealthService } from './health.service';
-import { HealthCheckOptions, HealthCheckAsyncOptions } from './health.interface';
+import { DynamicModule, Module } from '@nestjs/common';
+import { TerminusModule } from '@nestjs/terminus';
 import { HEALTH_OPTIONS_TOKEN } from './constants';
+import { HealthController } from './health.controller';
+import { HealthCheckAsyncOptions, HealthCheckOptions } from './health.interface';
+import { HealthService } from './health.service';
 
 /**
  * Dynamic module for health checks

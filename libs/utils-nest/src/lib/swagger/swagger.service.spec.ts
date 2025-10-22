@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { SwaggerService } from './swagger.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { SWAGGER_OPTIONS_TOKEN } from './constants';
 import { SwaggerModuleOptions } from './swagger.interface';
+import { SwaggerService } from './swagger.service';
 
 // Mock @nestjs/swagger - using manual mock since it's a peerDependency
 const DocumentBuilder = jest.fn().mockImplementation(() => ({

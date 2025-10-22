@@ -1,7 +1,6 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { LoggerService, LogLevel } from '@nestjs/common';
-import { LOGGER_TOKEN } from './constants';
+import { Inject, Injectable, LoggerService, LogLevel } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
+import { LOGGER_TOKEN } from './constants';
 
 /**
  * NestJS Logger Service that adapts @scouts/logger-node to NestJS LoggerService
