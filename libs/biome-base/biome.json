@@ -56,7 +56,8 @@
 				"noBannedTypes": "warn",
 				"noUselessFragments": "warn",
 				"noUselessTypeConstraint": "warn",
-				"noArguments": "error"
+				"noArguments": "error",
+				"useLiteralKeys": "off"
 			},
 			"performance": {
 				"noDelete": "warn",
