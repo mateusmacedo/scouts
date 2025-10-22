@@ -1,0 +1,20 @@
+{
+	"name": "@scouts/user-node",
+	"version": "0.0.0",
+	"author": "Mateus Macedo Dos Anjos",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/user-node"
+	},
+	"type": "commonjs",
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
+	"dependencies": {
+		"tslib": "^2.3.0"
+	}
+}
