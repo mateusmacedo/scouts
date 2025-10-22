@@ -152,6 +152,8 @@ jobs:
     needs: [validate]
     if: always() && (needs.validate.outputs.validation-result == 'success' || inputs.skip-validation == true)
     timeout-minutes: 20
+    outputs:
+      execution-mode: ${{ steps.execution-mode.outputs.mode }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -318,7 +320,7 @@ jobs:
     name: Rollback (if needed)
     runs-on: ubuntu-latest
     needs: [release]
-    if: failure() && steps.execution-mode.outputs.mode == 'release'
+    if: failure() && needs.release.outputs.execution-mode == 'release'
     timeout-minutes: 3
     steps:
       - name: Checkout
