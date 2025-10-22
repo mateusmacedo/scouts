@@ -19,4 +19,4 @@ permissions:
 jobs:
   validate:
     name: Validate & Test
-    uses: ./.github/workflows/validate.yml
+    uses: ./.github/workflows/_reusable-validate.yml
