@@ -14,21 +14,21 @@ export class MonitoringController {
 
 	@Get('metrics')
 	@LogInfo({ includeResult: true })
-	async getMetrics() {
+	getMetrics() {
 		this.logger.debug('Retrieving logger metrics', 'MonitoringController');
 		return this.monitoringService.getLoggerMetrics();
 	}
 
 	@Post('test-redaction')
 	@Log({ level: 'info', includeArgs: true, includeResult: true })
-	async testRedaction() {
+	testRedaction() {
 		this.logger.log('Testing data redaction', 'MonitoringController');
 		return this.monitoringService.testRedaction();
 	}
 
 	@Get('health')
 	@LogDebug({ includeResult: true })
-	async getHealth() {
+	getHealth() {
 		this.logger.debug('Checking health status', 'MonitoringController');
 		return this.monitoringService.getHealthStatus();
 	}

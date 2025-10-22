@@ -30,7 +30,7 @@ export class MonitoringService {
 		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
 	) {}
 
-	async getLoggerMetrics(): Promise<LoggerMetrics> {
+	getLoggerMetrics(): Promise<LoggerMetrics> {
 		this.logger.debug('Retrieving logger metrics', 'MonitoringService');
 
 		// Check if getMetrics method exists
@@ -48,7 +48,7 @@ export class MonitoringService {
 		};
 	}
 
-	async testRedaction(): Promise<{ original: RedactionTestData; redacted: string }> {
+	testRedaction(): Promise<{ original: RedactionTestData; redacted: string }> {
 		this.logger.log('Testing data redaction', 'MonitoringService');
 
 		const testData: RedactionTestData = {
@@ -98,7 +98,7 @@ export class MonitoringService {
 		};
 	}
 
-	async simulateError(): Promise<void> {
+	simulateError(): Promise<void> {
 		this.logger.warn('Simulating error for testing', 'MonitoringService');
 
 		try {

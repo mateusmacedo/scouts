@@ -46,6 +46,6 @@ export interface NestLoggerModuleOptions {
  */
 export interface NestLoggerModuleAsyncOptions {
 	imports?: DynamicModule['imports'];
-	useFactory: (...args: any[]) => Promise<NestLoggerModuleOptions> | NestLoggerModuleOptions;
+	useFactory: (...args: unknown[]) => Promise<NestLoggerModuleOptions> | NestLoggerModuleOptions;
 	inject?: (string | symbol | Type)[];
 }

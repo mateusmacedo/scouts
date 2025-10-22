@@ -121,6 +121,6 @@ export interface SwaggerPlugin {
 
 export interface SwaggerModuleAsyncOptions<T extends SwaggerModuleOptions = SwaggerModuleOptions> {
 	imports?: DynamicModule['imports'];
-	useFactory: (...args: any[]) => Promise<T> | T;
+	useFactory: (...args: unknown[]) => Promise<T> | T;
 	inject?: (string | symbol | Type)[];
 }

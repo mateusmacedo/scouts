@@ -44,7 +44,7 @@ export interface HealthCheckOptions {
  */
 export interface HealthCheckAsyncOptions<T extends HealthCheckOptions = HealthCheckOptions> {
 	imports?: DynamicModule['imports'];
-	useFactory: (...args: any[]) => Promise<T> | T;
+	useFactory: (...args: unknown[]) => Promise<T> | T;
 	inject?: (string | symbol | Type)[];
 }
 

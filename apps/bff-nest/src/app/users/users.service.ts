@@ -24,7 +24,7 @@ export class UsersService {
 		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
 	) {}
 
-	async create(createUserDto: CreateUserDto): Promise<User> {
+	create(createUserDto: CreateUserDto): Promise<User> {
 		this.logger.log('Creating new user', 'UsersService');
 
 		const user: User = {
@@ -49,7 +49,7 @@ export class UsersService {
 		return user;
 	}
 
-	async findAll(): Promise<User[]> {
+	findAll(): Promise<User[]> {
 		this.logger.debug('Finding all users', 'UsersService');
 
 		this.nodeLogger.debug('Users retrieved', {
@@ -59,7 +59,7 @@ export class UsersService {
 		return this.users;
 	}
 
-	async findOne(id: string): Promise<User | null> {
+	findOne(id: string): Promise<User | null> {
 		this.logger.debug(`Finding user with id: ${id}`, 'UsersService');
 
 		const user = this.users.find((u) => u.id === id);
@@ -74,7 +74,7 @@ export class UsersService {
 		return user;
 	}
 
-	async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+	update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
 		this.logger.log(`Updating user with id: ${id}`, 'UsersService');
 
 		const userIndex = this.users.findIndex((u) => u.id === id);
@@ -102,7 +102,7 @@ export class UsersService {
 		return updatedUser;
 	}
 
-	async remove(id: string): Promise<boolean> {
+	remove(id: string): Promise<boolean> {
 		this.logger.log(`Removing user with id: ${id}`, 'UsersService');
 
 		const userIndex = this.users.findIndex((u) => u.id === id);

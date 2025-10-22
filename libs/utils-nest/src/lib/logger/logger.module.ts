@@ -33,9 +33,9 @@ export class LoggerModule {
 								keys: allRedactKeys,
 							}),
 							sinkOptions: {
-								service: opts.service || process.env['SERVICE_NAME'] || 'nestjs-app',
-								environment: opts.environment || process.env['NODE_ENV'] || 'development',
-								version: opts.version || process.env['SERVICE_VERSION'] || '1.0.0',
+								service: opts.service || process.env.SERVICE_NAME || 'nestjs-app',
+								environment: opts.environment || process.env.NODE_ENV || 'development',
+								version: opts.version || process.env.SERVICE_VERSION || '1.0.0',
 							},
 						});
 					},
@@ -72,9 +72,9 @@ export class LoggerModule {
 								keys: allRedactKeys,
 							}),
 							sinkOptions: {
-								service: opts.service || process.env['SERVICE_NAME'] || 'nestjs-app',
-								environment: opts.environment || process.env['NODE_ENV'] || 'development',
-								version: opts.version || process.env['SERVICE_VERSION'] || '1.0.0',
+								service: opts.service || process.env.SERVICE_NAME || 'nestjs-app',
+								environment: opts.environment || process.env.NODE_ENV || 'development',
+								version: opts.version || process.env.SERVICE_VERSION || '1.0.0',
 							},
 						});
 					},

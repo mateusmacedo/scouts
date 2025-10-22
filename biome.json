@@ -1,6 +1,6 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
-	"extends": ["libs/base-biome/biome.json"],
+	"extends": ["libs/biome-base/biome.json"],
 	"files": {
 		"includes": [
 			"**/apps/**/*",

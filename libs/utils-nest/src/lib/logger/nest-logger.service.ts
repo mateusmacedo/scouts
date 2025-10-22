@@ -57,7 +57,7 @@ export class NestLoggerService implements LoggerService {
 	 * Set log levels (for compatibility with NestJS LoggerService)
 	 * Note: This is a no-op as @scouts/logger-node handles levels differently
 	 */
-	setLogLevels?(levels: LogLevel[]): void {
+	setLogLevels?(_levels: LogLevel[]): void {
 		// No-op: @scouts/logger-node handles log levels through configuration
 	}
 
