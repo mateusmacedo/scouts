@@ -1,0 +1,64 @@
+name: Reusable Validate
+
+on:
+  workflow_call:
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    uses: ./.github/workflows/_reusable-setup.yml
+
+  validate:
+    name: Validate Affected
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        task: [lint, test, build]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Caches já configurados via setup reusável
+      
+      - name: Restore cached dependencies
+        run: echo "Dependencies restored from setup job"
+
+      - name: Run ${{ matrix.task }}
+        run: pnpm nx affected -t ${{ matrix.task }}
+
+      - name: Upload coverage (test only)
+        if: matrix.task == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  check-go-sync:
+    name: Check Go Dependencies Sync
+    runs-on: ubuntu-latest
+    needs: setup
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup script permissions
+        run: chmod +x scripts/sync-go-versions.sh
+
+      - name: Check sync
+        run: |
+          ./scripts/sync-go-versions.sh
+          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
+            echo "❌ go.mod está desatualizado!"
+            exit 1
+          fi
