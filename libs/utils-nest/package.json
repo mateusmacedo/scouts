@@ -1,0 +1,32 @@
+{
+	"name": "@scouts/utils-nest",
+	"version": "0.0.0",
+	"type": "commonjs",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/utils-nest"
+	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
+	"author": "Mateus Macedo Dos Anjos",
+	"dependencies": {
+		"tslib": "^2.3.0",
+		"js-yaml": "^4.1.0",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.0",
+		"@scouts/logger-node": "workspace:*",
+		"express": "^4.18.0",
+		"@types/express": "^4.17.0"
+	},
+	"peerDependencies": {
+		"@nestjs/common": "^10.0.0",
+		"@nestjs/terminus": "^10.0.0",
+		"@nestjs/axios": "^3.0.0",
+		"@nestjs/swagger": "^7.0.0"
+	}
+}

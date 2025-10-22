@@ -1,0 +1,34 @@
+{
+	"name": "@scouts/logger-node",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/logger-node/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag",
+				"fallbackCurrentVersionResolver": "disk"
+			}
+		}
+	},
+	"tags": ["type:lib", "scope:internal"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/libs/logger-node",
+				"tsConfig": "libs/logger-node/tsconfig.lib.json",
+				"packageJson": "libs/logger-node/package.json",
+				"main": "libs/logger-node/src/index.ts",
+				"assets": ["libs/logger-node/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		}
+	}
+}

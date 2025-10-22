@@ -1,0 +1,40 @@
+{
+	"name": "@scouts/logger-node",
+	"version": "0.0.0",
+	"type": "commonjs",
+	"author": "Mateus Macedo Dos Anjos",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/logger-node"
+	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"default": "./src/index.js"
+		},
+		"./pino": {
+			"types": "./src/lib/sink/pino/index.d.ts",
+			"default": "./src/lib/sink/pino/index.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
+	"dependencies": {
+		"async-mutex": "^0.4.1",
+		"pino": "^9.0.0",
+		"tslib": "^2.3.0"
+	},
+	"peerDependencies": {
+		"ulid": "^2.3.0"
+	},
+	"peerDependenciesMeta": {
+		"ulid": {
+			"optional": true
+		}
+	}
+}

@@ -1,0 +1,48 @@
+{
+	"name": "@scouts/utils-nest",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/utils-nest/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag",
+				"fallbackCurrentVersionResolver": "disk"
+			}
+		}
+	},
+	"tags": ["type:lib", "scope:internal"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/libs/utils-nest",
+				"tsConfig": "libs/utils-nest/tsconfig.lib.json",
+				"packageJson": "libs/utils-nest/package.json",
+				"main": "libs/utils-nest/src/index.ts",
+				"assets": ["libs/utils-nest/*.md"]
+			}
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": ["biome lint {projectRoot} --write", "eslint {projectRoot} --fix"],
+				"cwd": "{workspaceRoot}"
+			}
+		},
+		"format": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome format {projectRoot} --write",
+				"cwd": "{workspaceRoot}"
+			}
+		}
+	}
+}
