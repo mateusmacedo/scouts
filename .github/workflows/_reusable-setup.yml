@@ -1,11 +1,22 @@
-name: Validate
+name: Reusable Setup
 
 on:
   workflow_call:
-
-concurrency:
-  group: validate-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      fetch-depth:
+        type: number
+        default: 0
+      install-dependencies:
+        type: boolean
+        default: true
+      setup-go:
+        type: boolean
+        default: true
+    outputs:
+      cache-hit-pnpm:
+        value: ${{ jobs.setup.outputs.cache-hit-pnpm }}
+      cache-hit-nx:
+        value: ${{ jobs.setup.outputs.cache-hit-nx }}
 
 env:
   NODE_VERSION: '20'
@@ -13,21 +24,20 @@ env:
   PNPM_VERSION: '9'
 
 jobs:
-  validate:
-    name: Validate Affected
+  setup:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        task: [lint, test, build]
-      fail-fast: false
+    outputs:
+      cache-hit-pnpm: ${{ steps.cache-pnpm.outputs.cache-hit }}
+      cache-hit-nx: ${{ steps.cache-nx.outputs.cache-hit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: ${{ inputs.fetch-depth }}
           filter: tree:0
 
       - name: Cache pnpm store
+        id: cache-pnpm
         uses: actions/cache@v4
         with:
           path: ~/.pnpm-store
@@ -36,6 +46,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
 
       - name: Cache Nx
+        id: cache-nx
         uses: actions/cache@v4
         with:
           path: .nx/cache
@@ -45,6 +56,7 @@ jobs:
             nx-${{ runner.os }}-
 
       - name: Cache Go modules
+        if: ${{ inputs.setup-go }}
         uses: actions/cache@v4
         with:
           path: |
@@ -78,6 +90,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Setup Go
+        if: ${{ inputs.setup-go }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -86,63 +99,8 @@ jobs:
             libs/user-go/go.sum
 
       - name: Install dependencies
+        if: ${{ inputs.install-dependencies }}
         run: pnpm install --frozen-lockfile
 
       - name: Set up Nx SHAs
         uses: nrwl/nx-set-shas@v4
-
-      - name: Run ${{ matrix.task }}
-        run: pnpm nx affected -t ${{ matrix.task }}
-
-      - name: Upload coverage (test only)
-        if: matrix.task == 'test'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 7
-
-  check-go-sync:
-    name: Check Go Dependencies Sync
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
-          restore-keys: |
-            go-${{ runner.os }}-
-
-      - name: Setup script permissions
-        run: chmod +x scripts/sync-go-versions.sh
-
-      - name: Check sync
-        run: |
-          ./scripts/sync-go-versions.sh
-
-          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
-            echo "❌ go.mod está desatualizado!"
-            echo "Execute: pnpm nx run @scouts/user-go-service:sync-go-deps"
-            git diff apps/user-go-service/go.mod
-            exit 1
-          fi
-          echo "✅ go.mod está sincronizado"
