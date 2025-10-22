@@ -29,7 +29,7 @@ fi
 
 # Verificar se os projetos estão configurados
 echo "📦 Verificando projetos..."
-PROJECTS=("@scouts/utils-nest" "@scouts/user-node" "@scouts/user-go" "@scouts/nest-bff" "@scouts/user-go-service")
+PROJECTS=("@scouts/utils-nest" "@scouts/user-node" "@scouts/user-go" "@scouts/bff-nest" "@scouts/user-go-service")
 
 for project in "${PROJECTS[@]}"; do
     if [ -d "libs/${project#@scouts/}" ] || [ -d "apps/${project#@scouts/}" ]; then
