@@ -1,0 +1,142 @@
+name: Reusable Release Validation
+
+on:
+  workflow_call:
+
+concurrency:
+  group: release-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+inputs:
+  dry-run:
+    description: 'Executar em modo dry-run (não publica)'
+    type: boolean
+    default: true
+  version-specifier:
+    description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
+    type: string
+    required: false
+  skip-validation:
+    description: 'Pular validações de consistência (não recomendado)'
+    type: boolean
+    default: false
+outputs:
+  first-release:
+    description: 'Se é a primeira release dos projetos'
+    value: ${{ jobs.validate.outputs.first-release }}
+  validation-result:
+    description: 'Resultado da validação'
+    value: ${{ jobs.validate.result }}
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.23'
+  PNPM_VERSION: '9'
+
+jobs:
+  validate:
+    name: Validate Release Consistency
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip-validation }}
+    timeout-minutes: 8
+    outputs:
+      first-release: ${{ steps.first-release.outputs.first_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Detect first release
+        id: first-release
+        run: |
+          echo "🔍 Verificando se é primeira release dos projetos..."
+          FIRST_RELEASE=true
+          
+          for project in logger-node utils-nest user-node; do
+            PACKAGE_NAME="@scouts/$project"
+            if npm view "$PACKAGE_NAME" version > /dev/null 2>&1; then
+              echo "📦 $PACKAGE_NAME já existe no registry"
+              FIRST_RELEASE=false
+            else
+              echo "🆕 $PACKAGE_NAME será publicado pela primeira vez"
+            fi
+          done
+          
+          echo "first_release=$FIRST_RELEASE" >> $GITHUB_OUTPUT
+          if [[ "$FIRST_RELEASE" == "true" ]]; then
+            echo "🎉 Esta será a PRIMEIRA RELEASE dos projetos!"
+            echo "ℹ️  Validações serão ajustadas para primeira release"
+          else
+            echo "🔄 Release subsequente dos projetos"
+          fi
+
+      - name: Run validation script
+        run: |
+          chmod +x scripts/validate-release-consistency.sh
+          ./scripts/validate-release-consistency.sh
+
+      - name: Dry run release
+        if: ${{ inputs.dry-run == 'true' }}
+        run: |
+          echo "🔍 Executando dry-run do release..."
+          pnpm nx release --dry-run
+
+  check-go-sync:
+    name: Check Go Dependencies Sync
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip-validation }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check sync
+        run: |
+          chmod +x scripts/sync-go-versions.sh
+          ./scripts/sync-go-versions.sh
+
+          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
+            echo "❌ go.mod está desatualizado!"
+            echo "Execute: pnpm nx run @scouts/user-go-service:sync-go-deps"
+            git diff apps/user-go-service/go.mod
+            exit 1
+          fi
+          echo "✅ go.mod está sincronizado"

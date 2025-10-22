@@ -54,75 +54,17 @@ env:
 jobs:
   validate:
     name: Validate Release Consistency
-    runs-on: ubuntu-latest
-    if: ${{ !inputs.skip-validation }}
-    timeout-minutes: 8
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          filter: tree:0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: |
-            apps/user-go-service/go.sum
-            libs/user-go/go.sum
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Set up Nx SHAs
-        uses: nrwl/nx-set-shas@v4
-
-      - name: Detect first release
-        id: first-release
-        run: |
-          echo "🔍 Verificando se é primeira release dos projetos..."
-          FIRST_RELEASE=true
-          
-          for project in logger-node utils-nest user-node; do
-            PACKAGE_NAME="@scouts/$project"
-            if npm view "$PACKAGE_NAME" version > /dev/null 2>&1; then
-              echo "📦 $PACKAGE_NAME já existe no registry"
-              FIRST_RELEASE=false
-            else
-              echo "🆕 $PACKAGE_NAME será publicado pela primeira vez"
-            fi
-          done
-          
-          echo "first_release=$FIRST_RELEASE" >> $GITHUB_OUTPUT
-          if [[ "$FIRST_RELEASE" == "true" ]]; then
-            echo "🎉 Esta será a PRIMEIRA RELEASE dos projetos!"
-            echo "ℹ️  Validações serão ajustadas para primeira release"
-          else
-            echo "🔄 Release subsequente dos projetos"
-          fi
-
-      - name: Run validation script
-        run: |
-          chmod +x scripts/validate-release-consistency.sh
-          ./scripts/validate-release-consistency.sh
+    uses: ./.github/workflows/reusable-release-validation.yml
+    with:
+      dry-run: ${{ inputs.dry-run }}
+      version-specifier: ${{ inputs.version-specifier }}
+      skip-validation: ${{ inputs.skip-validation }}
 
   release:
     name: Release
     runs-on: ubuntu-latest
     needs: [validate]
-    if: always() && (needs.validate.result == 'success' || inputs.skip-validation == true)
+    if: always() && (needs.validate.outputs.validation-result == 'success' || inputs.skip-validation == true)
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -176,7 +118,7 @@ jobs:
             echo "🔍 Executando em modo dry-run..."
             pnpm nx release --dry-run
           else
-            if [[ "${{ needs.validate.outputs.first_release }}" == "true" ]]; then
+            if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
               echo "🎉 Executando PRIMEIRA RELEASE dos projetos..."
               echo "ℹ️  Esta é a primeira publicação dos packages no NPM"
             else
