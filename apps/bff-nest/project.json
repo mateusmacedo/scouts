@@ -1,0 +1,57 @@
+{
+	"name": "@scouts/bff-nest",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "apps/bff-nest/src",
+	"projectType": "application",
+	"tags": ["type:app", "scope:internal"],
+	"targets": {
+		"build": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "webpack-cli build",
+				"args": ["node-env=production"]
+			},
+			"configurations": {
+				"development": {
+					"args": ["node-env=development"]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nx/js:node",
+			"defaultConfiguration": "development",
+			"dependsOn": ["build"],
+			"options": {
+				"buildTarget": "@scouts/bff-nest:build",
+				"runBuildTargetDependencies": false
+			},
+			"configurations": {
+				"development": {
+					"buildTarget": "@scouts/bff-nest:build:development"
+				},
+				"production": {
+					"buildTarget": "@scouts/bff-nest:build:production"
+				}
+			}
+		},
+		"test": {
+			"options": {
+				"passWithNoTests": true
+			}
+		},
+		"lint": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": ["biome lint {projectRoot} --write", "eslint {projectRoot} --fix"],
+				"cwd": "{workspaceRoot}"
+			}
+		},
+		"format": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome format {projectRoot} --write",
+				"cwd": "{workspaceRoot}"
+			}
+		}
+	}
+}
