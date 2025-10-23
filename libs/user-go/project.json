@@ -25,6 +25,9 @@
 				"parallel": false
 			},
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+		},
+		"nx-release-publish": {
+			"executor": "nx:noop"
 		}
 	},
 	"release": {
