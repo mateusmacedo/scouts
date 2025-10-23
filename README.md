@@ -84,6 +84,9 @@ pnpm nx show project bff-nest
 
 ## 📚 Documentação
 
+### Documentação Principal
+- **[Resumo do Workspace](docs/WORKSPACE_SUMMARY.md)** - Resumo completo da documentação do workspace e projetos
+
 ### Guias de Desenvolvimento
 - **[Geradores Nx](docs/NX_GENERATORS.md)** - Como criar novos projetos e usar geradores
 - **[Processo de Release](docs/RELEASE_PROCESS.md)** - Como fazer releases dos projetos
