@@ -16,7 +16,7 @@ export class UsersController {
 
 	@Post()
 	@Log({ level: 'info', includeArgs: true, includeResult: true })
-	create(@Body() createUserDto: CreateUserDto) {
+	async create(@Body() createUserDto: CreateUserDto) {
 		// password field will be automatically redacted in logs
 		this.logger.log('Creating user via POST /users', 'UsersController');
 		return this.usersService.create(createUserDto);
@@ -24,39 +24,39 @@ export class UsersController {
 
 	@Get()
 	@LogInfo({ includeResult: true })
-	findAll() {
+	async findAll() {
 		this.logger.debug('Finding all users via GET /users', 'UsersController');
 		return this.usersService.findAll();
 	}
 
 	@Get(':id')
 	@LogDebug({ includeArgs: true, includeResult: true })
-	findOne(@Param('id') id: string) {
+	async findOne(@Param('id') id: string) {
 		this.logger.debug(`Finding user with id: ${id}`, 'UsersController');
 		return this.usersService.findOne(id);
 	}
 
 	@Patch(':id')
 	@Log({ level: 'info', includeArgs: true, includeResult: true })
-	update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+	async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
 		this.logger.log(`Updating user with id: ${id}`, 'UsersController');
 		return this.usersService.update(id, updateUserDto);
 	}
 
 	@Delete(':id')
 	@LogWarn({ includeArgs: true, includeResult: true })
-	remove(@Param('id') id: string) {
+	async remove(@Param('id') id: string) {
 		this.logger.log(`Removing user with id: ${id}`, 'UsersController');
 		return this.usersService.remove(id);
 	}
 
 	@Post(':id/activate')
 	@LogInfo({ includeArgs: true, includeResult: true })
-	activate(@Param('id') id: string) {
+	async activate(@Param('id') id: string) {
 		this.logger.log(`Activating user with id: ${id}`, 'UsersController');
 
 		// Simulate activation logic
-		const user = this.usersService.findOne(id);
+		const user = await this.usersService.findOne(id);
 		if (!user) {
 			this.nodeLogger.error('User not found for activation', { userId: id });
 			return { success: false, message: 'User not found' };
@@ -68,11 +68,11 @@ export class UsersController {
 
 	@Post(':id/deactivate')
 	@LogWarn({ includeArgs: true, includeResult: true })
-	deactivate(@Param('id') id: string) {
+	async deactivate(@Param('id') id: string) {
 		this.logger.log(`Deactivating user with id: ${id}`, 'UsersController');
 
 		// Simulate deactivation logic
-		const user = this.usersService.findOne(id);
+		const user = await this.usersService.findOne(id);
 		if (!user) {
 			this.nodeLogger.error('User not found for deactivation', { userId: id });
 			return { success: false, message: 'User not found' };
