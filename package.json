@@ -4,16 +4,12 @@
   "license": "MIT",
   "author": "Mateus Macedo Dos Anjos",
   "scripts": {
-    "lint": "nx run-many -t lint",
-    "lint:check": "biome lint . && eslint .",
-    "format": "biome format --write .",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
     "release": "nx release",
-    "release:dry-run": "nx release --dry-run",
-    "release:version": "nx release --skip-publish",
-    "release:publish": "nx release publish",
-    "ci": "nx affected -t lint test build --parallel=3"
+    "release:version": "nx release version",
+    "release:publish": "nx release publish"
   },
   "private": true,
   "packageManager": "pnpm@9.15.0",
