@@ -6,7 +6,11 @@
   "scripts": {
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
+    "test:coverage": "nx run-many -t test --coverage",
+    "test:user": "nx run-many -t test --projects @scouts/user-node,@scouts/user-go",
     "lint": "nx run-many -t lint",
+    "dev:user-go-service": "nx serve user-go-service",
+    "dev:bff-nest": "nx serve bff-nest",
     "release": "nx release",
     "release:version": "nx release version",
     "release:publish": "nx release publish"

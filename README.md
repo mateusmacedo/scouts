@@ -53,6 +53,10 @@ pnpm nx serve bff-nest
 pnpm nx serve user-go-service
 ```
 
+**Scripts dedicados:**
+- `pnpm dev:bff-nest` - Atalho para `nx serve bff-nest`, iniciando o BFF NestJS com a configuração padrão do workspace.
+- `pnpm dev:user-go-service` - Atalho para `nx serve user-go-service`, expondo o serviço Go com hot reload gerenciado pelo Nx.
+
 ### Build e Testes
 
 ```bash
@@ -61,6 +65,12 @@ pnpm nx affected -t build
 
 # Testes de todos os projetos afetados
 pnpm nx affected -t test
+
+# Testes com cobertura consolidada
+pnpm test:coverage
+
+# Testes unitários apenas para as bibliotecas de usuários
+pnpm test:user
 
 # Lint de todos os projetos afetados
 pnpm nx affected -t lint
