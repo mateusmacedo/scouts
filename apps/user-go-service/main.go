@@ -22,8 +22,8 @@ const version = "1.0.0"
 type CustomValidator struct{}
 
 func (cv *CustomValidator) Validate(i interface{}) error {
-	// For now, we'll use a simple validation approach
-	// In a real application, you might want to use a more sophisticated validator
+	// For integration tests, we'll use a simple validation approach
+	// In a real application, you might want to use a more sophisticated validator like go-playground/validator
 	return nil
 }
 
