@@ -1,312 +1,249 @@
-# user-go
+# @scouts/user-go
 
-Biblioteca Go para gerenciamento básico de usuários com funcionalidades essenciais.
+SDK Go para gerenciamento de usuários que compartilha contratos com `@scouts/user-node` e oferece serviços com validação, repositório e publicação de eventos.
 
-## Características
+> ℹ️ O pacote ainda exporta apenas a função `GoUser` como verificação básica. Use este guia para evoluir o módulo mantendo compatibilidade com o serviço `user-go-service`.
 
-- **Simplicidade**: Interface Go idiomática e direta
-- **Performance**: Implementação otimizada para alta performance
-- **Concorrência**: Suporte nativo à concorrência Go
-- **Testável**: Cobertura de testes com Go testing package
-- **Modular**: Arquitetura modular para fácil extensão
+## Requisitos mínimos
 
-## Instalação
+| Ferramenta  | Versão |
+|-------------|--------|
+| Go          | 1.23   |
+| Task runner | `pnpm` para executar alvos Nx |
+| Linter      | `golangci-lint` opcional |
 
-```bash
-go get github.com/mateusmacedo/scouts/libs/user-go
-```
-
-## Uso Básico
-
-```go
-package main
-
-import (
-    "fmt"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
-)
-
-func main() {
-    result := gouser.GoUser("João Silva")
-    fmt.Println(result) // "GoUser João Silva"
-}
-```
-
-## API Reference
-
-### GoUser(name string) string
-
-Cria uma string de identificação de usuário com o nome fornecido.
-
-**Parâmetros:**
-- `name` (string): Nome do usuário
-
-**Retorno:** `string` - String formatada "GoUser {name}"
-
-**Exemplo:**
-```go
-package main
-
-import (
-    "fmt"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
-)
-
-func main() {
-    user := gouser.GoUser("Maria Santos")
-    fmt.Println(user) // "GoUser Maria Santos"
-}
-```
-
-## Arquitetura
-
-A biblioteca `user-go` segue as convenções Go padrão:
+## Estrutura recomendada do módulo
 
 ```
 libs/user-go/
-├── user-go.go        # Implementação principal
-├── user-go_test.go   # Testes unitários
-├── go.mod           # Dependências Go
-└── project.json     # Configuração Nx
+├── go.mod
+├── go-user.go                 # Stub atual
+├── internal/
+│   ├── domain/
+│   │   └── user.go            # Structs e erros
+│   ├── repository/
+│   │   ├── repository.go      # Interfaces
+│   │   └── memory.go          # Implementação em memória
+│   ├── service/
+│   │   └── service.go         # Casos de uso
+│   └── events/
+│       └── bus.go             # Canal de eventos
+└── tests/
+    └── service_test.go        # Cenários E2E de CRUD
 ```
 
-### Estrutura do Código
+## Entidades e DTOs em Go
 
 ```go
-package gouser
+package domain
 
-// GoUser cria uma identificação de usuário
-func GoUser(name string) string {
-    result := "GoUser " + name
-    return result
+type UserStatus string
+
+const (
+    StatusActive   UserStatus = "active"
+    StatusInactive UserStatus = "inactive"
+    StatusBlocked  UserStatus = "blocked"
+)
+
+type User struct {
+    ID        string            `json:"id"`
+    Name      string            `json:"name"`
+    Email     string            `json:"email"`
+    Document  string            `json:"document,omitempty"`
+    Status    UserStatus        `json:"status"`
+    Metadata  map[string]any    `json:"metadata,omitempty"`
+    CreatedAt time.Time         `json:"createdAt"`
+    UpdatedAt time.Time         `json:"updatedAt"`
+    DeletedAt *time.Time        `json:"deletedAt,omitempty"`
+}
+
+type CreateUserInput struct {
+    Name     string `json:"name" validate:"required,max=120"`
+    Email    string `json:"email" validate:"required,email"`
+    Document string `json:"document" validate:"omitempty,len=11|len=14"`
+}
+
+type UpdateUserInput struct {
+    Name     *string     `json:"name" validate:"omitempty,max=120"`
+    Email    *string     `json:"email" validate:"omitempty,email"`
+    Status   *UserStatus `json:"status" validate:"omitempty,oneof=active inactive blocked"`
+    Metadata map[string]any `json:"metadata"`
+}
+
+type ListUsersInput struct {
+    Page   int         `validate:"gte=1"`
+    Limit  int         `validate:"gt=0,lte=100"`
+    Status UserStatus  `validate:"omitempty,oneof=active inactive blocked"`
+    Search string      `validate:"omitempty,min=3"`
 }
 ```
 
-## Desenvolvimento
-
-### Build
-
-```bash
-# Build da biblioteca
-pnpm nx build user-go
-
-# Build com watch mode
-pnpm nx build user-go --watch
-```
-
-### Testes
-
-```bash
-# Executar testes
-pnpm nx test user-go
-
-# Testes com coverage
-pnpm nx test user-go --coverage
-
-# Testes em watch mode
-pnpm nx test user-go --watch
-```
-
-### Lint e Formatação
-
-```bash
-# Lint
-pnpm nx lint user-go
-
-# Formatação
-pnpm nx format user-go
-
-# Biome (linting + formatação)
-pnpm nx biome user-go
-```
-
-## Versionamento
-
-A biblioteca utiliza versionamento semântico via git tags:
-
-```bash
-# Verificar versão atual
-git tag -l | grep user-go
-
-# Criar nova versão
-git tag user-go@v1.0.0
-git push origin user-go@v1.0.0
-```
-
-### Module Path
-
-O module path é configurado para GitHub:
+## Repositório
 
 ```go
-module github.com/mateusmacedo/scouts/libs/user-go
+package repository
+
+type UserRepository interface {
+    Create(ctx context.Context, input domain.CreateUserInput) (domain.User, error)
+    FindByID(ctx context.Context, id string) (domain.User, error)
+    FindByEmail(ctx context.Context, email string) (domain.User, error)
+    Update(ctx context.Context, id string, input domain.UpdateUserInput) (domain.User, error)
+    Delete(ctx context.Context, id string) error
+    List(ctx context.Context, input domain.ListUsersInput) ([]domain.User, int, error)
+}
 ```
 
-### Uso com Versões Específicas
+Implementação de referência (`memory.go`):
+
+- Usa `sync.RWMutex` para concorrência segura.
+- Gera IDs com `github.com/oklog/ulid/v2`.
+- Persiste entidades em `map[string]domain.User`.
+- Retorna erros sentinela `domain.ErrDuplicatedEmail` e `domain.ErrNotFound` para facilitar `errors.Is`.
+
+## Serviço e validações
 
 ```go
-// Usar versão específica
-go get github.com/mateusmacedo/scouts/libs/user-go@v1.0.0
-
-// Usar versão mais recente
-go get github.com/mateusmacedo/scouts/libs/user-go@latest
-```
-
-## Roadmap
-
-### Funcionalidades Planejadas
-
-- [ ] **User Struct**: Estrutura para representação de usuários
-- [ ] **User Service**: Serviço para operações CRUD de usuários
-- [ ] **User Validation**: Validação de dados de usuário
-- [ ] **User Events**: Sistema de eventos para mudanças de usuário
-- [ ] **User Repository**: Interface para persistência de usuários
-- [ ] **Concurrency**: Suporte a operações concorrentes
-- [ ] **Context**: Suporte a context.Context para cancelamento
-
-### Exemplo de Uso Futuro
-
-```go
-// Funcionalidade planejada
-package main
+package service
 
 import (
     "context"
     "fmt"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
+
+    "github.com/go-playground/validator/v10"
+)
+
+type Service struct {
+    repo   repository.UserRepository
+    bus    events.Bus
+    validate *validator.Validate
+}
+
+func New(repo repository.UserRepository, bus events.Bus) *Service {
+    v := validator.New()
+    return &Service{repo: repo, bus: bus, validate: v}
+}
+
+func (s *Service) Create(ctx context.Context, input domain.CreateUserInput) (domain.User, error) {
+    if err := s.validate.Struct(input); err != nil {
+        return domain.User{}, fmt.Errorf("validation error: %w", err)
+    }
+    if existing, _ := s.repo.FindByEmail(ctx, input.Email); existing.ID != "" {
+        return domain.User{}, domain.ErrDuplicatedEmail
+    }
+    user, err := s.repo.Create(ctx, input)
+    if err != nil {
+        return domain.User{}, err
+    }
+    s.bus.Publish(events.UserCreated{User: user})
+    return user, nil
+}
+
+func (s *Service) Update(ctx context.Context, id string, input domain.UpdateUserInput) (domain.User, error) {
+    if err := s.validate.Struct(input); err != nil {
+        return domain.User{}, fmt.Errorf("validation error: %w", err)
+    }
+    user, err := s.repo.Update(ctx, id, input)
+    if err != nil {
+        return domain.User{}, err
+    }
+    s.bus.Publish(events.UserUpdated{User: user})
+    return user, nil
+}
+
+func (s *Service) Delete(ctx context.Context, id string) error {
+    if err := s.repo.Delete(ctx, id); err != nil {
+        return err
+    }
+    s.bus.Publish(events.UserDeleted{ID: id})
+    return nil
+}
+```
+
+## Eventos
+
+```go
+package events
+
+type Bus interface {
+    Publish(evt any)
+    Subscribe(topic string) <-chan any
+    Close()
+}
+
+const TopicUser = "user"
+
+type UserCreated struct { User domain.User }
+type UserUpdated struct { User domain.User }
+type UserDeleted struct { ID string }
+```
+
+Implementação mínima: canal buffered com fan-out (`chan any` + goroutines) e encerramento gracioso usando `context.Context`.
+
+## Exemplo completo (CRUD + eventos)
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+    "time"
+
+    "github.com/mateusmacedo/scouts/libs/user-go/internal/domain"
+    "github.com/mateusmacedo/scouts/libs/user-go/internal/events"
+    "github.com/mateusmacedo/scouts/libs/user-go/internal/repository"
+    "github.com/mateusmacedo/scouts/libs/user-go/internal/service"
 )
 
 func main() {
     ctx := context.Background()
-    
-    // Criar usuário
-    user, err := gouser.CreateUser(ctx, gouser.CreateUserRequest{
+    repo := repository.NewMemory()
+    bus := events.NewInMemoryBus()
+    svc := service.New(repo, bus)
+
+    sub := bus.Subscribe(events.TopicUser)
+    go func() {
+        for evt := range sub {
+            log.Printf("received event %#v", evt)
+        }
+    }()
+
+    created, err := svc.Create(ctx, domain.CreateUserInput{
         Name:  "João Silva",
         Email: "joao@example.com",
     })
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
-    
-    // Buscar usuário
-    foundUser, err := gouser.FindUser(ctx, user.ID)
-    if err != nil {
-        panic(err)
-    }
-    
-    fmt.Printf("User: %+v\n", foundUser)
+
+    _, _ = svc.Update(ctx, created.ID, domain.UpdateUserInput{Status: domain.StatusInactive})
+
+    list, total, _ := svc.List(ctx, domain.ListUsersInput{Page: 1, Limit: 10})
+    log.Printf("users: %d total: %d", len(list), total)
+
+    _ = svc.Delete(ctx, created.ID)
+
+    time.Sleep(100 * time.Millisecond)
+    bus.Close()
 }
 ```
 
-
-## Testes
-
-### Executar Testes
+## Execução e testes
 
 ```bash
-# Testes unitários
-go test ./libs/user-go
+# Rodar testes unitários
+pnpm nx test user-go
 
-# Testes com coverage
-go test -cover ./libs/user-go
+# Go direto
+cd libs/user-go
+go test ./...
 
-# Testes com coverage detalhado
-go test -coverprofile=coverage.out ./libs/user-go
-go tool cover -html=coverage.out
+# Lint (opcional, recomenda-se golangci-lint)
+golangci-lint run ./...
 ```
 
-### Exemplo de Teste
+## Documentação relacionada
 
-```go
-package gouser
-
-import "testing"
-
-func TestGoUser(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        expected string
-    }{
-        {
-            name:     "valid name",
-            input:    "João Silva",
-            expected: "GoUser João Silva",
-        },
-        {
-            name:     "empty name",
-            input:    "",
-            expected: "GoUser ",
-        },
-        {
-            name:     "special characters",
-            input:    "João-Silva_123",
-            expected: "GoUser João-Silva_123",
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            result := GoUser(tt.input)
-            if result != tt.expected {
-                t.Errorf("GoUser(%q) = %q, want %q", tt.input, result, tt.expected)
-            }
-        })
-    }
-}
-```
-
-## Performance
-
-### Benchmarks
-
-```go
-// benchmark_test.go
-package gouser
-
-import "testing"
-
-func BenchmarkGoUser(b *testing.B) {
-    for i := 0; i < b.N; i++ {
-        GoUser("Test User")
-    }
-}
-
-func BenchmarkGoUserLongName(b *testing.B) {
-    longName := "Very Long User Name That Exceeds Normal Length"
-    for i := 0; i < b.N; i++ {
-        GoUser(longName)
-    }
-}
-```
-
-### Executar Benchmarks
-
-```bash
-# Benchmarks
-go test -bench=. ./libs/user-go
-
-# Benchmarks com profiling
-go test -bench=. -cpuprofile=cpu.prof ./libs/user-go
-go tool pprof cpu.prof
-```
-
-## Contribuição
-
-1. Fork o repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
-
-### Padrões de Código
-
-- Siga as convenções Go padrão
-- Use `gofmt` para formatação
-- Use `golint` para verificação de estilo
-- Escreva testes para todas as funcionalidades
-- Documente funções públicas com comentários Go
-
-## Licença
-
-MIT - veja o arquivo [LICENSE](../../LICENSE) para detalhes.
+- [Arquitetura do domínio de usuários](../../docs/architecture/user-platform.md)
+- Integração HTTP: consulte `apps/user-go-service/README.md`.
 
