@@ -1,3 +1,13 @@
+## 0.1.1 (2025-10-23)
+
+### 🩹 Fixes
+
+- **logger-node:** remove placeholder comments to improve code clarity
+
+### ❤️ Thank You
+
+- Mateus Macedo Dos Anjos
+
 ## 0.1.0 (2025-10-23)
 
 ### 🚀 Features

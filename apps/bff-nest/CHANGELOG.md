@@ -1,3 +1,13 @@
+## 0.1.1 (2025-10-23)
+
+### 🩹 Fixes
+
+- **bff-nest:** remove fake values to clean up code
+
+### ❤️ Thank You
+
+- Mateus Macedo Dos Anjos
+
 ## 0.1.0 (2025-10-23)
 
 ### 🚀 Features

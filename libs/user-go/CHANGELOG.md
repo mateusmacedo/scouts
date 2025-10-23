@@ -1,3 +1,13 @@
+## 0.2.0 (2025-10-23)
+
+### 🩹 Fixes
+
+- **user-go:** remove unnecessary placeholder comments to enhance code clarity
+
+### ❤️ Thank You
+
+- Mateus Macedo Dos Anjos
+
 ## 0.1.0 (2025-10-23)
 
 ### 🚀 Features
