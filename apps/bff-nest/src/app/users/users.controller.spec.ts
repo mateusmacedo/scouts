@@ -244,11 +244,11 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for activation', () => {
+		it('should return error when user not found for activation', async () => {
 			const userId = '999';
 			mockUsersService.findOne.mockReturnValue(null);
 
-			const result = controller.activate(userId);
+			const result = await controller.activate(userId);
 
 			expect(service.findOne).toHaveBeenCalledWith(userId);
 			expect(result).toEqual({
@@ -280,11 +280,11 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for deactivation', () => {
+		it('should return error when user not found for deactivation', async () => {
 			const userId = '999';
 			mockUsersService.findOne.mockReturnValue(null);
 
-			const result = controller.deactivate(userId);
+			const result = await controller.deactivate(userId);
 
 			expect(service.findOne).toHaveBeenCalledWith(userId);
 			expect(result).toEqual({

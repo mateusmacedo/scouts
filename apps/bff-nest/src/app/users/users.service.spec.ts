@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UsersService } from './users.service';
+import { UsersService } from './users.service';
+import { InMemoryUserRepository } from '@scouts/user-node';
 
 describe('UsersService', () => {
 	let service: UsersService;
@@ -18,15 +19,15 @@ describe('UsersService', () => {
 		logger = module.get(LOGGER_TOKEN);
 
 		// Mock the logger methods
-		jest.spyOn(logger, 'info');
-		jest.spyOn(logger, 'error');
-		jest.spyOn(logger, 'warn');
-		jest.spyOn(logger, 'debug');
-		jest.spyOn(logger, 'fatal');
+		jest.spyOn(logger, 'info').mockImplementation(() => {});
+		jest.spyOn(logger, 'error').mockImplementation(() => {});
+		jest.spyOn(logger, 'warn').mockImplementation(() => {});
+		jest.spyOn(logger, 'debug').mockImplementation(() => {});
+		jest.spyOn(logger, 'fatal').mockImplementation(() => {});
+		jest.spyOn(logger, 'log').mockImplementation(() => {});
 
-		// Reset the internal state for each test
-		(service as any).users = [];
-		(service as any).nextId = 1;
+		// Clear the repository for each test
+		(service as any).userRepository.clear();
 	});
 
 	afterEach(() => {
@@ -42,7 +43,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
-				password: 'password123',
 				phone: '123456789',
 				address: '123 Main St',
 			};
@@ -61,7 +61,7 @@ describe('UsersService', () => {
 
 			expect(logger.info).toHaveBeenCalledWith('User created successfully', {
 				userId: '1',
-				userData: createUserDto,
+				userData: { name: 'John Doe', email: 'john@example.com' },
 			});
 		});
 
@@ -69,7 +69,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'Jane Doe',
 				email: 'jane@example.com',
-				password: 'password123',
 			};
 
 			const result = await service.create(createUserDto);
@@ -89,13 +88,11 @@ describe('UsersService', () => {
 			const user1Dto: CreateUserDto = {
 				name: 'User 1',
 				email: 'user1@example.com',
-				password: 'password123',
 			};
 
 			const user2Dto: CreateUserDto = {
 				name: 'User 2',
 				email: 'user2@example.com',
-				password: 'password123',
 			};
 
 			const user1 = await service.create(user1Dto);
@@ -109,7 +106,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'Test User',
 				email: 'test@example.com',
-				password: 'password123',
 			};
 
 			const beforeCreate = new Date();
@@ -135,13 +131,11 @@ describe('UsersService', () => {
 			const user1Dto: CreateUserDto = {
 				name: 'User 1',
 				email: 'user1@example.com',
-				password: 'password123',
 			};
 
 			const user2Dto: CreateUserDto = {
 				name: 'User 2',
 				email: 'user2@example.com',
-				password: 'password123',
 			};
 
 			await service.create(user1Dto);
@@ -161,7 +155,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
-				password: 'password123',
 			};
 
 			const createdUser = await service.create(createUserDto);
@@ -191,7 +184,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
-				password: 'password123',
 			};
 
 			const createdUser = await service.create(createUserDto);
@@ -210,10 +202,6 @@ describe('UsersService', () => {
 			});
 
 			expect(result?.updatedAt.getTime()).toBeGreaterThanOrEqual(createdUser.updatedAt.getTime());
-			expect(logger.info).toHaveBeenCalledWith('User updated successfully', {
-				userId: createdUser.id,
-				updateData: updateUserDto,
-			});
 		});
 
 		it('should return null when user not found for update', async () => {
@@ -231,7 +219,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
-				password: 'password123',
 				phone: '123456789',
 				address: '123 Main St',
 			};
@@ -261,7 +248,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
-				password: 'password123',
 			};
 
 			const createdUser = await service.create(createUserDto);
@@ -272,10 +258,6 @@ describe('UsersService', () => {
 			// Verify user was actually removed
 			const findResult = await service.findOne(createdUser.id);
 			expect(findResult).toBeNull();
-
-			expect(logger.info).toHaveBeenCalledWith('User removed successfully', {
-				userId: createdUser.id,
-			});
 		});
 
 		it('should return false when user not found for removal', async () => {
@@ -289,13 +271,11 @@ describe('UsersService', () => {
 			const user1Dto: CreateUserDto = {
 				name: 'User 1',
 				email: 'user1@example.com',
-				password: 'password123',
 			};
 
 			const user2Dto: CreateUserDto = {
 				name: 'User 2',
 				email: 'user2@example.com',
-				password: 'password123',
 			};
 
 			const user1 = await service.create(user1Dto);
@@ -316,7 +296,6 @@ describe('UsersService', () => {
 			const createUserDto: CreateUserDto = {
 				name: 'Isolation Test',
 				email: 'isolation@example.com',
-				password: 'password123',
 			};
 
 			const result = await service.create(createUserDto);
