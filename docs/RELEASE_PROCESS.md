@@ -27,11 +27,11 @@ feat(api)!: change authentication method
   - `@scouts/user-node`
 
 - **🔧 Lib Go (versionada via git tags):**
-  - `@scouts/user-go`
+  - `scouts/user-go`
 
 - **🚀 Apps (versionados mas não publicados):**
   - `@scouts/bff-nest`
-  - `@scouts/user-go-service`
+  - `scouts/user-go-service`
 
 ### ⚙️ Configurações Aplicadas
 
@@ -179,9 +179,9 @@ O release agora é executado **manualmente** via GitHub Actions UI para maior se
 @scouts/logger-node@v0.1.0
 @scouts/utils-nest@v0.1.0
 @scouts/user-node@v0.1.0
-@scouts/user-go@v0.1.0
+scouts/user-go@v0.1.0
 @scouts/bff-nest@v0.1.0
-@scouts/user-go-service@v0.1.0
+scouts/user-go-service@v0.1.0
 ```
 
 ### 📦 Packages Publicados

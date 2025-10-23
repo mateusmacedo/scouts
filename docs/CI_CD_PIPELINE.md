@@ -133,7 +133,7 @@ graph TD
 ./scripts/sync-go-versions.sh
 
 # Via Nx
-pnpm nx run @scouts/user-go-service:sync-go-deps
+pnpm nx run scouts/user-go-service:sync-go-deps
 ```
 
 ### Validação Automática
@@ -205,7 +205,7 @@ pnpm nx build <project-name> --skip-nx-cache
 **Soluções:**
 ```bash
 # Sincronizar manualmente
-pnpm nx run @scouts/user-go-service:sync-go-deps
+pnpm nx run scouts/user-go-service:sync-go-deps
 
 # Verificar versão atual
 node -p "require('./libs/user-go/package.json').version"

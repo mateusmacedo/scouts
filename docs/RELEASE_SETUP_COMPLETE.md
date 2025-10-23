@@ -163,8 +163,8 @@ Acesse: `Settings → Secrets and variables → Actions`
 @scouts/user-node@v0.1.0
 @scouts/utils-nest@v0.1.0
 @scouts/base-biome@v0.1.0
-@scouts/user-go@v1.0.0
-@scouts/user-go-service@v0.1.0
+scouts/user-go@v1.0.0
+scouts/user-go-service@v0.1.0
 @scouts/bff-nest@v0.1.0
 ```
 
