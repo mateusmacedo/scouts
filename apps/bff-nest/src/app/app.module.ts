@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,6 +10,7 @@ import { UsersService } from './users/users.service';
 
 @Module({
 	imports: [
+		HttpModule,
 		HealthModule.forRoot(), // Configuração básica sem indicadores customizados
 		LoggerModule.forRoot({
 			service: 'bff-nest',
