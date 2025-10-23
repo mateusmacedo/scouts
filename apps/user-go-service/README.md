@@ -1,6 +1,6 @@
 # user-go-service
 
-Serviço de usuários em Go que demonstra a integração com a biblioteca `@scouts/user-go` e serve como exemplo de aplicação Go em um monorepo Nx.
+Serviço de usuários em Go que demonstra a integração com a biblioteca `scouts/user-go` e serve como exemplo de aplicação Go em um monorepo Nx.
 
 ## Características
 
@@ -101,7 +101,7 @@ O serviço utiliza a biblioteca `user-go` que é sincronizada automaticamente:
 
 ```bash
 # Sincronizar dependências Go
-pnpm nx run @scouts/user-go-service:sync-go-deps
+pnpm nx run scouts/user-go-service:sync-go-deps
 
 # Ou executar script diretamente
 ./scripts/sync-go-versions.sh
@@ -172,7 +172,7 @@ O projeto está configurado no `project.json`:
 
 ```json
 {
-  "name": "@scouts/user-go-service",
+  "name": "scouts/user-go-service",
   "sourceRoot": "apps/user-go-service",
   "projectType": "application",
   "targets": {
@@ -215,7 +215,7 @@ pnpm nx lint user-go-service
 pnpm nx format user-go-service
 
 # Sync Go Dependencies
-pnpm nx run @scouts/user-go-service:sync-go-deps
+pnpm nx run scouts/user-go-service:sync-go-deps
 ```
 
 ## CI/CD
@@ -339,7 +339,7 @@ go tool pprof cpu.prof
 
 ```bash
 # Sincronizar dependências
-pnpm nx run @scouts/user-go-service:sync-go-deps
+pnpm nx run scouts/user-go-service:sync-go-deps
 
 # Verificar versão da lib
 go list -m github.com/mateusmacedo/scouts/libs/user-go

@@ -1,5 +1,5 @@
 {
-  "name": "@scouts/user-go-service",
+  "name": "scouts/user-go-service",
   "version": "0.1.0",
   "private": true
 }
