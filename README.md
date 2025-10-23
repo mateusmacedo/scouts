@@ -72,6 +72,20 @@ pnpm nx affected -t format
 pnpm nx affected -t check-boundaries
 ```
 
+### Cobertura de Testes
+
+- Bibliotecas (`libs/*`): cobertura mínima de **80%** para linhas, ramos, funções e statements.
+- Aplicações (`apps/*`): cobertura mínima de **70%** nos mesmos indicadores.
+- Arquivos utilitários gerados (como DTOs, rascunhos e índices) são ignorados automaticamente pela configuração de `collectCoverageFrom`.
+
+```bash
+# Exemplo: validar cobertura da biblioteca utils-nest
+pnpm nx test @scouts/utils-nest --coverage
+
+# Exemplo: validar cobertura da aplicação bff-nest
+pnpm nx test @scouts/bff-nest --coverage
+```
+
 ### Verificar Projetos
 
 ```bash
