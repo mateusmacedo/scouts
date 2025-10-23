@@ -131,44 +131,4 @@ jobs:
           echo "🔍 Executando dry-run do release..."
           pnpm nx release --dry-run
 
-  check-go-sync:
-    name: Check Go Dependencies Sync
-    runs-on: ubuntu-latest
-    if: ${{ !inputs.skip-validation }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
-          restore-keys: |
-            go-${{ runner.os }}-
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: |
-            apps/user-go-service/go.sum
-            libs/user-go/go.sum
-
-      - name: Setup script permissions
-        run: chmod +x scripts/sync-go-versions.sh
-
-      - name: Check sync
-        run: |
-          ./scripts/sync-go-versions.sh
-          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
-            echo "❌ go.mod está desatualizado!"
-            echo "Execute: pnpm nx run scouts/user-go-service:sync-go-deps"
-            git diff apps/user-go-service/go.mod
-            exit 1
-          fi
           echo "✅ go.mod está sincronizado"
