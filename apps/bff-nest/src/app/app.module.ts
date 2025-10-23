@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
+import { UserService } from '@scouts/user-node';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MonitoringController } from './monitoring/monitoring.controller';
@@ -19,7 +20,7 @@ import { UsersService } from './users/users.service';
 		}),
 	],
 	controllers: [AppController, UsersController, MonitoringController],
-	providers: [AppService, UsersService, MonitoringService],
+        providers: [AppService, UsersService, MonitoringService, UserService],
 })
 export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

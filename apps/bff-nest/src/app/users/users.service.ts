@@ -1,121 +1,89 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
 import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-
-export interface User {
-	id: string;
-	name: string;
-	email: string;
-	phone?: string;
-	address?: string;
-	createdAt: Date;
-	updatedAt: Date;
-}
+import { CreateUserDto, UpdateUserDto, User, UserService } from '@scouts/user-node';
 
 @Injectable()
 export class UsersService {
-	private users: User[] = [];
-	private nextId = 1;
+        constructor(
+                private readonly logger: NestLoggerService,
+                @Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger,
+                private readonly userService: UserService
+        ) {}
 
-	constructor(
-		private readonly logger: NestLoggerService,
-		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
-	) {}
+        async create(createUserDto: CreateUserDto): Promise<User> {
+                this.logger.log('Creating new user', 'UsersService');
 
-	create(createUserDto: CreateUserDto): User {
-		this.logger.log('Creating new user', 'UsersService');
+                const user = await this.userService.create(createUserDto);
 
-		const user: User = {
-			id: this.nextId.toString(),
-			name: createUserDto.name,
-			email: createUserDto.email,
-			phone: createUserDto.phone,
-			address: createUserDto.address,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+                // Log with sensitive data (will be redacted automatically)
+                this.nodeLogger.info('User created successfully', {
+                        userId: user.id,
+                        userData: createUserDto,
+                });
 
-		this.users.push(user);
-		this.nextId++;
+                return user;
+        }
 
-		// Log with sensitive data (will be redacted automatically)
-		this.nodeLogger.info('User created successfully', {
-			userId: user.id,
-			userData: createUserDto,
-		});
+        async findAll(): Promise<User[]> {
+                this.logger.debug('Finding all users', 'UsersService');
 
-		return user;
-	}
+                const users = await this.userService.findAll();
 
-	findAll(): User[] {
-		this.logger.debug('Finding all users', 'UsersService');
+                this.nodeLogger.debug('Users retrieved', {
+                        count: users.length,
+                });
 
-		this.nodeLogger.debug('Users retrieved', {
-			count: this.users.length,
-		});
+                return users;
+        }
 
-		return this.users;
-	}
+        async findOne(id: string): Promise<User | null> {
+                this.logger.debug(`Finding user with id: ${id}`, 'UsersService');
 
-	findOne(id: string): User | null {
-		this.logger.debug(`Finding user with id: ${id}`, 'UsersService');
+                const user = await this.userService.findOne(id);
 
-		const user = this.users.find((u) => u.id === id);
+                if (!user) {
+                        this.logger.warn(`User not found with id: ${id}`, 'UsersService');
+                        this.nodeLogger.warn('User not found', { userId: id });
+                        return null;
+                }
 
-		if (!user) {
-			this.logger.warn(`User not found with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found', { userId: id });
-			return null;
-		}
+                this.nodeLogger.info('User found', { userId: id });
+                return user;
+        }
 
-		this.nodeLogger.info('User found', { userId: id });
-		return user;
-	}
+        async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+                this.logger.log(`Updating user with id: ${id}`, 'UsersService');
 
-	update(id: string, updateUserDto: UpdateUserDto): User | null {
-		this.logger.log(`Updating user with id: ${id}`, 'UsersService');
+                const updatedUser = await this.userService.update(id, updateUserDto);
 
-		const userIndex = this.users.findIndex((u) => u.id === id);
+                if (!updatedUser) {
+                        this.logger.warn(`User not found for update with id: ${id}`, 'UsersService');
+                        this.nodeLogger.warn('User not found for update', { userId: id });
+                        return null;
+                }
 
-		if (userIndex === -1) {
-			this.logger.warn(`User not found for update with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found for update', { userId: id });
-			return null;
-		}
+                // Log with potentially sensitive data (will be redacted)
+                this.nodeLogger.info('User updated successfully', {
+                        userId: id,
+                        updateData: updateUserDto,
+                });
 
-		const updatedUser = {
-			...this.users[userIndex],
-			...updateUserDto,
-			updatedAt: new Date(),
-		};
+                return updatedUser;
+        }
 
-		this.users[userIndex] = updatedUser;
+        async remove(id: string): Promise<boolean> {
+                this.logger.log(`Removing user with id: ${id}`, 'UsersService');
 
-		// Log with potentially sensitive data (will be redacted)
-		this.nodeLogger.info('User updated successfully', {
-			userId: id,
-			updateData: updateUserDto,
-		});
+                const removed = await this.userService.remove(id);
 
-		return updatedUser;
-	}
+                if (!removed) {
+                        this.logger.warn(`User not found for removal with id: ${id}`, 'UsersService');
+                        this.nodeLogger.warn('User not found for removal', { userId: id });
+                        return false;
+                }
 
-	remove(id: string): boolean {
-		this.logger.log(`Removing user with id: ${id}`, 'UsersService');
-
-		const userIndex = this.users.findIndex((u) => u.id === id);
-
-		if (userIndex === -1) {
-			this.logger.warn(`User not found for removal with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found for removal', { userId: id });
-			return false;
-		}
-
-		this.users.splice(userIndex, 1);
-
-		this.nodeLogger.info('User removed successfully', { userId: id });
-		return true;
-	}
+                this.nodeLogger.info('User removed successfully', { userId: id });
+                return true;
+        }
 }

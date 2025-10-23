@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoggerModule } from '@scouts/utils-nest';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto, UpdateUserDto } from '@scouts/user-node';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -244,18 +243,18 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for activation', () => {
-			const userId = '999';
-			mockUsersService.findOne.mockReturnValue(null);
+                it('should return error when user not found for activation', async () => {
+                        const userId = '999';
+                        mockUsersService.findOne.mockResolvedValue(null);
 
-			const result = controller.activate(userId);
+                        const result = await controller.activate(userId);
 
-			expect(service.findOne).toHaveBeenCalledWith(userId);
-			expect(result).toEqual({
-				success: false,
-				message: 'User not found',
-			});
-		});
+                        expect(service.findOne).toHaveBeenCalledWith(userId);
+                        expect(result).toEqual({
+                                success: false,
+                                message: 'User not found',
+                        });
+                });
 	});
 
 	describe('deactivate', () => {
@@ -280,15 +279,15 @@ describe('UsersController', () => {
 			});
 		});
 
-		it('should return error when user not found for deactivation', () => {
-			const userId = '999';
-			mockUsersService.findOne.mockReturnValue(null);
+                it('should return error when user not found for deactivation', async () => {
+                        const userId = '999';
+                        mockUsersService.findOne.mockResolvedValue(null);
 
-			const result = controller.deactivate(userId);
+                        const result = await controller.deactivate(userId);
 
-			expect(service.findOne).toHaveBeenCalledWith(userId);
-			expect(result).toEqual({
-				success: false,
+                        expect(service.findOne).toHaveBeenCalledWith(userId);
+                        expect(result).toEqual({
+                                success: false,
 				message: 'User not found',
 			});
 		});

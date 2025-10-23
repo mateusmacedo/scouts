@@ -1,326 +1,190 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UsersService } from './users.service';
+import type { Logger } from '@scouts/logger-node';
+import { CreateUserDto, UpdateUserDto, User, UserService } from '@scouts/user-node';
+import { LOGGER_TOKEN, LoggerModule, NestLoggerService } from '@scouts/utils-nest';
+import { UsersService } from './users.service';
 
 describe('UsersService', () => {
-	let service: UsersService;
-	let logger: any;
+        let service: UsersService;
+        let userService: jest.Mocked<UserService>;
+        let nodeLogger: jest.Mocked<Logger>;
+        let nestLogger: NestLoggerService;
 
-	beforeEach(async () => {
-		const module: TestingModule = await Test.createTestingModule({
-			imports: [LoggerModule.forRoot()],
-			providers: [UsersService],
-		}).compile();
+        beforeEach(async () => {
+                userService = {
+                        create: jest.fn(),
+                        findAll: jest.fn(),
+                        findOne: jest.fn(),
+                        update: jest.fn(),
+                        remove: jest.fn(),
+                } as unknown as jest.Mocked<UserService>;
 
-		service = module.get<UsersService>(UsersService);
-		logger = module.get(LOGGER_TOKEN);
+                const module: TestingModule = await Test.createTestingModule({
+                        imports: [LoggerModule.forRoot()],
+                        providers: [
+                                UsersService,
+                                {
+                                        provide: UserService,
+                                        useValue: userService,
+                                },
+                        ],
+                }).compile();
 
-		// Mock the logger methods
-		jest.spyOn(logger, 'info');
-		jest.spyOn(logger, 'error');
-		jest.spyOn(logger, 'warn');
-		jest.spyOn(logger, 'debug');
-		jest.spyOn(logger, 'fatal');
+                service = module.get<UsersService>(UsersService);
+                nodeLogger = module.get(LOGGER_TOKEN) as jest.Mocked<Logger>;
+                nestLogger = module.get(NestLoggerService);
 
-		// Reset the internal state for each test
-		(service as any).users = [];
-		(service as any).nextId = 1;
-	});
+                jest.spyOn(nestLogger, 'log').mockImplementation(() => undefined);
+                jest.spyOn(nestLogger, 'debug').mockImplementation(() => undefined);
+                jest.spyOn(nestLogger, 'warn').mockImplementation(() => undefined);
 
-	afterEach(() => {
-		jest.clearAllMocks();
-	});
+                jest.spyOn(nodeLogger, 'info').mockImplementation(() => undefined);
+                jest.spyOn(nodeLogger, 'warn').mockImplementation(() => undefined);
+                jest.spyOn(nodeLogger, 'debug').mockImplementation(() => undefined);
+        });
 
-	it('should be defined', () => {
-		expect(service).toBeDefined();
-	});
+        afterEach(() => {
+                jest.clearAllMocks();
+        });
 
-	describe('create', () => {
-		it('should create a user with all fields', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'John Doe',
-				email: 'john@example.com',
-				password: 'password123',
-				phone: '123456789',
-				address: '123 Main St',
-			};
+        it('should be defined', () => {
+                expect(service).toBeDefined();
+        });
 
-			const result = await service.create(createUserDto);
+        it('should create a user using the domain service and log the operation', async () => {
+                const createUserDto: CreateUserDto = {
+                        name: 'John Doe',
+                        email: 'john@example.com',
+                        password: 'password123',
+                };
+                const createdUser: User = {
+                        id: '1',
+                        name: 'John Doe',
+                        email: 'john@example.com',
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                };
+                userService.create.mockResolvedValue(createdUser);
 
-			expect(result).toEqual({
-				id: '1',
-				name: 'John Doe',
-				email: 'john@example.com',
-				phone: '123456789',
-				address: '123 Main St',
-				createdAt: expect.any(Date),
-				updatedAt: expect.any(Date),
-			});
+                const result = await service.create(createUserDto);
 
-			expect(logger.info).toHaveBeenCalledWith('User created successfully', {
-				userId: '1',
-				userData: createUserDto,
-			});
-		});
+                expect(userService.create).toHaveBeenCalledWith(createUserDto);
+                expect(result).toBe(createdUser);
+                expect(nestLogger.log).toHaveBeenCalledWith('Creating new user', 'UsersService');
+                expect(nodeLogger.info).toHaveBeenCalledWith('User created successfully', {
+                        userId: createdUser.id,
+                        userData: createUserDto,
+                });
+        });
 
-		it('should create a user with minimal required fields', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'Jane Doe',
-				email: 'jane@example.com',
-				password: 'password123',
-			};
+        it('should list users using the domain service and log the count', async () => {
+                const users: User[] = [
+                        {
+                                id: '1',
+                                name: 'User 1',
+                                email: 'user1@example.com',
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                        },
+                        {
+                                id: '2',
+                                name: 'User 2',
+                                email: 'user2@example.com',
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                        },
+                ];
+                userService.findAll.mockResolvedValue(users);
 
-			const result = await service.create(createUserDto);
+                const result = await service.findAll();
 
-			expect(result).toEqual({
-				id: '1',
-				name: 'Jane Doe',
-				email: 'jane@example.com',
-				phone: undefined,
-				address: undefined,
-				createdAt: expect.any(Date),
-				updatedAt: expect.any(Date),
-			});
-		});
+                expect(userService.findAll).toHaveBeenCalled();
+                expect(result).toEqual(users);
+                expect(nestLogger.debug).toHaveBeenCalledWith('Finding all users', 'UsersService');
+                expect(nodeLogger.debug).toHaveBeenCalledWith('Users retrieved', { count: users.length });
+        });
 
-		it('should increment ID for multiple users', async () => {
-			const user1Dto: CreateUserDto = {
-				name: 'User 1',
-				email: 'user1@example.com',
-				password: 'password123',
-			};
+        it('should return a user when found and log success', async () => {
+                const user: User = {
+                        id: '1',
+                        name: 'John Doe',
+                        email: 'john@example.com',
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                };
+                userService.findOne.mockResolvedValue(user);
 
-			const user2Dto: CreateUserDto = {
-				name: 'User 2',
-				email: 'user2@example.com',
-				password: 'password123',
-			};
+                const result = await service.findOne('1');
 
-			const user1 = await service.create(user1Dto);
-			const user2 = await service.create(user2Dto);
+                expect(userService.findOne).toHaveBeenCalledWith('1');
+                expect(result).toBe(user);
+                expect(nodeLogger.info).toHaveBeenCalledWith('User found', { userId: '1' });
+        });
 
-			expect(user1.id).toBe('1');
-			expect(user2.id).toBe('2');
-		});
+        it('should log a warning when user is not found', async () => {
+                userService.findOne.mockResolvedValue(null);
 
-		it('should set createdAt and updatedAt to current date', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'Test User',
-				email: 'test@example.com',
-				password: 'password123',
-			};
+                const result = await service.findOne('999');
 
-			const beforeCreate = new Date();
-			const result = await service.create(createUserDto);
-			const afterCreate = new Date();
+                expect(userService.findOne).toHaveBeenCalledWith('999');
+                expect(result).toBeNull();
+                expect(nestLogger.warn).toHaveBeenCalledWith('User not found with id: 999', 'UsersService');
+                expect(nodeLogger.warn).toHaveBeenCalledWith('User not found', { userId: '999' });
+        });
 
-			expect(result.createdAt).toBeInstanceOf(Date);
-			expect(result.updatedAt).toBeInstanceOf(Date);
-			expect(result.createdAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
-			expect(result.createdAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
-		});
-	});
+        it('should update user data when domain service succeeds', async () => {
+                const updateDto: UpdateUserDto = {
+                        name: 'Updated Name',
+                };
+                const updatedUser: User = {
+                        id: '1',
+                        name: 'Updated Name',
+                        email: 'john@example.com',
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                };
+                userService.update.mockResolvedValue(updatedUser);
 
-	describe('findAll', () => {
-		it('should return empty array when no users exist', async () => {
-			const result = await service.findAll();
+                const result = await service.update('1', updateDto);
 
-			expect(result).toEqual([]);
-			expect(logger.debug).toHaveBeenCalledWith('Users retrieved', { count: 0 });
-		});
+                expect(userService.update).toHaveBeenCalledWith('1', updateDto);
+                expect(result).toBe(updatedUser);
+                expect(nodeLogger.info).toHaveBeenCalledWith('User updated successfully', {
+                        userId: '1',
+                        updateData: updateDto,
+                });
+        });
 
-		it('should return all users', async () => {
-			const user1Dto: CreateUserDto = {
-				name: 'User 1',
-				email: 'user1@example.com',
-				password: 'password123',
-			};
+        it('should warn when trying to update a missing user', async () => {
+                const updateDto: UpdateUserDto = {
+                        name: 'Missing User',
+                };
+                userService.update.mockResolvedValue(null);
 
-			const user2Dto: CreateUserDto = {
-				name: 'User 2',
-				email: 'user2@example.com',
-				password: 'password123',
-			};
+                const result = await service.update('999', updateDto);
 
-			await service.create(user1Dto);
-			await service.create(user2Dto);
+                expect(userService.update).toHaveBeenCalledWith('999', updateDto);
+                expect(result).toBeNull();
+                expect(nodeLogger.warn).toHaveBeenCalledWith('User not found for update', { userId: '999' });
+        });
 
-			const result = await service.findAll();
+        it('should remove a user and log success when domain service succeeds', async () => {
+                userService.remove.mockResolvedValue(true);
 
-			expect(result).toHaveLength(2);
-			expect(result[0].name).toBe('User 1');
-			expect(result[1].name).toBe('User 2');
-			expect(logger.debug).toHaveBeenCalledWith('Users retrieved', { count: 2 });
-		});
-	});
+                const result = await service.remove('1');
 
-	describe('findOne', () => {
-		it('should return user when found', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'John Doe',
-				email: 'john@example.com',
-				password: 'password123',
-			};
+                expect(userService.remove).toHaveBeenCalledWith('1');
+                expect(result).toBe(true);
+                expect(nodeLogger.info).toHaveBeenCalledWith('User removed successfully', { userId: '1' });
+        });
 
-			const createdUser = await service.create(createUserDto);
-			const result = await service.findOne(createdUser.id);
+        it('should warn when trying to remove a missing user', async () => {
+                userService.remove.mockResolvedValue(false);
 
-			expect(result).toEqual(createdUser);
-			expect(logger.info).toHaveBeenCalledWith('User found', { userId: createdUser.id });
-		});
+                const result = await service.remove('999');
 
-		it('should return null when user not found', async () => {
-			const result = await service.findOne('999');
-
-			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found', { userId: '999' });
-		});
-
-		it('should return null for empty string ID', async () => {
-			const result = await service.findOne('');
-
-			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found', { userId: '' });
-		});
-	});
-
-	describe('update', () => {
-		it('should update user successfully', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'John Doe',
-				email: 'john@example.com',
-				password: 'password123',
-			};
-
-			const createdUser = await service.create(createUserDto);
-			const updateUserDto: UpdateUserDto = {
-				name: 'John Updated',
-				phone: '987654321',
-			};
-
-			const result = await service.update(createdUser.id, updateUserDto);
-
-			expect(result).toEqual({
-				...createdUser,
-				name: 'John Updated',
-				phone: '987654321',
-				updatedAt: expect.any(Date),
-			});
-
-			expect(result?.updatedAt.getTime()).toBeGreaterThanOrEqual(createdUser.updatedAt.getTime());
-			expect(logger.info).toHaveBeenCalledWith('User updated successfully', {
-				userId: createdUser.id,
-				updateData: updateUserDto,
-			});
-		});
-
-		it('should return null when user not found for update', async () => {
-			const updateUserDto: UpdateUserDto = {
-				name: 'Updated Name',
-			};
-
-			const result = await service.update('999', updateUserDto);
-
-			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found for update', { userId: '999' });
-		});
-
-		it('should update only provided fields', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'John Doe',
-				email: 'john@example.com',
-				password: 'password123',
-				phone: '123456789',
-				address: '123 Main St',
-			};
-
-			const createdUser = await service.create(createUserDto);
-			const updateUserDto: UpdateUserDto = {
-				phone: '987654321',
-			};
-
-			const result = await service.update(createdUser.id, updateUserDto);
-
-			expect(result).toEqual({
-				...createdUser,
-				phone: '987654321',
-				updatedAt: expect.any(Date),
-			});
-
-			// Other fields should remain unchanged
-			expect(result?.name).toBe(createdUser.name);
-			expect(result?.email).toBe(createdUser.email);
-			expect(result?.address).toBe(createdUser.address);
-		});
-	});
-
-	describe('remove', () => {
-		it('should remove user successfully', async () => {
-			const createUserDto: CreateUserDto = {
-				name: 'John Doe',
-				email: 'john@example.com',
-				password: 'password123',
-			};
-
-			const createdUser = await service.create(createUserDto);
-			const result = await service.remove(createdUser.id);
-
-			expect(result).toBe(true);
-
-			// Verify user was actually removed
-			const findResult = await service.findOne(createdUser.id);
-			expect(findResult).toBeNull();
-
-			expect(logger.info).toHaveBeenCalledWith('User removed successfully', {
-				userId: createdUser.id,
-			});
-		});
-
-		it('should return false when user not found for removal', async () => {
-			const result = await service.remove('999');
-
-			expect(result).toBe(false);
-			expect(logger.warn).toHaveBeenCalledWith('User not found for removal', { userId: '999' });
-		});
-
-		it('should maintain other users when removing one', async () => {
-			const user1Dto: CreateUserDto = {
-				name: 'User 1',
-				email: 'user1@example.com',
-				password: 'password123',
-			};
-
-			const user2Dto: CreateUserDto = {
-				name: 'User 2',
-				email: 'user2@example.com',
-				password: 'password123',
-			};
-
-			const user1 = await service.create(user1Dto);
-			const user2 = await service.create(user2Dto);
-
-			const removeResult = await service.remove(user1.id);
-			expect(removeResult).toBe(true);
-
-			const allUsers = await service.findAll();
-			expect(allUsers).toHaveLength(1);
-			expect(allUsers[0].id).toBe(user2.id);
-		});
-	});
-
-	describe('state isolation', () => {
-		it('should not affect other test users', async () => {
-			// This test verifies that the beforeEach reset works correctly
-			const createUserDto: CreateUserDto = {
-				name: 'Isolation Test',
-				email: 'isolation@example.com',
-				password: 'password123',
-			};
-
-			const result = await service.create(createUserDto);
-			expect(result.id).toBe('1'); // Should start from 1, not continue from previous tests
-		});
-	});
+                expect(userService.remove).toHaveBeenCalledWith('999');
+                expect(result).toBe(false);
+                expect(nodeLogger.warn).toHaveBeenCalledWith('User not found for removal', { userId: '999' });
+        });
 });

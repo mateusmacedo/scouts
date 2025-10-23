@@ -202,6 +202,15 @@ importers:
 
   libs/user-node:
     dependencies:
+      '@nestjs/common':
+        specifier: ^10.0.2
+        version: 10.4.20(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.1.14)(rxjs@7.8.2)
+      '@nestjs/mapped-types':
+        specifier: ^2.0.0
+        version: 2.1.0(@nestjs/common@10.4.20(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.1.14)(rxjs@7.8.2))(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.1.14)
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.2
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
