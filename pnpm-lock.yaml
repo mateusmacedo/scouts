@@ -202,6 +202,9 @@ importers:
 
   libs/user-node:
     dependencies:
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.2
       tslib:
         specifier: ^2.3.0
         version: 2.8.1

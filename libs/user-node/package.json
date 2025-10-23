@@ -14,7 +14,8 @@
 		"access": "public",
 		"registry": "https://registry.npmjs.org/"
 	},
-	"dependencies": {
-		"tslib": "^2.3.0"
-	}
+        "dependencies": {
+                "class-validator": "^0.14.0",
+                "tslib": "^2.3.0"
+        }
 }
