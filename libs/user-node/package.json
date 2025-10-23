@@ -15,6 +15,8 @@
 		"registry": "https://registry.npmjs.org/"
 	},
 	"dependencies": {
-		"tslib": "^2.3.0"
+		"tslib": "^2.3.0",
+		"@nestjs/common": "^10.0.2",
+		"class-validator": "^0.14.0"
 	}
 }
