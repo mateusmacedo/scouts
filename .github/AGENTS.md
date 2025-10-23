@@ -13,6 +13,196 @@
 
 <!-- nx configuration end-->
 
+# 🏗️ Repository-Specific Instructions
+
+## Overview
+
+This is a **monorepo managed by Nx** containing applications and libraries for TypeScript/NestJS and Go projects. The workspace follows strict quality standards with automated CI/CD, comprehensive testing, and release management.
+
+## Technologies and Stack
+
+### Primary Technologies
+- **Nx 20.8.2** - Monorepo build system with task orchestration and caching
+- **TypeScript 5.7.2** - Primary language for Node.js projects
+- **Go 1.23** - For microservices and libraries
+- **NestJS 10.x** - Backend framework for Node.js applications
+- **Jest 29.x** - Testing framework for TypeScript/JavaScript
+- **pnpm 9.15.0** - Package manager (use pnpm, NOT npm or yarn)
+
+### Code Quality Tools
+- **Biome 2.2.6** - Primary linting and formatting tool (preferred over ESLint/Prettier)
+- **ESLint 9.x** - Additional linting (use via `nx lint`)
+- **SonarQube** - Quality gate integration in CI/CD
+
+## Project Structure
+
+### Applications (`apps/`)
+- **`bff-nest`** - Backend for Frontend in NestJS
+- **`user-go-service`** - User microservice in Go
+
+### Libraries (`libs/`)
+- **`logger-node`** - Modular logging system with correlation IDs, sensitive data redaction, and metrics
+- **`utils-nest`** - NestJS utilities (health checks, Swagger, logger adapter)
+- **`user-node`** - User domain library for Node.js
+- **`user-go`** - User domain library for Go
+- **`biome-base`** - Shared Biome configuration
+
+### Tagging System
+Projects use tags for categorization:
+- `npm:public` - Published to npm registry
+- `npm:private` - Internal use only
+- `go:public` - Go library versioned via git tags
+- `type:app` - Application
+- `type:lib` - Library
+- `scope:internal` - Internal workspace scope
+
+## Development Commands
+
+### Running Tasks
+**ALWAYS use Nx commands** instead of direct tool invocation:
+
+```bash
+# Build affected projects
+pnpm nx affected -t build
+
+# Test affected projects
+pnpm nx affected -t test
+
+# Lint affected projects
+pnpm nx affected -t lint
+
+# Format code with Biome
+pnpm nx affected -t format
+
+# Run specific project
+pnpm nx serve bff-nest
+pnpm nx serve user-go-service
+
+# Run all checks (like CI)
+pnpm nx ci
+```
+
+### Code Quality
+```bash
+# Format with Biome (preferred)
+pnpm nx format
+
+# Check linting (Biome + ESLint)
+pnpm nx lint
+
+# Run tests with coverage
+pnpm nx affected -t test --coverage
+```
+
+## Code Standards
+
+### TypeScript/NestJS
+- Use **strict TypeScript** settings - NO `any` types
+- Follow **Clean Architecture** principles (domain, application, infrastructure layers)
+- Use **dependency injection** via NestJS decorators
+- Implement proper **error handling** with custom exceptions
+- Add **comprehensive JSDoc comments** for public APIs
+- Write **unit tests** using Jest with meaningful test names
+- Use **class-validator** and **class-transformer** for DTOs
+
+### Go
+- Follow **Go 1.23 standards** and idiomatic Go patterns
+- Use **Go modules** for dependency management
+- Write **table-driven tests** for comprehensive coverage
+- Include **godoc comments** for exported functions/types
+- Use **interfaces** for abstraction and testability
+- Handle errors explicitly - NO panic in library code
+
+### General Principles
+- **SOLID principles** - Single responsibility, dependency inversion, etc.
+- **Low coupling, high cohesion** between modules
+- **Meaningful naming** - clear, professional, intention-revealing
+- **Security by design** - authentication, authorization, least privilege
+- **Observability** - structured logs with correlation IDs, metrics, tracing
+- **NO hardcoded secrets** - use environment variables or secret managers
+
+## Testing Requirements
+
+### Coverage Expectations
+- **Unit tests** - Core business logic (domain layer)
+- **Integration tests** - Infrastructure interactions (repositories, external APIs)
+- **E2E tests** - Complete user flows (for applications)
+
+### Test Standards
+- Use **realistic test data** - avoid generic "test" or "foo/bar" values
+- Write **clear assertions** - specific, meaningful error messages
+- Test **edge cases** - null values, empty arrays, error conditions
+- Ensure **test isolation** - each test should be independent
+- **Mock external dependencies** - use Jest mocks or test doubles
+
+## CI/CD and Workflows
+
+### Workflow Architecture
+The repository uses **reusable workflow components**:
+- `ci.yml` - Main validation orchestrator
+- `release.yml` - Manual release workflow
+- `release-validation.yml` - Validates release branches
+- `_reusable-*` - Shared workflow components (setup, validate, quality-gate, release-steps)
+
+### Before Committing
+1. **Run local validation**: `pnpm nx ci`
+2. **Format code**: `pnpm nx format`
+3. **Fix linting issues**: `pnpm nx affected -t lint --fix`
+4. **Verify tests pass**: `pnpm nx affected -t test`
+5. **Check builds**: `pnpm nx affected -t build`
+
+### Commit Standards
+- Follow **Conventional Commits** (feat, fix, chore, docs, test, refactor, ci, build)
+- Keep messages **≤ 100 characters**
+- Use **clear scope**: `feat(logger-node): add correlation ID support`
+- Add **body only when needed** - explain "why" not "what"
+
+## Release Process
+
+### Version Management
+- Uses **Nx Release** with independent versioning per project
+- Projects tagged with `npm:public` or `go:public` are publishable
+- Manual release via GitHub Actions (`release.yml`)
+
+### Release Commands
+```bash
+# Preview release changes
+pnpm nx release --specifier=minor --dry-run
+
+# Create release
+pnpm nx release --specifier=minor
+
+# Publish packages
+pnpm nx release publish
+```
+
+## Important Notes
+
+### What to Do
+- **Preserve existing patterns** - follow established code structure
+- **Use workspace generators** - create new projects via Nx generators
+- **Verify before modifying** - check existing implementations first
+- **Update documentation** - keep README and docs in sync with code
+- **Test incrementally** - validate changes frequently during development
+- **Ask for clarification** - when requirements are ambiguous
+
+### What NOT to Do
+- **Don't use npm or yarn** - pnpm is the required package manager
+- **Don't bypass Nx** - always use `nx` commands for tasks
+- **Don't ignore linting** - Biome and ESLint rules are enforced
+- **Don't skip tests** - comprehensive testing is mandatory
+- **Don't modify CI workflows** without understanding the architecture
+- **Don't commit build artifacts** - dist/, node_modules/, etc. are gitignored
+- **Don't introduce breaking changes** without discussing first
+
+## Documentation References
+
+- [NX Generators Guide](docs/NX_GENERATORS.md) - Creating new projects
+- [Release Process](docs/RELEASE_PROCESS.md) - Version management and publishing
+- [Workflows Architecture](docs/WORKFLOWS_ARCHITECTURE.md) - CI/CD design and components
+
+---
+
 # 📘 Global Engineering Communication & Execution Rules
 
 ## Visão Geral
