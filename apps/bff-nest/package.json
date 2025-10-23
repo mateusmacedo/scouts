@@ -3,6 +3,13 @@
   "version": "0.1.1",
   "private": true,
   "dependencies": {
-    "@nestjs/mapped-types": "^2.0.0"
+    "@nestjs/mapped-types": "^2.0.0",
+    "@nestjs/common": "^10.0.2",
+    "@nestjs/core": "^10.0.2",
+    "@scouts/logger-node": "workspace:*",
+    "@scouts/utils-nest": "workspace:*",
+    "@scouts/user-node": "workspace:*",
+    "class-validator": "^0.14.0",
+    "@nx/webpack": "20.8.2"
   }
 }
