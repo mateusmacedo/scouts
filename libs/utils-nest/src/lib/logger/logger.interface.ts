@@ -49,4 +49,4 @@ export interface NestLoggerModuleAsyncOptions {
 	useFactory: (...args: unknown[]) => Promise<NestLoggerModuleOptions> | NestLoggerModuleOptions;
 	inject?: (string | symbol | Type)[];
 }
-// fake value to change and force affected files
+
