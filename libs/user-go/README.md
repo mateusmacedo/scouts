@@ -1,88 +1,295 @@
-# user-go
+# @scouts/user-go
 
-Biblioteca Go para gerenciamento básico de usuários com funcionalidades essenciais.
+A comprehensive Go library for user management operations with full concurrency support and context handling.
 
-## Características
+## Features
 
-- **Simplicidade**: Interface Go idiomática e direta
-- **Performance**: Implementação otimizada para alta performance
-- **Concorrência**: Suporte nativo à concorrência Go
-- **Testável**: Cobertura de testes com Go testing package
-- **Modular**: Arquitetura modular para fácil extensão
+- **User CRUD Operations**: Create, read, update, and delete users
+- **Data Validation**: Built-in validation with custom error types
+- **Concurrency Support**: Thread-safe operations with sync.RWMutex
+- **Context Support**: Full context.Context integration for cancellation
+- **Event System**: User lifecycle events for logging and monitoring
+- **Repository Pattern**: Clean separation of concerns with repository interface
+- **In-Memory Repository**: Thread-safe implementation for development and testing
 
-## Instalação
+## Installation
 
 ```bash
 go get github.com/mateusmacedo/scouts/libs/user-go
 ```
 
-## Uso Básico
+## Usage
+
+### Basic Usage
 
 ```go
 package main
 
 import (
+    "context"
     "fmt"
+    "log"
+    
     gouser "github.com/mateusmacedo/scouts/libs/user-go"
 )
 
 func main() {
-    result := gouser.GoUser("João Silva")
-    fmt.Println(result) // "GoUser João Silva"
+    ctx := context.Background()
+    
+    // Create repository and events handler
+    repository := gouser.NewInMemoryUserRepository()
+    events := &UserEventsLogger{}
+    userService := gouser.NewUserService(repository, events)
+    
+    // Create a user
+    userData := gouser.CreateUserData{
+        Name:    "John Doe",
+        Email:   "john@example.com",
+        Phone:   "+1234567890",
+        Address: "123 Main St",
+    }
+    
+    user, err := userService.Create(ctx, userData)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("Created user: %+v\n", user)
+    
+    // Find user by ID
+    foundUser, err := userService.FindByID(ctx, user.ID)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("Found user: %+v\n", foundUser)
+    
+    // Update user
+    newName := "John Smith"
+    updateData := gouser.UpdateUserData{
+        Name: &newName,
+    }
+    
+    updatedUser, err := userService.Update(ctx, user.ID, updateData)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("Updated user: %+v\n", updatedUser)
+    
+    // Get all users
+    allUsers, err := userService.FindAll(ctx)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("All users: %+v\n", allUsers)
+    
+    // Delete user
+    err = userService.Delete(ctx, user.ID)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Println("User deleted successfully")
+}
+
+// UserEventsLogger implements UserEvents interface for logging
+type UserEventsLogger struct{}
+
+func (l *UserEventsLogger) OnUserCreated(user *gouser.User) {
+    log.Printf("User created: ID=%s, Name=%s, Email=%s", user.ID, user.Name, user.Email)
+}
+
+func (l *UserEventsLogger) OnUserUpdated(user *gouser.User) {
+    log.Printf("User updated: ID=%s, Name=%s, Email=%s", user.ID, user.Name, user.Email)
+}
+
+func (l *UserEventsLogger) OnUserDeleted(userID string) {
+    log.Printf("User deleted: ID=%s", userID)
+}
+```
+
+### With HTTP Server (Echo)
+
+```go
+package main
+
+import (
+    "github.com/labstack/echo/v4"
+    gouser "github.com/mateusmacedo/scouts/libs/user-go"
+)
+
+func main() {
+    e := echo.New()
+    
+    // Initialize user service
+    repository := gouser.NewInMemoryUserRepository()
+    userService := gouser.NewUserService(repository, nil)
+    
+    // Setup routes
+    e.POST("/users", createUserHandler(userService))
+    e.GET("/users/:id", getUserHandler(userService))
+    e.PUT("/users/:id", updateUserHandler(userService))
+    e.DELETE("/users/:id", deleteUserHandler(userService))
+    
+    e.Logger.Fatal(e.Start(":8080"))
 }
 ```
 
 ## API Reference
 
-### GoUser(name string) string
+### Types
 
-Cria uma string de identificação de usuário com o nome fornecido.
+#### `User`
 
-**Parâmetros:**
-- `name` (string): Nome do usuário
-
-**Retorno:** `string` - String formatada "GoUser {name}"
-
-**Exemplo:**
 ```go
-package main
-
-import (
-    "fmt"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
-)
-
-func main() {
-    user := gouser.GoUser("Maria Santos")
-    fmt.Println(user) // "GoUser Maria Santos"
+type User struct {
+    ID        string    `json:"id"`
+    Name      string    `json:"name"`
+    Email     string    `json:"email"`
+    Phone     string    `json:"phone,omitempty"`
+    Address   string    `json:"address,omitempty"`
+    CreatedAt time.Time `json:"createdAt"`
+    UpdatedAt time.Time `json:"updatedAt"`
 }
 ```
 
-## Arquitetura
+#### `CreateUserData`
 
-A biblioteca `user-go` segue as convenções Go padrão:
-
+```go
+type CreateUserData struct {
+    Name    string `json:"name"`
+    Email   string `json:"email"`
+    Phone   string `json:"phone,omitempty"`
+    Address string `json:"address,omitempty"`
+}
 ```
-libs/user-go/
-├── user-go.go        # Implementação principal
-├── user-go_test.go   # Testes unitários
-├── go.mod           # Dependências Go
-└── project.json     # Configuração Nx
+
+#### `UpdateUserData`
+
+```go
+type UpdateUserData struct {
+    Name    *string `json:"name,omitempty"`
+    Email   *string `json:"email,omitempty"`
+    Phone   *string `json:"phone,omitempty"`
+    Address *string `json:"address,omitempty"`
+}
 ```
 
-### Estrutura do Código
+### Interfaces
+
+#### `UserRepository`
+
+```go
+type UserRepository interface {
+    Create(ctx context.Context, data CreateUserData) (*User, error)
+    FindByID(ctx context.Context, id string) (*User, error)
+    FindAll(ctx context.Context) ([]*User, error)
+    Update(ctx context.Context, id string, data UpdateUserData) (*User, error)
+    Delete(ctx context.Context, id string) error
+}
+```
+
+#### `UserEvents`
+
+```go
+type UserEvents interface {
+    OnUserCreated(user *User)
+    OnUserUpdated(user *User)
+    OnUserDeleted(userID string)
+}
+```
+
+### Functions
+
+#### `NewUserService(repository UserRepository, events UserEvents) *UserService`
+
+Creates a new UserService instance.
+
+#### `NewInMemoryUserRepository() *InMemoryUserRepository`
+
+Creates a new in-memory repository instance.
+
+### Methods
+
+#### `UserService`
+
+- `Create(ctx context.Context, data CreateUserData) (*User, error)` - Create a new user
+- `FindAll(ctx context.Context) ([]*User, error)` - Get all users
+- `FindByID(ctx context.Context, id string) (*User, error)` - Find user by ID
+- `FindByEmail(ctx context.Context, email string) (*User, error)` - Find user by email
+- `Update(ctx context.Context, id string, data UpdateUserData) (*User, error)` - Update user
+- `Delete(ctx context.Context, id string) error` - Delete user
+
+#### `InMemoryUserRepository`
+
+- `Create(ctx context.Context, data CreateUserData) (*User, error)` - Create user
+- `FindByID(ctx context.Context, id string) (*User, error)` - Find by ID
+- `FindAll(ctx context.Context) ([]*User, error)` - Get all users
+- `Update(ctx context.Context, id string, data UpdateUserData) (*User, error)` - Update user
+- `Delete(ctx context.Context, id string) error` - Delete user
+- `Clear()` - Clear all users (for testing)
+
+## Error Handling
+
+The library defines custom errors for different scenarios:
+
+```go
+var (
+    ErrUserNotFound      = errors.New("user not found")
+    ErrUserAlreadyExists = errors.New("user already exists")
+    ErrInvalidEmail      = errors.New("invalid email format")
+    ErrInvalidPhone      = errors.New("invalid phone format")
+    ErrEmptyName         = errors.New("name cannot be empty")
+    ErrEmptyEmail        = errors.New("email cannot be empty")
+)
+```
+
+## Validation
+
+The library includes built-in validation functions:
+
+```go
+// ValidateCreateUserData validates CreateUserData
+func ValidateCreateUserData(data CreateUserData) error
+
+// ValidateUpdateUserData validates UpdateUserData
+func ValidateUpdateUserData(data UpdateUserData) error
+```
+
+## Testing
 
 ```go
 package gouser
 
-// GoUser cria uma identificação de usuário
-func GoUser(name string) string {
-    result := "GoUser " + name
-    return result
+import (
+    "context"
+    "testing"
+)
+
+func TestUserService_Create(t *testing.T) {
+    repository := NewInMemoryUserRepository()
+    service := NewUserService(repository, nil)
+    ctx := context.Background()
+    
+    data := CreateUserData{
+        Name:  "John Doe",
+        Email: "john@example.com",
+    }
+    
+    user, err := service.Create(ctx, data)
+    if err != nil {
+        t.Fatalf("Expected no error, got %v", err)
+    }
+    
+    if user.Name != data.Name {
+        t.Errorf("Expected name %s, got %s", data.Name, user.Name)
+    }
 }
 ```
 
-## Desenvolvimento
+## Development
 
 ### Build
 
@@ -120,193 +327,35 @@ pnpm nx format user-go
 pnpm nx biome user-go
 ```
 
-## Versionamento
+## Concurrency
 
-A biblioteca utiliza versionamento semântico via git tags:
+The library is designed for concurrent use:
 
-```bash
-# Verificar versão atual
-git tag -l | grep user-go
-
-# Criar nova versão
-git tag user-go@v1.0.0
-git push origin user-go@v1.0.0
-```
-
-### Module Path
-
-O module path é configurado para GitHub:
-
-```go
-module github.com/mateusmacedo/scouts/libs/user-go
-```
-
-### Uso com Versões Específicas
-
-```go
-// Usar versão específica
-go get github.com/mateusmacedo/scouts/libs/user-go@v1.0.0
-
-// Usar versão mais recente
-go get github.com/mateusmacedo/scouts/libs/user-go@latest
-```
-
-## Roadmap
-
-### Funcionalidades Planejadas
-
-- [ ] **User Struct**: Estrutura para representação de usuários
-- [ ] **User Service**: Serviço para operações CRUD de usuários
-- [ ] **User Validation**: Validação de dados de usuário
-- [ ] **User Events**: Sistema de eventos para mudanças de usuário
-- [ ] **User Repository**: Interface para persistência de usuários
-- [ ] **Concurrency**: Suporte a operações concorrentes
-- [ ] **Context**: Suporte a context.Context para cancelamento
-
-### Exemplo de Uso Futuro
-
-```go
-// Funcionalidade planejada
-package main
-
-import (
-    "context"
-    "fmt"
-    gouser "github.com/mateusmacedo/scouts/libs/user-go"
-)
-
-func main() {
-    ctx := context.Background()
-    
-    // Criar usuário
-    user, err := gouser.CreateUser(ctx, gouser.CreateUserRequest{
-        Name:  "João Silva",
-        Email: "joao@example.com",
-    })
-    if err != nil {
-        panic(err)
-    }
-    
-    // Buscar usuário
-    foundUser, err := gouser.FindUser(ctx, user.ID)
-    if err != nil {
-        panic(err)
-    }
-    
-    fmt.Printf("User: %+v\n", foundUser)
-}
-```
-
-
-## Testes
-
-### Executar Testes
-
-```bash
-# Testes unitários
-go test ./libs/user-go
-
-# Testes com coverage
-go test -cover ./libs/user-go
-
-# Testes com coverage detalhado
-go test -coverprofile=coverage.out ./libs/user-go
-go tool cover -html=coverage.out
-```
-
-### Exemplo de Teste
-
-```go
-package gouser
-
-import "testing"
-
-func TestGoUser(t *testing.T) {
-    tests := []struct {
-        name     string
-        input    string
-        expected string
-    }{
-        {
-            name:     "valid name",
-            input:    "João Silva",
-            expected: "GoUser João Silva",
-        },
-        {
-            name:     "empty name",
-            input:    "",
-            expected: "GoUser ",
-        },
-        {
-            name:     "special characters",
-            input:    "João-Silva_123",
-            expected: "GoUser João-Silva_123",
-        },
-    }
-
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            result := GoUser(tt.input)
-            if result != tt.expected {
-                t.Errorf("GoUser(%q) = %q, want %q", tt.input, result, tt.expected)
-            }
-        })
-    }
-}
-```
+- All repository operations are thread-safe using `sync.RWMutex`
+- Context cancellation is supported throughout
+- No shared mutable state between operations
 
 ## Performance
 
 ### Benchmarks
 
 ```go
-// benchmark_test.go
-package gouser
-
-import "testing"
-
-func BenchmarkGoUser(b *testing.B) {
+func BenchmarkUserService_Create(b *testing.B) {
+    repository := NewInMemoryUserRepository()
+    service := NewUserService(repository, nil)
+    ctx := context.Background()
+    
+    b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        GoUser("Test User")
-    }
-}
-
-func BenchmarkGoUserLongName(b *testing.B) {
-    longName := "Very Long User Name That Exceeds Normal Length"
-    for i := 0; i < b.N; i++ {
-        GoUser(longName)
+        data := CreateUserData{
+            Name:  "User",
+            Email: fmt.Sprintf("user%d@example.com", i),
+        }
+        service.Create(ctx, data)
     }
 }
 ```
 
-### Executar Benchmarks
+## License
 
-```bash
-# Benchmarks
-go test -bench=. ./libs/user-go
-
-# Benchmarks com profiling
-go test -bench=. -cpuprofile=cpu.prof ./libs/user-go
-go tool pprof cpu.prof
-```
-
-## Contribuição
-
-1. Fork o repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
-
-### Padrões de Código
-
-- Siga as convenções Go padrão
-- Use `gofmt` para formatação
-- Use `golint` para verificação de estilo
-- Escreva testes para todas as funcionalidades
-- Documente funções públicas com comentários Go
-
-## Licença
-
-MIT - veja o arquivo [LICENSE](../../LICENSE) para detalhes.
-
+MIT
