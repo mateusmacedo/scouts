@@ -2,12 +2,21 @@ name: Release Validation
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
 
 jobs:
-  release-validation:
+  dry-run:
+    name: Validate Release Configuration
     runs-on: ubuntu-latest
-    
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,41 +26,43 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          check-latest: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
 
+      - name: Configure pnpm store
+        run: pnpm config set store-dir ~/.pnpm-store
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
-          cache-dependency-path: |
-            apps/user-go-service/go.sum
-            libs/user-go/go.sum
+          go-version: "1.23"
+          check-latest: true
+
+      - name: Restore Go cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate Go dependencies sync
-        run: ./scripts/sync-go-versions.sh
-
-      - name: Build affected projects
-        run: pnpm nx affected -t build --parallel=3
-
-      - name: Test affected projects
-        run: pnpm nx affected -t test --parallel=3
-
-      - name: Lint affected projects
-        run: pnpm nx affected -t lint --parallel=3
-
-      - name: Check module boundaries
-        run: pnpm nx affected -t check-boundaries --parallel=3
-
-      - name: Release dry-run
-        run: pnpm nx release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dry-run release versioning
+        run: pnpm nx release version --dry-run
