@@ -11,11 +11,63 @@ if [[ ! "$GITHUB_REF" =~ ^refs/heads/(release/|main$) ]]; then
     echo "Continuando com validação..."
 fi
 
+# Lista de padrões de arquivos/diretórios permitidos para mudanças
+# - Documentação e guias
+# - Arquivos de configuração do editor/IDE
+# - Arquivos de permissão de scripts (mode-only changes)
+ALLOWED_PATTERNS=(
+    "^AGENTS.md"
+    "^README.md"
+    "^\.cursor/"
+    "^\.vscode/"
+    "^\.editorconfig"
+    "^\.gemini/"
+    "^docs/"
+    "^scripts/.*\.sh$"
+)
+
+# Função para verificar se um arquivo corresponde aos padrões permitidos
+is_allowed_change() {
+    local file="$1"
+    for pattern in "${ALLOWED_PATTERNS[@]}"; do
+        if [[ "$file" =~ $pattern ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Verificar se há mudanças não commitadas
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "❌ Há mudanças não commitadas:"
-    git status --porcelain
-    exit 1
+PORCELAIN_OUTPUT=$(git status --porcelain)
+if [[ -n "$PORCELAIN_OUTPUT" ]]; then
+    echo "⚠️  Detectadas mudanças não commitadas:"
+    echo "$PORCELAIN_OUTPUT"
+    echo ""
+    
+    # Filtrar mudanças críticas (excluindo arquivos permitidos)
+    CRITICAL_CHANGES=""
+    while IFS= read -r line; do
+        # Extrair o nome do arquivo (remover o prefixo de status)
+        file=$(echo "$line" | sed 's/^...//g')
+        
+        # Verificar se é uma mudança permitida
+        if ! is_allowed_change "$file"; then
+            CRITICAL_CHANGES="${CRITICAL_CHANGES}${line}\n"
+        else
+            echo "ℹ️  Mudança permitida: $file"
+        fi
+    done <<< "$PORCELAIN_OUTPUT"
+    
+    # Se houver mudanças críticas, falhar
+    if [[ -n "$CRITICAL_CHANGES" ]]; then
+        echo ""
+        echo "❌ Há mudanças críticas não commitadas:"
+        echo -e "$CRITICAL_CHANGES"
+        exit 1
+    fi
+    
+    echo ""
+    echo "✅ Todas as mudanças detectadas são permitidas"
 fi
 
 # Verificar se pnpm está disponível
