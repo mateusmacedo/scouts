@@ -185,7 +185,7 @@ export class DefaultRedactor implements Redactor {
 	}
 
 	private escapeRegExp(str: string): string {
-		return str.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+		return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	}
 
 	/**
