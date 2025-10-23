@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
+import { LOGGER_TOKEN, LoggerModule, AdvancedLoggerService } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
@@ -8,6 +8,7 @@ import { InMemoryUserRepository } from '@scouts/user-node';
 describe('UsersService', () => {
 	let service: UsersService;
 	let logger: any;
+	let advancedLogger: AdvancedLoggerService;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -17,6 +18,7 @@ describe('UsersService', () => {
 
 		service = module.get<UsersService>(UsersService);
 		logger = module.get(LOGGER_TOKEN);
+		advancedLogger = module.get<AdvancedLoggerService>(AdvancedLoggerService);
 
 		// Mock the logger methods
 		jest.spyOn(logger, 'info').mockImplementation(() => {});
@@ -25,6 +27,13 @@ describe('UsersService', () => {
 		jest.spyOn(logger, 'debug').mockImplementation(() => {});
 		jest.spyOn(logger, 'fatal').mockImplementation(() => {});
 		jest.spyOn(logger, 'log').mockImplementation(() => {});
+
+		// Mock the advanced logger methods
+		jest.spyOn(advancedLogger, 'info').mockImplementation(() => {});
+		jest.spyOn(advancedLogger, 'error').mockImplementation(() => {});
+		jest.spyOn(advancedLogger, 'warn').mockImplementation(() => {});
+		jest.spyOn(advancedLogger, 'debug').mockImplementation(() => {});
+		jest.spyOn(advancedLogger, 'logBusinessEvent').mockImplementation(() => {});
 
 		// Clear the repository for each test
 		(service as any).userRepository.clear();
@@ -59,7 +68,7 @@ describe('UsersService', () => {
 				updatedAt: expect.any(Date),
 			});
 
-			expect(logger.info).toHaveBeenCalledWith('User created successfully', {
+			expect(advancedLogger.logBusinessEvent).toHaveBeenCalledWith('user_created', {
 				userId: '1',
 				userData: { name: 'John Doe', email: 'john@example.com' },
 			});
@@ -124,7 +133,7 @@ describe('UsersService', () => {
 			const result = await service.findAll();
 
 			expect(result).toEqual([]);
-			expect(logger.debug).toHaveBeenCalledWith('Users retrieved', { count: 0 });
+			expect(advancedLogger.debug).toHaveBeenCalledWith('Users retrieved', { count: 0 });
 		});
 
 		it('should return all users', async () => {
@@ -146,7 +155,7 @@ describe('UsersService', () => {
 			expect(result).toHaveLength(2);
 			expect(result[0].name).toBe('User 1');
 			expect(result[1].name).toBe('User 2');
-			expect(logger.debug).toHaveBeenCalledWith('Users retrieved', { count: 2 });
+			expect(advancedLogger.debug).toHaveBeenCalledWith('Users retrieved', { count: 2 });
 		});
 	});
 
@@ -161,21 +170,21 @@ describe('UsersService', () => {
 			const result = await service.findOne(createdUser.id);
 
 			expect(result).toEqual(createdUser);
-			expect(logger.info).toHaveBeenCalledWith('User found', { userId: createdUser.id });
+			expect(advancedLogger.info).toHaveBeenCalledWith('User found', { userId: createdUser.id });
 		});
 
 		it('should return null when user not found', async () => {
 			const result = await service.findOne('999');
 
 			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found', { userId: '999' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found', { userId: '999' });
 		});
 
 		it('should return null for empty string ID', async () => {
 			const result = await service.findOne('');
 
 			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found', { userId: '' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found', { userId: '' });
 		});
 	});
 
@@ -212,7 +221,7 @@ describe('UsersService', () => {
 			const result = await service.update('999', updateUserDto);
 
 			expect(result).toBeNull();
-			expect(logger.warn).toHaveBeenCalledWith('User not found for update', { userId: '999' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for update', { userId: '999' });
 		});
 
 		it('should update only provided fields', async () => {
@@ -264,7 +273,7 @@ describe('UsersService', () => {
 			const result = await service.remove('999');
 
 			expect(result).toBe(false);
-			expect(logger.warn).toHaveBeenCalledWith('User not found for removal', { userId: '999' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for removal', { userId: '999' });
 		});
 
 		it('should maintain other users when removing one', async () => {
