@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build affected projects
+        run: pnpm nx affected -t build --parallel=3
+
+      - name: Test affected projects
+        run: pnpm nx affected -t test --parallel=3
+
+      - name: Lint affected projects
+        run: pnpm nx affected -t lint --parallel=3
+
+      - name: Check module boundaries
+        run: pnpm nx affected -t check-boundaries --parallel=3
+
+      - name: Format check
+        run: pnpm nx affected -t format --parallel=3
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
