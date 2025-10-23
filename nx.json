@@ -48,7 +48,7 @@
       "exclude": ["*-e2e/**/*"]
     },
     "@nx-go/nx-go",
-    "@nx/eslint/plugin"
+    "@nx/eslint/plugin",
   ],
   "targetDefaults": {
     "@nx/js:tsc": {
@@ -77,12 +77,36 @@
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/jest.preset.js"
       ],
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "coverage": true,
+        "coverageReporters": ["text", "lcov", "html"],
+        "coverageThreshold": {
+          "global": {
+            "branches": 70,
+            "functions": 70,
+            "lines": 70,
+            "statements": 70
+          }
+        }
+      }
     },
     "@nx/js:swc": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    },
+    "check-boundaries": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx graph --file=graph.json && nx graph --affected --file=affected-graph.json"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "biome format --write ."
+      }
     }
   },
   "cacheDirectory": ".nx/cache",
