@@ -50,7 +50,7 @@ feat(api)!: change authentication method
    }
    ```
 
-2. **`libs/user-go/project.json`** - Configuração específica para Go:
+2. **`libs/user-go/project.json`** - Configuração específica para Go (agora 100% automática):
    ```json
    {
      "release": {
@@ -58,7 +58,8 @@ feat(api)!: change authentication method
          "generator": "@nx/js:release-version",
          "generatorOptions": {
            "currentVersionResolver": "git-tag",
-           "specifierSource": "prompt"
+           "fallbackCurrentVersionResolver": "disk",
+           "specifierSource": "conventional-commits"
          }
        }
      }
@@ -193,7 +194,7 @@ O release agora é executado **manualmente** via GitHub Actions UI para maior se
 ### 📝 Changelogs Gerados
 
 - `CHANGELOG.md` individual para cada projeto
-- `CHANGELOG.md` do workspace (consolidado)
+- Workspace changelog desabilitado (Nx ignora em releases independentes)
 
 ## ✅ Validação Pós-Release
 
@@ -276,7 +277,7 @@ pnpm nx run-many -t build --parallel=3
 3. **Clique:** "Run workflow"
 4. **Configure inputs:**
    - `dry-run`: `true` (primeira vez) ou `false` (release real)
-   - `version-specifier`: deixe vazio para auto
+   - `version-specifier`: deixe vazio para auto ou use `patch`/`minor`/`major`/`1.2.3`
    - `skip-validation`: `false` (recomendado)
 5. **Execute** e monitore os logs
 

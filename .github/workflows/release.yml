@@ -168,11 +168,31 @@ jobs:
             echo "🔍 Trigger não reconhecido - executando em modo dry-run por segurança"
           fi
 
+      - name: Preparar versão manual (se informado)
+        id: version-specifier
+        env:
+          SPECIFIER: ${{ github.event_name == 'workflow_dispatch' && inputs.version-specifier || '' }}
+        run: |
+          if [[ -n "$SPECIFIER" ]]; then
+            echo "cli=$SPECIFIER" >> $GITHUB_OUTPUT
+            echo "🔢 Versão manual recebida: $SPECIFIER"
+          else
+            echo "cli=" >> $GITHUB_OUTPUT
+            echo "📐 Sem versão manual - usando conventional commits"
+          fi
+
       - name: Release (Version & Changelog)
         run: |
+          if [[ -n "${RELEASE_SPECIFIER}" ]]; then
+            echo "ℹ️  Aplicando specifier manual: ${RELEASE_SPECIFIER}"
+          fi
           if [[ "${{ steps.execution-mode.outputs.mode }}" == "dry-run" ]]; then
             echo "🔍 Executando em modo dry-run..."
-            pnpm nx release --dry-run
+            if [[ -n "${RELEASE_SPECIFIER}" ]]; then
+              pnpm nx release "${RELEASE_SPECIFIER}" --dry-run
+            else
+              pnpm nx release --dry-run
+            fi
           else
             if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
               echo "🎉 Executando PRIMEIRA RELEASE dos projetos..."
@@ -180,10 +200,15 @@ jobs:
             else
               echo "🔄 Executando release subsequente..."
             fi
-            pnpm nx release --skip-publish
+            if [[ -n "${RELEASE_SPECIFIER}" ]]; then
+              pnpm nx release "${RELEASE_SPECIFIER}" --skip-publish
+            else
+              pnpm nx release --skip-publish
+            fi
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          RELEASE_SPECIFIER: ${{ steps.version-specifier.outputs.cli }}
 
       - name: Setup sync script permissions
         if: ${{ steps.execution-mode.outputs.mode == 'release' }}
