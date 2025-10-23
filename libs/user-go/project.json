@@ -14,18 +14,6 @@
 		"tidy": {
 			"executor": "@nx-go/nx-go:tidy"
 		},
-		"coverage": {
-			"executor": "nx:run-commands",
-			"options": {
-				"commands": [
-					"go test -cover -coverprofile=../../coverage/{projectRoot}/coverage.out -covermode=atomic ./...",
-					"go tool cover -html=../../coverage/{projectRoot}/coverage.out -o ../../coverage/{projectRoot}/coverage.html"
-				],
-				"cwd": "{projectRoot}",
-				"parallel": false
-			},
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
-		},
 		"nx-release-publish": {
 			"executor": "nx:noop"
 		}
