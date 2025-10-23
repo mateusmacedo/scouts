@@ -118,45 +118,37 @@ pnpm nx list @nx-go/nx-go
 
 ## 🔄 Release e CI/CD
 
+### Workflows disponíveis
+
+- **`ci.yml`** – Executa lint, testes e build apenas dos projetos afetados em pushes e pull requests, com caches de pnpm e Go para acelerar execuções.
+- **`release.yml`** – Ao receber pushes na `main` ou novas tags, gera changelog, versiona os pacotes e publica artefatos utilizando os comandos `pnpm nx release version` e `pnpm nx release publish`.
+- **`release-validation.yml`** – Valida PRs executando `pnpm nx release version --dry-run`, garantindo a conformidade das convenções de commit e a integridade da configuração de release antes do merge.
+
 ### Release de Projetos
 
 ```bash
-# Dry-run para preview (recomendado)
-pnpm release:dry-run
+# Pré-visualizar mudanças de versão e changelog
+pnpm nx release version --dry-run
 
-# Release completo (via CI/CD automático ao push main)
-# Ou manualmente via GitHub Actions UI
+# Atualizar versões, changelog e tags localmente
+pnpm release:version
 
-# Scripts locais (avançado)
-pnpm release:version  # Apenas versionamento
-pnpm release:publish  # Apenas publicação
+# Publicar pacotes após versionamento
+pnpm release:publish
 ```
 
-### CI/CD Simplificado
-
-O workspace possui uma **arquitetura simplificada de workflows** baseada em Nx Release 20.8.2:
-
-- **🚀 CI otimizado** - Executa apenas projetos afetados com cache inteligente
-- **📦 Release automático** - Trigger automático ao push na `main`
-- **✅ Validação em PRs** - Dry-run automático para preview
-- **🛡️ Quality Gate** - Integração com SonarQube
-- **🔧 Menos complexidade** - 60% menos código de workflow
-
-**Arquitetura de Workflows:**
-- `ci.yml` - CI para desenvolvimento
-- `release.yml` - Release simplificado (~110 linhas)
-- `release-validation.yml` - Validação inline para PRs (~65 linhas)
-- `_reusable-*` - Componentes reutilizáveis (setup, validate, quality-gate)
-
-**Melhorias vs Versão Anterior:**
-- ✅ 60% menos código nos workflows
-- ✅ 86% menos scripts customizados
-- ✅ 95%+ conformidade com Nx Release best practices
-- ✅ Fluxo linear e transparente
-
-Para mais detalhes, consulte:
+Para detalhes adicionais do processo consulte:
 - [Processo de Release](docs/RELEASE_PROCESS.md)
 - [Arquitetura de Workflows](docs/WORKFLOWS_ARCHITECTURE.md)
+
+### 🔐 Segredos e Variáveis de Ambiente
+
+Os workflows dependem dos seguintes segredos configurados no repositório:
+
+| Nome | Uso | Observações |
+| --- | --- | --- |
+| `NPM_TOKEN` | Autenticação para `pnpm nx release publish` publicar pacotes no npm. | Deve possuir permissão de publicação nos registries necessários. Também é exportado como `NODE_AUTH_TOKEN`. |
+| `GITHUB_TOKEN` | Operações de versionamento, criação de changelog e push de tags realizados pelo Nx Release. | O token padrão (`secrets.GITHUB_TOKEN`) já é suficiente; use um token com permissão de escrita em `contents` se necessário. |
 
 ## 🛠️ Ferramentas de Desenvolvimento
 
