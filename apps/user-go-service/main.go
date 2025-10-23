@@ -9,3 +9,5 @@ import (
 func main() {
 	fmt.Println(gouser.GoUser("from user-go lib"))
 }
+
+// fake value to change and force affected files
