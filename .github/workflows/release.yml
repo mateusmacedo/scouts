@@ -1,24 +1,14 @@
 name: Release
 
-# Comportamento do workflow:
-# - workflow_dispatch: Execução manual com opção de dry-run
-# - pull_request (main): Sempre dry-run para validação
-# - push (main): Execução real do release
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
-      dry-run:
-        description: 'Executar em modo dry-run (não publica)'
-        type: boolean
-        default: true
       version-specifier:
-        description: 'Especificador de versão (deixe vazio para auto via conventional commits)'
+        description: 'Version specifier (opcional - deixe vazio para conventional commits)'
         type: string
         required: false
-      skip-validation:
-        description: 'Pular validações de consistência (não recomendado)'
-        type: boolean
-        default: false
 
 concurrency:
   group: release-${{ github.ref }}
@@ -28,7 +18,6 @@ permissions:
   contents: write
   packages: write
   id-token: write
-  actions: read
 
 env:
   NODE_VERSION: '20'
@@ -36,67 +25,16 @@ env:
   PNPM_VERSION: '9'
 
 jobs:
-  validate:
-    uses: ./.github/workflows/_reusable-release-steps.yml
-    with:
-      dry-run: false
-      skip-validation: ${{ inputs.skip-validation || false }}
-    secrets: inherit
-
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: always() && (needs.validate.result == 'success' || inputs.skip-validation == true)
-    timeout-minutes: 20
-    outputs:
-      execution-mode: ${{ steps.execution-mode.outputs.mode }}
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          filter: tree:0
           token: ${{ secrets.GH_TOKEN }}
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            pnpm-store-${{ runner.os }}-
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('**/package.json', '**/pnpm-lock.yaml', 'nx.json') }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-${{ hashFiles('**/package.json', '**/pnpm-lock.yaml', 'nx.json') }}-
-            nx-${{ runner.os }}-
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
-          restore-keys: |
-            go-${{ runner.os }}-
-
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            dist/
-            apps/*/dist/
-            libs/*/dist/
-          key: build-${{ runner.os }}-${{ hashFiles('**/package.json', '**/tsconfig*.json') }}-${{ github.sha }}
-          restore-keys: |
-            build-${{ runner.os }}-${{ hashFiles('**/package.json', '**/tsconfig*.json') }}-
-            build-${{ runner.os }}-
 
       - name: Setup Git
         run: |
@@ -130,147 +68,58 @@ jobs:
       - name: Set up Nx SHAs
         uses: nrwl/nx-set-shas@v4
 
-      - name: Print Environment Info
-        run: pnpm nx report
-
-      - name: Build affected projects
-        run: pnpm nx affected -t build --parallel=3
-
-      - name: Determine execution mode
-        id: execution-mode
+      - name: Validate Go sync before release
         run: |
-          # Para workflow_dispatch, usar input do usuário
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
-              echo "mode=dry-run" >> $GITHUB_OUTPUT
-              echo "🔍 Modo dry-run selecionado manualmente"
-            else
-              echo "mode=release" >> $GITHUB_OUTPUT
-              echo "🚀 Modo release selecionado manualmente"
-            fi
-          # Para PRs, sempre dry-run
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "mode=dry-run" >> $GITHUB_OUTPUT
-            echo "🔍 PR detectado - executando em modo dry-run"
-          # Para push na main, executar release real
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "mode=release" >> $GITHUB_OUTPUT
-            echo "🚀 Push na main detectado - executando release real"
-          else
-            echo "mode=dry-run" >> $GITHUB_OUTPUT
-            echo "🔍 Trigger não reconhecido - executando em modo dry-run por segurança"
+          echo "🔍 Validando sincronização Go..."
+          chmod +x scripts/sync-go-versions.sh
+          ./scripts/sync-go-versions.sh
+          
+          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
+            echo "❌ go.mod desatualizado! Execute: pnpm nx run scouts/user-go-service:sync-go-deps"
+            git diff apps/user-go-service/go.mod
+            exit 1
           fi
+          echo "✅ go.mod sincronizado"
 
       - name: Release (Version & Changelog)
         run: |
-          if [[ "${{ steps.execution-mode.outputs.mode }}" == "dry-run" ]]; then
-            echo "🔍 Executando em modo dry-run..."
-            pnpm nx release --dry-run
+          echo "🚀 Executando Nx Release..."
+          if [[ -n "${{ inputs.version-specifier }}" ]]; then
+            echo "ℹ️  Usando version specifier: ${{ inputs.version-specifier }}"
+            pnpm nx release --skip-publish ${{ inputs.version-specifier }}
           else
-            if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
-              echo "🎉 Executando PRIMEIRA RELEASE dos projetos..."
-              echo "ℹ️  Esta é a primeira publicação dos packages no NPM"
-            else
-              echo "🔄 Executando release subsequente..."
-            fi
+            echo "ℹ️  Usando conventional commits para versionamento"
             pnpm nx release --skip-publish
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Setup sync script permissions
-        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
-        run: chmod +x scripts/sync-go-versions.sh
-
-      - name: Sync Go dependencies
-        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
+      - name: Sync Go dependencies post-release
         run: |
+          echo "🔄 Sincronizando dependências Go pós-release..."
           ./scripts/sync-go-versions.sh
-
-          # Commit se houver mudanças
+          
+          # Commit apenas se houver mudanças
           if [[ -n $(git status -s apps/user-go-service/) ]]; then
             GO_USER_VERSION=$(node -p "require('./libs/user-go/package.json').version")
             git add apps/user-go-service/go.mod apps/user-go-service/go.sum
             git commit -m "chore(user-go-service): sync user-go dependency to v${GO_USER_VERSION}"
+            echo "✅ Dependências Go sincronizadas e commitadas"
+          else
+            echo "ℹ️  Nenhuma mudança em dependências Go"
           fi
 
       - name: Publish packages
-        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
-        run: pnpm nx release publish --force
+        run: |
+          echo "📦 Publicando packages no NPM..."
+          pnpm nx release publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push changes and tags
-        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
         run: |
+          echo "🔀 Enviando mudanças e tags para repositório..."
           git push origin ${{ github.ref_name }}
           git push --tags
-
-      - name: Create GitHub Release
-        if: ${{ steps.execution-mode.outputs.mode == 'release' }}
-        run: |
-          echo "📝 GitHub Release será criado automaticamente pelo Nx Release"
-          echo "Verifique em: https://github.com/${{ github.repository }}/releases"
-
-  rollback:
-    name: Rollback (if needed)
-    runs-on: ubuntu-latest
-    needs: [release]
-    if: failure() && needs.release.outputs.execution-mode == 'release'
-    timeout-minutes: 3
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_TOKEN }}
-
-      - name: Setup Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Capture current state
-        id: current
-        run: |
-          echo "tags=$(git tag --points-at HEAD | grep '@scouts/' | tr '\n' ' ' || echo '')" >> $GITHUB_OUTPUT
-          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-          echo "is_release_commit=$(git log -1 --pretty=%B | grep -q 'chore(release)' && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
-
-      - name: Rollback changes
-        run: |
-          TAGS="${{ steps.current.outputs.tags }}"
-          IS_RELEASE="${{ steps.current.outputs.is_release_commit }}"
-          
-          echo "🔄 Executando rollback seguro..."
-          
-          # 1. Deletar apenas tags criadas NESTE release (apontam para HEAD)
-          if [[ -n "$TAGS" ]]; then
-            echo "Deletando tags criadas nesta execução:"
-            for tag in $TAGS; do
-              echo "  - $tag"
-              git push --delete origin "$tag" 2>/dev/null || true
-              git tag -d "$tag"
-            done
-          else
-            echo "ℹ️  Nenhuma tag criada nesta execução"
-          fi
-          
-          # 2. Reverter commit apenas se for commit de release
-          if [[ "$IS_RELEASE" == "true" ]]; then
-            echo "Revertendo commit de release..."
-            git revert HEAD --no-edit
-            git push origin ${{ github.ref_name }}
-          else
-            echo "ℹ️  Último commit não é de release, nada a reverter"
-          fi
-          
-          echo "✅ Rollback concluído"
-
-      - name: Final notification
-        run: |
-          echo "❌ Release falhou e foi revertido"
-          echo "📋 Tags deletadas: ${{ steps.current.outputs.tags }}"
-          echo "🔍 Verifique os logs para identificar o problema"
-          echo "🔄 Execute novamente após correções"
+          echo "✅ Release concluído com sucesso!"

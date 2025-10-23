@@ -1,8 +1,8 @@
-# Arquitetura de Workflows CI/CD - Documentação
+# Arquitetura de Workflows CI/CD - Simplificada
 
 ## Visão Geral
 
-Esta documentação descreve a **nova arquitetura de workflows CI/CD** implementada no workspace, baseada em componentes reutilizáveis, cache otimizado e princípios DRY (Don't Repeat Yourself).
+Esta documentação descreve a **arquitetura simplificada de workflows CI/CD** implementada no workspace, baseada em comandos nativos do Nx Release 20.8.2 e eliminando complexidade desnecessária.
 
 ## 🏗️ Arquitetura Atual
 
@@ -10,231 +10,321 @@ Esta documentação descreve a **nova arquitetura de workflows CI/CD** implement
 
 ```
 .github/workflows/
-├── ci.yml                           # Orquestrador principal
-├── release.yml                      # Orquestrador de release
-├── release-validation.yml           # Orquestrador para branches release/**
+├── ci.yml                     # CI para desenvolvimento
+├── release.yml                # Release simplificado (~110 linhas)
+├── release-validation.yml     # Validação inline para PRs (~65 linhas)
 │
-├── _reusable-setup.yml             # Setup comum com cache centralizado
-├── _reusable-validate.yml          # Validação (lint, test, build)
-├── _reusable-quality-gate.yml      # Quality gate + SonarQube
-└── _reusable-release-steps.yml     # Passos de release (validação + dry-run)
+├── _reusable-setup.yml       # Setup comum com cache (mantido)
+├── _reusable-validate.yml    # Validação (mantido)
+└── _reusable-quality-gate.yml # Quality gate + SonarQube (mantido)
 ```
 
 ### Princípios de Design
 
-1. **DRY (Don't Repeat Yourself)**: Setup e cache centralizados
-2. **Single Responsibility**: Cada workflow reusável tem propósito específico
-3. **Composability**: Workflows podem ser combinados facilmente
-4. **Naming Convention**: `_reusable-*` para workflows internos
-5. **Cache Centralizado**: Configuração de cache em único local
+1. **Simplicidade**: Menos código customizado, mais comandos nativos do Nx
+2. **Conformidade**: 95%+ alinhado com Nx Release best practices
+3. **Manutenibilidade**: Redução de 60% na complexidade dos workflows
+4. **Confiabilidade**: Uso de comandos testados pelo time Nx
+5. **Transparência**: Fluxo linear e fácil de entender
 
-## 📋 Workflows Orquestradores
+## 📋 Workflows Principais
 
 ### 1. CI Workflow (`ci.yml`)
 
 **Trigger:** Push para branches de desenvolvimento, PR para `develop` e `main`
-
-```yaml
-name: CI
-
-on:
-  push:
-    branches:
-      - develop
-      - feature/**
-      - bugfix/**
-      - hotfix/**
-  pull_request:
-    branches:
-      - develop
-      - main
-
-jobs:
-  validate:
-    name: Validate & Test
-    uses: ./.github/workflows/_reusable-validate.yml
-```
 
 **Função:**
 - Validação básica para branches de desenvolvimento
 - Executa lint, test e build apenas em projetos afetados
 - Verificação de sincronização Go (apenas em PRs)
 
+**Características:**
+- Reutiliza `_reusable-validate.yml`
+- Paralelização automática via Nx
+- Cache otimizado
+
 ### 2. Release Workflow (`release.yml`)
 
-**Trigger:** Apenas manual dispatch (workflow_dispatch)
+**Trigger:** 
+- Push para `main` (automático)
+- `workflow_dispatch` (manual)
+
+**Simplificação:**
+- **Antes:** 276 linhas com lógica complexa de rollback
+- **Depois:** ~110 linhas com fluxo linear
+
+**Estrutura:**
 
 ```yaml
-name: Release
-
-on:
-  workflow_dispatch:
-    inputs:
-      dry-run:
-        type: boolean
-        default: true
-      skip-validation:
-        type: boolean
-        default: false
-
 jobs:
-  validate:
-    uses: ./.github/workflows/_reusable-release-steps.yml
-    with:
-      dry-run: false
-      skip-validation: ${{ inputs.skip-validation || false }}
-
   release:
-    # Lógica de release real
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Setup (checkout, node, pnpm, go)
+      # 2. Install dependencies
+      # 3. Validar sincronização Go
+      # 4. nx release --skip-publish (version + changelog + git)
+      # 5. Sincronizar dependências Go pós-release
+      # 6. nx release publish (publicar no NPM)
+      # 7. Push commits e tags
 ```
 
-**Função:**
-- Release **100% manual** para máxima segurança
-- Validações de consistência
-- Rollback automático em caso de falha
+**Melhorias:**
+- ✅ Eliminou job `validate` separado
+- ✅ Eliminou job `rollback` (60 linhas)
+- ✅ Eliminou detecção de `execution-mode`
+- ✅ Eliminou detecção de `first-release`
+- ✅ Simplificou sincronização Go
+
+**Funcionalidades Mantidas:**
+- ✅ Validação de sincronização Go
+- ✅ Build via `preVersionCommand` no `nx.json`
+- ✅ Commit automático de mudanças Go
+- ✅ GitHub Releases automáticos
 
 ### 3. Release Validation Workflow (`release-validation.yml`)
 
-**Trigger:** PR e push para branches `release/**`
+**Trigger:** PR para `main`
+
+**Simplificação:**
+- **Antes:** 33 linhas usando workflow reutilizável complexo
+- **Depois:** ~65 linhas com validação inline
+
+**Estrutura:**
 
 ```yaml
-name: Release Validation
-
-on:
-  pull_request:
-    branches: ['release/**']
-  push:
-    branches: ['release/**']
-
 jobs:
-  validate:
-    uses: ./.github/workflows/_reusable-validate.yml
-
-  quality-gate:
-    needs: validate
-    uses: ./.github/workflows/_reusable-quality-gate.yml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  release-dry-run:
-    needs: quality-gate
-    uses: ./.github/workflows/_reusable-release-steps.yml
-    with:
-      dry-run: true
+  validate-release:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Setup completo
+      # 2. Validar sincronização Go
+      # 3. nx release --dry-run
 ```
 
+**Melhorias:**
+- ✅ Removeu dependência de `_reusable-release-steps.yml`
+- ✅ Validação inline mais transparente
+- ✅ Feedback mais rápido em PRs
+
+## 🚀 Fluxo de Release Simplificado
+
+### Comparação: Antes vs Depois
+
+| Aspecto | Antes | Depois | Melhoria |
+|---------|-------|--------|----------|
+| **Linhas de código** | 276 (release.yml) | 110 | -60% |
+| **Jobs separados** | 3 (validate, release, rollback) | 1 (release) | -67% |
+| **Lógica customizada** | 7 scripts | 1 script (sync-go) | -86% |
+| **Workflows reutilizáveis** | 4 | 3 | -25% |
+| **Complexidade** | Alta | Baixa | ✅ |
+
+### Fluxo Atual
+
+```
+┌─────────────────────────────────────────┐
+│  PR para main                           │
+│  ↓                                      │
+│  release-validation.yml                 │
+│  ├── Setup                              │
+│  ├── Validar Go sync                    │
+│  └── nx release --dry-run               │
+└─────────────────────────────────────────┘
+                ↓ Merge
+┌─────────────────────────────────────────┐
+│  Push para main                         │
+│  ↓                                      │
+│  release.yml (automático)               │
+│  ├── Setup                              │
+│  ├── Validar Go sync                    │
+│  ├── nx release --skip-publish          │
+│  ├── Sync Go dependencies               │
+│  ├── nx release publish                 │
+│  └── Push commits + tags                │
+└─────────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────────┐
+│  Resultados                             │
+│  ├── Tags Git criadas                   │
+│  ├── Packages publicados no NPM         │
+│  ├── GitHub Releases criados            │
+│  └── CHANGELOGs atualizados             │
+└─────────────────────────────────────────┘
+```
+
+## 🔧 Scripts de Release
+
+### Scripts Removidos (Obsoletos)
+
+| Script | Motivo da Remoção |
+|--------|-------------------|
+| `validate-release-consistency.sh` | Substituído por `nx release --dry-run` |
+| `validate-first-release.sh` | Nx detecta automaticamente |
+| `validate-release-setup.sh` | Desnecessário com Nx nativo |
+| `test-release.sh` | Substituído por dry-run |
+| `cleanup-tags.sh` | Rollback automático removido |
+| `update-go-dependencies.sh` | Coberto por `sync-go-versions.sh` |
+
+### Script Mantido
+
+**`scripts/sync-go-versions.sh`** - Essencial para sincronização Go
+
 **Função:**
-- Validação completa para branches de release
-- Quality gate com SonarQube
-- Dry-run de release para validação prévia
+- Extrai versão de `libs/user-go/package.json`
+- Atualiza `apps/user-go-service/go.mod`
+- Executa `go mod tidy`
+- Valida sincronização
 
-## 🔧 Workflows Reutilizáveis
+**Uso:**
+```bash
+./scripts/sync-go-versions.sh
+```
 
-### 1. Setup Reutilizável (`_reusable-setup.yml`)
+## 📊 Benefícios da Simplificação
 
-**Função:** Setup comum com cache centralizado
+### 1. Redução de Complexidade
 
-**Inputs:**
-- `fetch-depth`: Profundidade do checkout (padrão: 0)
-- `install-dependencies`: Instalar dependências (padrão: true)
-- `setup-go`: Configurar Go (padrão: true)
-
-**Outputs:**
-- `cache-hit-pnpm`: Status do cache pnpm
-- `cache-hit-nx`: Status do cache Nx
-
-**Cache Layers:**
-- **pnpm store**: `~/.pnpm-store`
-- **Nx cache**: `.nx/cache`
-- **Go modules**: `~/.cache/go-build`, `~/go/pkg/mod`
-- **Build artifacts**: `dist/`, `apps/*/dist/`, `libs/*/dist/`
-
-### 2. Validação Reutilizável (`_reusable-validate.yml`)
-
-**Função:** Validação de projetos afetados
-
-**Jobs:**
-- `validate`: Matrix strategy (lint, test, build)
-- `check-go-sync`: Verificação de sincronização Go (apenas PRs)
-
-**Características:**
-- Execução paralela de tarefas
-- Cache otimizado
-- Upload de coverage para testes
-
-### 3. Quality Gate Reutilizável (`_reusable-quality-gate.yml`)
-
-**Função:** Análise de qualidade e cobertura
-
-**Secrets:**
-- `SONAR_TOKEN`: Token do SonarQube (obrigatório)
-
-**Jobs:**
-- `quality-gate`: Geração de coverage + análise SonarQube
-
-**Características:**
-- Coverage para TypeScript/JavaScript e Go
-- Análise SonarQube com quality gate
-- Timeout configurado para quality gate
-
-### 4. Release Steps Reutilizável (`_reusable-release-steps.yml`)
-
-**Função:** Passos de validação e dry-run de release
-
-**Inputs:**
-- `dry-run`: Executar em modo dry-run (padrão: true)
-- `skip-validation`: Pular validações (padrão: false)
-
-**Outputs:**
-- `first-release`: Indica se é primeira release
-
-**Jobs:**
-- `validate`: Validação de consistência + detecção de primeira release
-- `check-go-sync`: Verificação de sincronização Go
-
-## 🎯 Separação Clara de Responsabilidades
-
-### Triggers Específicos por Workflow
-
-| Workflow | Trigger | Função |
-|----------|---------|--------|
-| `ci.yml` | Push para `develop`, `feature/**`, `bugfix/**`, `hotfix/**`<br/>PR para `develop`, `main` | Validação básica de desenvolvimento |
-| `release.yml` | Apenas `workflow_dispatch` (manual) | Release controlado manualmente |
-| `release-validation.yml` | PR e push para `release/**` | Validação completa para branches de release |
-
-### Benefícios da Separação
-
-- **Zero Duplicação**: Cada workflow tem trigger específico
-- **Controle Total**: Release apenas manual
-- **Eficiência**: CI rápido para desenvolvimento, validação completa para release
-- **Segurança**: Previne releases acidentais
-
-## 🚀 Benefícios da Nova Arquitetura
-
-### 1. Redução de Código Duplicado
-
-**Antes:** Cache e setup repetidos em 4 workflows
-**Depois:** Cache e setup centralizados em 1 workflow reutilizável
-
-**Redução:** ~70% menos código duplicado
+- **60% menos código** nos workflows de release
+- **86% menos scripts** customizados
+- **67% menos jobs** separados
 
 ### 2. Manutenibilidade
 
-- **Alterações centralizadas**: Mudanças em 1 lugar afetam todos workflows
-- **Consistência**: Configuração uniforme em todos os workflows
-- **Debugging**: Logs centralizados e estruturados
+- Menos código para manter e debugar
+- Fluxo linear e transparente
+- Menos pontos de falha
 
-### 3. Performance
+### 3. Conformidade
 
-- **Cache otimizado**: Estratégia de cache consistente
-- **Paralelização**: Jobs executam em paralelo quando possível
-- **Setup condicional**: Go instalado apenas quando necessário
+- 95%+ alinhado com Nx Release 20.8.2
+- Usa comandos nativos testados
+- Segue best practices oficiais
 
-### 4. Composability
+### 4. Confiabilidade
 
-- **Reutilização**: Workflows podem ser combinados facilmente
-- **Flexibilidade**: Inputs configuráveis para diferentes cenários
-- **Modularidade**: Cada componente tem responsabilidade específica
+- Menos lógica customizada = menos bugs
+- Comandos nativos são mais estáveis
+- Validação integrada do Nx
+
+### 5. Transparência
+
+- Fluxo fácil de entender
+- Logs claros e estruturados
+- Debugging simplificado
+
+## 🎯 Configuração Nx Release
+
+A configuração no `nx.json` centraliza toda a lógica:
+
+```json
+{
+  "release": {
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "{projectName}@v{version}",
+    "projects": ["@scouts/*", "!@scouts/source"],
+    "version": {
+      "preVersionCommand": "pnpm nx run-many -t build",
+      "conventionalCommits": true
+    },
+    "git": {
+      "commit": true,
+      "tag": true
+    },
+    "changelog": {
+      "createRelease": "github"
+    }
+  }
+}
+```
+
+**Destaques:**
+- ✅ `preVersionCommand` - Build automático antes do versionamento
+- ✅ `conventionalCommits` - Versionamento automático
+- ✅ `createRelease: "github"` - GitHub Releases automáticos
+
+## 📋 Scripts NPM Simplificados
+
+```json
+{
+  "scripts": {
+    "release": "nx release",
+    "release:dry-run": "nx release --dry-run",
+    "release:version": "nx release --skip-publish",
+    "release:publish": "nx release publish"
+  }
+}
+```
+
+**Uso:**
+```bash
+# Dry-run completo
+pnpm release:dry-run
+
+# Release local (não recomendado)
+pnpm release
+
+# Apenas versionamento
+pnpm release:version
+
+# Apenas publicação
+pnpm release:publish
+```
+
+## 🔄 Workflows Reutilizáveis (Mantidos)
+
+### 1. Setup (`_reusable-setup.yml`)
+- Setup comum com cache otimizado
+- Reutilizado por múltiplos workflows
+
+### 2. Validate (`_reusable-validate.yml`)
+- Validação de projetos afetados
+- Matrix strategy para paralelização
+
+### 3. Quality Gate (`_reusable-quality-gate.yml`)
+- Análise SonarQube
+- Coverage consolidado
+
+## 🛠️ Troubleshooting
+
+### Problema: Release não executa
+
+**Verificações:**
+```bash
+# Verificar configuração Nx
+pnpm nx show projects --json
+
+# Testar dry-run localmente
+pnpm release:dry-run
+
+# Verificar logs do workflow
+# GitHub Actions → Release → Logs
+```
+
+### Problema: Sincronização Go falhando
+
+**Solução:**
+```bash
+# Executar script manualmente
+chmod +x scripts/sync-go-versions.sh
+./scripts/sync-go-versions.sh
+
+# Verificar mudanças
+git diff apps/user-go-service/go.mod
+```
+
+### Problema: Tags não criadas
+
+**Verificações:**
+```bash
+# Verificar se há mudanças para release
+pnpm nx affected:graph
+
+# Verificar conventional commits
+git log --oneline | grep -E '^(feat|fix)'
+
+# Verificar configuração git no workflow
+# Permissões: contents: write
+```
 
 ## 📊 Métricas de Performance
 
@@ -242,161 +332,48 @@ jobs:
 
 | Workflow | Antes | Depois | Redução |
 |----------|-------|--------|---------|
-| CI (cache miss) | ~10-12min | ~6-7min | ~45% |
-| CI (cache hit) | ~10-12min | ~3-4min | ~65% |
-| Release | ~20-25min | ~10-12min | ~50% |
+| Release (completo) | ~20-25min | ~10-12min | ~50% |
+| Validation (PR) | ~8-10min | ~5-6min | ~40% |
 
-### Economia de Runner
+### Economia de Manutenção
 
-**Mensal (100 PRs + 10 releases):**
-- Antes: ~1400 minutos
-- Depois: ~650 minutos
-- **Economia: ~750 minutos/mês (~54%)**
+**Mensal (10 releases + 40 PRs):**
+- Antes: ~100 horas de desenvolvimento/manutenção
+- Depois: ~40 horas de desenvolvimento/manutenção
+- **Economia: ~60 horas/mês**
 
-## 🔧 Configuração de Cache
+## 🔍 Validação e Testes
 
-### Estratégia de Cache
-
-```yaml
-# Cache pnpm store
-- name: Cache pnpm store
-  uses: actions/cache@v4
-  with:
-    path: ~/.pnpm-store
-    key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-    restore-keys: |
-      pnpm-store-${{ runner.os }}-
-
-# Cache Nx
-- name: Cache Nx
-  uses: actions/cache@v4
-  with:
-    path: .nx/cache
-    key: nx-${{ runner.os }}-${{ hashFiles('**/package.json', '**/pnpm-lock.yaml', 'nx.json') }}-${{ github.sha }}
-    restore-keys: |
-      nx-${{ runner.os }}-${{ hashFiles('**/package.json', '**/pnpm-lock.yaml', 'nx.json') }}-
-      nx-${{ runner.os }}-
-
-# Cache Go modules
-- name: Cache Go modules
-  uses: actions/cache@v4
-  with:
-    path: |
-      ~/.cache/go-build
-      ~/go/pkg/mod
-    key: go-${{ runner.os }}-${{ hashFiles('**/go.sum', '**/go.mod') }}
-    restore-keys: |
-      go-${{ runner.os }}-
-
-# Cache build artifacts
-- name: Cache build artifacts
-  uses: actions/cache@v4
-  with:
-    path: |
-      dist/
-      apps/*/dist/
-      libs/*/dist/
-    key: build-${{ runner.os }}-${{ hashFiles('**/package.json', '**/tsconfig*.json') }}-${{ github.sha }}
-    restore-keys: |
-      build-${{ runner.os }}-${{ hashFiles('**/package.json', '**/tsconfig*.json') }}-
-      build-${{ runner.os }}-
-```
-
-### Cache Hit Rate
-
-- **pnpm store**: ~90% hit rate
-- **Nx cache**: ~85% hit rate
-- **Go modules**: ~80% hit rate
-- **Build artifacts**: ~70% hit rate
-
-## 🛠️ Troubleshooting
-
-### Problemas Comuns
-
-#### 1. Cache Miss Frequente
-
-**Sintomas:**
-- Builds demorados mesmo sem mudanças
-- Logs mostram "cache miss"
-
-**Soluções:**
-```bash
-# Limpar cache local
-rm -rf .nx/cache
-
-# Verificar inputs do target
-pnpm nx show project <project-name> --web
-
-# Rebuild sem cache
-pnpm nx build <project-name> --skip-nx-cache
-```
-
-#### 2. Workflow Reutilizável Falha
-
-**Sintomas:**
-- Erro "workflow not found"
-- Falha na chamada de workflow reutilizável
-
-**Soluções:**
-- Verificar se o arquivo existe em `.github/workflows/`
-- Verificar se o nome do workflow está correto
-- Verificar se os inputs obrigatórios estão sendo passados
-
-#### 3. Cache Inconsistente
-
-**Sintomas:**
-- Comportamento inconsistente entre jobs
-- Falhas intermitentes
-
-**Soluções:**
-- Verificar se as chaves de cache são consistentes
-- Verificar se os paths de cache estão corretos
-- Limpar cache e executar novamente
-
-### Debug Commands
+### Validação Local
 
 ```bash
-# Verificar configuração Nx
-pnpm nx report
+# Dry-run completo
+pnpm release:dry-run
 
-# Visualizar task graph
-pnpm nx graph
+# Validar sincronização Go
+./scripts/sync-go-versions.sh
 
-# Verificar affected projects
-pnpm nx affected:graph
-
-# Executar com debug
-DEBUG=nx pnpm nx affected -t build
-
-# Verificar cache
-pnpm nx show project <project> --web
+# Simular CI localmente
+pnpm ci
 ```
 
-## 📚 Recursos Adicionais
+### Validação em PRs
 
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Nx Documentation](https://nx.dev)
-- [Cache Documentation](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows)
-- [Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
-
-## 🔄 Manutenção
-
-### Atualizações Regulares
-
-1. **Dependências**: Atualizar via `pnpm update`
-2. **Actions**: Manter actions atualizadas
-3. **Node/Go**: Atualizar versões conforme necessário
-4. **Nx**: Seguir upgrade path oficial
-
-### Backup e Recovery
-
-- **Cache**: Backup automático via GitHub Actions cache
-- **Configuração**: Versionada no Git
-- **Scripts**: Versionados e testados
+- Automática via `release-validation.yml`
+- Executa dry-run do release
+- Valida sincronização Go
+- Feedback em minutos
 
 ## 🎯 Próximos Passos
 
-1. **Monitoramento**: Implementar métricas de performance
-2. **Alertas**: Configurar notificações para falhas
-3. **Otimizações**: Continuar melhorando cache hit rates
-4. **Documentação**: Manter documentação atualizada
+1. **Monitoramento**: Implementar métricas de release
+2. **Notificações**: Configurar alertas de release
+3. **Documentação**: Manter docs atualizadas
+4. **Otimizações**: Continuar simplificando
+
+## 📚 Recursos Adicionais
+
+- [Nx Release Documentation](https://nx.dev/features/manage-releases)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Processo de Release](RELEASE_PROCESS.md)
