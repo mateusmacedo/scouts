@@ -167,7 +167,7 @@ jobs:
           ./scripts/sync-go-versions.sh
           if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
             echo "❌ go.mod está desatualizado!"
-            echo "Execute: pnpm nx run @scouts/user-go-service:sync-go-deps"
+            echo "Execute: pnpm nx run scouts/user-go-service:sync-go-deps"
             git diff apps/user-go-service/go.mod
             exit 1
           fi

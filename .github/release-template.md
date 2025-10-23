@@ -62,7 +62,7 @@ For detailed changelog, see individual project CHANGELOG.md files:
 - [@scouts/logger-node](https://github.com/mateusmacedo/scouts/blob/main/libs/logger-node/CHANGELOG.md)
 - [@scouts/utils-nest](https://github.com/mateusmacedo/scouts/blob/main/libs/utils-nest/CHANGELOG.md)
 - [@scouts/user-node](https://github.com/mateusmacedo/scouts/blob/main/libs/user-node/CHANGELOG.md)
-- [@scouts/user-go](https://github.com/mateusmacedo/scouts/blob/main/libs/user-go/CHANGELOG.md)
+- [scouts/user-go](https://github.com/mateusmacedo/scouts/blob/main/libs/user-go/CHANGELOG.md)
 
 ## 🏷️ Git Tags
 
