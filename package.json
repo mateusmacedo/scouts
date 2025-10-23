@@ -6,8 +6,15 @@
   "scripts": {
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
+    "test:coverage": "nx run-many -t test --coverage",
+    "test:user": "nx run-many -t test --projects=@scouts/user-node,scouts/user-go",
     "lint": "nx run-many -t lint",
+    "format": "nx run-many -t format",
+    "check-boundaries": "nx run-many -t check-boundaries",
+    "dev:bff-nest": "nx serve bff-nest",
+    "dev:user-go-service": "nx serve user-go-service",
     "release": "nx release",
+    "release:dry-run": "nx release --dry-run",
     "release:version": "nx release version",
     "release:publish": "nx release publish"
   },
@@ -45,6 +52,7 @@
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
     "@swc/jest": "^0.2.39",
+    "@types/express": "5.0.3",
     "@types/jest": "^29.5.12",
     "@types/node": "~18.16.9",
     "eslint": "^9.8.0",
