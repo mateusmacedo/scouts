@@ -12,7 +12,7 @@
 			}
 		}
 	},
-	"tags": ["type:lib", "scope:internal"],
+        "tags": ["type:lib", "scope:user-node"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

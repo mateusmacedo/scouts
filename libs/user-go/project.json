@@ -3,7 +3,7 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "library",
 	"sourceRoot": "libs/user-go",
-	"tags": ["type:lib", "scope:internal"],
+        "tags": ["type:lib", "scope:user-go"],
 	"targets": {
 		"test": {
 			"executor": "@nx-go/nx-go:test"

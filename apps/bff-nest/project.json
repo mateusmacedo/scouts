@@ -3,7 +3,7 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "apps/bff-nest/src",
 	"projectType": "application",
-	"tags": ["type:app", "scope:internal"],
+        "tags": ["type:app", "scope:user-node"],
 	"targets": {
 		"build": {
 			"executor": "nx:run-commands",

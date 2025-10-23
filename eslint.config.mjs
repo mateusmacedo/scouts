@@ -24,8 +24,28 @@ export default [
           allow: [String.raw`^.*/eslint(\.base)?\.config\.[cm]?js$`],
           depConstraints: [
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: ['type:lib'],
+            },
+            {
+              sourceTag: 'type:lib',
+              onlyDependOnLibsWithTags: ['type:lib'],
+            },
+            {
+              sourceTag: 'scope:user-node',
+              onlyDependOnLibsWithTags: ['scope:user-node', 'scope:logger'],
+            },
+            {
+              sourceTag: 'scope:user-go',
+              onlyDependOnLibsWithTags: ['scope:user-go'],
+            },
+            {
+              sourceTag: 'scope:logger',
+              onlyDependOnLibsWithTags: ['scope:logger'],
+            },
+            {
+              sourceTag: 'scope:tooling',
+              onlyDependOnLibsWithTags: ['scope:tooling'],
             },
           ],
         },

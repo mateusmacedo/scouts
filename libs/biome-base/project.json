@@ -3,6 +3,6 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"projectType": "library",
 	"sourceRoot": "libs/base-biome",
-	"tags": ["type:lib", "scope:internal"],
+        "tags": ["type:lib", "scope:tooling"],
 	"targets": {}
 }

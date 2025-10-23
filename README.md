@@ -88,6 +88,7 @@ pnpm nx show project bff-nest
 - **[Geradores Nx](docs/NX_GENERATORS.md)** - Como criar novos projetos e usar geradores
 - **[Processo de Release](docs/RELEASE_PROCESS.md)** - Como fazer releases dos projetos
 - **[Arquitetura de Workflows](docs/WORKFLOWS_ARCHITECTURE.md)** - Arquitetura moderna de CI/CD
+- **[Arquitetura de Domínios](docs/ARCHITECTURE.md)** - Tags e restrições de dependência entre projetos
 
 ### Criar Novos Projetos
 

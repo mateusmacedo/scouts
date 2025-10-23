@@ -12,7 +12,7 @@
 			}
 		}
 	},
-	"tags": ["type:lib", "scope:internal"],
+        "tags": ["type:lib", "scope:logger"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",
