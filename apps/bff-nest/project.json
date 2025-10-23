@@ -39,19 +39,5 @@
 				"passWithNoTests": true
 			}
 		},
-		"lint": {
-			"executor": "nx:run-commands",
-			"options": {
-				"commands": ["biome lint {projectRoot} --write", "eslint {projectRoot} --fix"],
-				"cwd": "{workspaceRoot}"
-			}
-		},
-		"format": {
-			"executor": "nx:run-commands",
-			"options": {
-				"command": "biome format {projectRoot} --write",
-				"cwd": "{workspaceRoot}"
-			}
-		}
 	}
 }
