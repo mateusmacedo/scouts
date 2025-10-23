@@ -148,3 +148,4 @@ export class LogBuffer {
 		}, this.flushInterval);
 	}
 }
+// fake value to change and force affected files
