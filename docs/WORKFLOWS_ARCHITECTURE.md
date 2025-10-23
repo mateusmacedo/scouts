@@ -32,15 +32,22 @@ Esta documentação descreve a **nova arquitetura de workflows CI/CD** implement
 
 ### 1. CI Workflow (`ci.yml`)
 
-**Trigger:** Push para qualquer branch, PR para `main` e `release/**`
+**Trigger:** Push para branches de desenvolvimento, PR para `develop` e `main`
 
 ```yaml
 name: CI
 
 on:
   push:
+    branches:
+      - develop
+      - feature/**
+      - bugfix/**
+      - hotfix/**
   pull_request:
-    branches: [main, 'release/**']
+    branches:
+      - develop
+      - main
 
 jobs:
   validate:
@@ -49,13 +56,13 @@ jobs:
 ```
 
 **Função:**
-- Validação básica para todas as mudanças
+- Validação básica para branches de desenvolvimento
 - Executa lint, test e build apenas em projetos afetados
 - Verificação de sincronização Go (apenas em PRs)
 
 ### 2. Release Workflow (`release.yml`)
 
-**Trigger:** Manual dispatch com inputs configuráveis
+**Trigger:** Apenas manual dispatch (workflow_dispatch)
 
 ```yaml
 name: Release
@@ -82,7 +89,7 @@ jobs:
 ```
 
 **Função:**
-- Release manual com controle total
+- Release **100% manual** para máxima segurança
 - Validações de consistência
 - Rollback automático em caso de falha
 
@@ -184,6 +191,23 @@ jobs:
 **Jobs:**
 - `validate`: Validação de consistência + detecção de primeira release
 - `check-go-sync`: Verificação de sincronização Go
+
+## 🎯 Separação Clara de Responsabilidades
+
+### Triggers Específicos por Workflow
+
+| Workflow | Trigger | Função |
+|----------|---------|--------|
+| `ci.yml` | Push para `develop`, `feature/**`, `bugfix/**`, `hotfix/**`<br/>PR para `develop`, `main` | Validação básica de desenvolvimento |
+| `release.yml` | Apenas `workflow_dispatch` (manual) | Release controlado manualmente |
+| `release-validation.yml` | PR e push para `release/**` | Validação completa para branches de release |
+
+### Benefícios da Separação
+
+- **Zero Duplicação**: Cada workflow tem trigger específico
+- **Controle Total**: Release apenas manual
+- **Eficiência**: CI rápido para desenvolvimento, validação completa para release
+- **Segurança**: Previne releases acidentais
 
 ## 🚀 Benefícios da Nova Arquitetura
 

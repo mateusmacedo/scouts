@@ -2,11 +2,15 @@ name: CI
 
 on:
   push:
-    # Remove branch restrictions - valida TODAS as branches
+    branches:
+      - develop
+      - feature/**
+      - bugfix/**
+      - hotfix/**
   pull_request:
     branches:
+      - develop
       - main
-      - 'release/**'
 
 concurrency:
   group: ci-${{ github.ref }}

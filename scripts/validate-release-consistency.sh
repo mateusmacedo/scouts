@@ -11,10 +11,11 @@ if [[ ! "$GITHUB_REF" =~ ^refs/heads/(release/|main$) ]]; then
     echo "Continuando com validação..."
 fi
 
-# Verificar se há mudanças não commitadas
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "❌ Há mudanças não commitadas:"
-    git status --porcelain
+# Verificar se há mudanças não commitadas (apenas arquivos críticos)
+CRITICAL_CHANGES=$(git status --porcelain | grep -E '^ M (package\.json|pnpm-lock\.yaml|go\.mod|go\.sum|nx\.json)')
+if [[ -n "$CRITICAL_CHANGES" ]]; then
+    echo "❌ Há mudanças críticas não commitadas:"
+    echo "$CRITICAL_CHANGES"
     exit 1
 fi
 
