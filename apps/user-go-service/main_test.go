@@ -12,5 +12,3 @@ func TestGoUser(t *testing.T) {
 		t.Error("Expected GoUser to append 'john doe', got:", result)
 	}
 }
-
-// fake value to change and force affected files
