@@ -25,9 +25,9 @@ if ! command -v pnpm &> /dev/null; then
     exit 1
 fi
 
-# Verificar se nx está disponível
-if ! command -v nx &> /dev/null; then
-    echo "❌ nx não está instalado"
+# Verificar se nx está disponível via pnpm
+if ! pnpm exec nx --version > /dev/null 2>&1; then
+    echo '? nx não está disponível via pnpm (execute pnpm install para garantir as dependências)'
     exit 1
 fi
 
@@ -68,3 +68,4 @@ if ! pnpm nx show projects --json > /dev/null; then
 fi
 
 echo "✅ Validação de consistência concluída com sucesso"
+
