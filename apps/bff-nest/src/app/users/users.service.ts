@@ -1,6 +1,5 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { Logger } from '@scouts/logger-node';
-import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
+import { Injectable } from '@nestjs/common';
+import { NestLoggerService, AdvancedLoggerService } from '@scouts/utils-nest';
 import { 
 	UserService, 
 	InMemoryUserRepository, 
@@ -19,7 +18,7 @@ export class UsersService {
 
 	constructor(
 		private readonly logger: NestLoggerService,
-		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
+		private readonly advancedLogger: AdvancedLoggerService
 	) {
 		// Initialize repository and service
 		this.userRepository = new InMemoryUserRepository();
@@ -27,19 +26,19 @@ export class UsersService {
 		// Create user events handler for logging
 		const userEvents: UserEvents = {
 			onUserCreated: (user: User) => {
-				this.nodeLogger.info('User created successfully', {
+				this.advancedLogger.logBusinessEvent('user_created', {
 					userId: user.id,
 					userData: { name: user.name, email: user.email }
 				});
 			},
 			onUserUpdated: (user: User) => {
-				this.nodeLogger.info('User updated successfully', {
+				this.advancedLogger.logBusinessEvent('user_updated', {
 					userId: user.id,
 					userData: { name: user.name, email: user.email }
 				});
 			},
 			onUserDeleted: (userId: string) => {
-				this.nodeLogger.info('User deleted successfully', { userId });
+				this.advancedLogger.logBusinessEvent('user_deleted', { userId });
 			}
 		};
 
@@ -64,7 +63,7 @@ export class UsersService {
 
 		const users = await this.userService.findAll();
 
-		this.nodeLogger.debug('Users retrieved', {
+		this.advancedLogger.debug('Users retrieved', {
 			count: users.length,
 		});
 
@@ -76,11 +75,11 @@ export class UsersService {
 
 		try {
 			const user = await this.userService.findById(id);
-			this.nodeLogger.info('User found', { userId: id });
+			this.advancedLogger.info('User found', { userId: id });
 			return user;
 		} catch (error) {
 			this.logger.warn(`User not found with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found', { userId: id });
+			this.advancedLogger.warn('User not found', { userId: id });
 			return null;
 		}
 	}
@@ -99,7 +98,7 @@ export class UsersService {
 			return await this.userService.update(id, userDto);
 		} catch (error) {
 			this.logger.warn(`User not found for update with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found for update', { userId: id });
+			this.advancedLogger.warn('User not found for update', { userId: id });
 			return null;
 		}
 	}
@@ -112,7 +111,7 @@ export class UsersService {
 			return true;
 		} catch (error) {
 			this.logger.warn(`User not found for removal with id: ${id}`, 'UsersService');
-			this.nodeLogger.warn('User not found for removal', { userId: id });
+			this.advancedLogger.warn('User not found for removal', { userId: id });
 			return false;
 		}
 	}
