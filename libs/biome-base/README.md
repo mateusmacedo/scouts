@@ -49,3 +49,4 @@ npx @biomejs/biome lint <files>
 
 Isso executará o Biome em todos os arquivos no diretório atual e exibirá quaisquer problemas que encontrar.
 
+<!-- fake value to change and force affected files -->
