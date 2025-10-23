@@ -48,12 +48,7 @@
       "exclude": ["*-e2e/**/*"]
     },
     "@nx-go/nx-go",
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
-    }
+    "@nx/eslint/plugin"
   ],
   "targetDefaults": {
     "@nx/js:tsc": {
@@ -83,83 +78,6 @@
         "{workspaceRoot}/jest.preset.js"
       ],
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
-    },
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "biome lint {projectRoot} --write",
-          "eslint {projectRoot} --fix"
-        ],
-        "cwd": "{workspaceRoot}"
-      },
-      "cache": true,
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/biome.json",
-        "{workspaceRoot}/libs/base-biome/biome.json",
-        "{workspaceRoot}/eslint.config.mjs"
-      ]
-    },
-    "biome": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "biome lint {projectRoot}",
-        "cwd": "{workspaceRoot}"
-      },
-      "cache": true,
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/biome.json",
-        "{workspaceRoot}/libs/base-biome/biome.json"
-      ]
-    },
-    "format": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "biome format {projectRoot} --write",
-        "cwd": "{workspaceRoot}"
-      },
-      "cache": true,
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/biome.json",
-        "{workspaceRoot}/libs/base-biome/biome.json"
-      ]
-    },
-    "check-boundaries": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "eslint {projectRoot} --rule '@nx/enforce-module-boundaries:error'",
-        "cwd": "{workspaceRoot}"
-      },
-      "cache": true,
-      "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
-    },
-    "coverage": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": ["default", "^default"],
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
-    },
-    "sync-go-deps": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/libs/user-go/package.json",
-        "{workspaceRoot}/apps/user-go-service/go.mod"
-      ],
-      "outputs": [
-        "{workspaceRoot}/apps/user-go-service/go.mod",
-        "{workspaceRoot}/apps/user-go-service/go.sum"
-      ],
-      "options": {
-        "command": "./scripts/sync-go-versions.sh",
-        "cwd": "{workspaceRoot}"
-      }
     },
     "@nx/js:swc": {
       "cache": true,
