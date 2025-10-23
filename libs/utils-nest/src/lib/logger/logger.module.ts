@@ -3,6 +3,7 @@ import { createComposedLogger, createRedactor } from '@scouts/logger-node';
 import { LOGGER_OPTIONS_TOKEN, LOGGER_TOKEN } from './constants';
 import { NestLoggerModuleAsyncOptions, NestLoggerModuleOptions } from './logger.interface';
 import { NestLoggerService } from './nest-logger.service';
+import { AdvancedLoggerService } from './advanced-logger.service';
 
 /**
  * Dynamic module for NestJS Logger integration with @scouts/logger-node
@@ -42,8 +43,9 @@ export class LoggerModule {
 					inject: [LOGGER_OPTIONS_TOKEN],
 				},
 				NestLoggerService,
+				AdvancedLoggerService,
 			],
-			exports: [NestLoggerService, LOGGER_TOKEN],
+			exports: [NestLoggerService, AdvancedLoggerService, LOGGER_TOKEN],
 		};
 	}
 
@@ -81,8 +83,9 @@ export class LoggerModule {
 					inject: [LOGGER_OPTIONS_TOKEN],
 				},
 				NestLoggerService,
+				AdvancedLoggerService,
 			],
-			exports: [NestLoggerService, LOGGER_TOKEN],
+			exports: [NestLoggerService, AdvancedLoggerService, LOGGER_TOKEN],
 		};
 	}
 }
