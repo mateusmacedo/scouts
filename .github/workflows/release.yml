@@ -54,7 +54,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [validate]
-    if: always() && (needs.validate.outputs.validation-result == 'success' || inputs.skip-validation == true)
+    if: always() && (needs.validate.result == 'success' || inputs.skip-validation == true)
     timeout-minutes: 20
     outputs:
       execution-mode: ${{ steps.execution-mode.outputs.mode }}
@@ -121,6 +121,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
           scope: '@scouts'
+          always-auth: true
           cache: 'pnpm'
 
       - name: Setup Go
@@ -183,16 +184,23 @@ jobs:
 
       - name: Release (Version & Changelog)
         run: |
+          EXTRA_ARGS=()
+          if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
+            EXTRA_ARGS+=(--first-release)
+          fi
+
+          if [[ -n "${RELEASE_SPECIFIER}" ]]; then
+            CMD_ARGS=("${RELEASE_SPECIFIER}" "${EXTRA_ARGS[@]}")
+          else
+            CMD_ARGS=("${EXTRA_ARGS[@]}")
+          fi
+
           if [[ -n "${RELEASE_SPECIFIER}" ]]; then
             echo "ℹ️  Aplicando specifier manual: ${RELEASE_SPECIFIER}"
           fi
           if [[ "${{ steps.execution-mode.outputs.mode }}" == "dry-run" ]]; then
             echo "🔍 Executando em modo dry-run..."
-            if [[ -n "${RELEASE_SPECIFIER}" ]]; then
-              pnpm nx release "${RELEASE_SPECIFIER}" --dry-run
-            else
-              pnpm nx release --dry-run
-            fi
+            pnpm nx release "${CMD_ARGS[@]}" --dry-run
           else
             if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
               echo "🎉 Executando PRIMEIRA RELEASE dos projetos..."
@@ -200,11 +208,7 @@ jobs:
             else
               echo "🔄 Executando release subsequente..."
             fi
-            if [[ -n "${RELEASE_SPECIFIER}" ]]; then
-              pnpm nx release "${RELEASE_SPECIFIER}" --skip-publish
-            else
-              pnpm nx release --skip-publish
-            fi
+            pnpm nx release "${CMD_ARGS[@]}" --skip-publish
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -228,7 +232,12 @@ jobs:
 
       - name: Publish packages
         if: ${{ steps.execution-mode.outputs.mode == 'release' }}
-        run: pnpm nx release publish --force
+        run: |
+          PUBLISH_ARGS=(--yes)
+          if [[ "${{ needs.validate.outputs.first-release }}" == "true" ]]; then
+            PUBLISH_ARGS+=(--first-release)
+          fi
+          pnpm nx release publish "${PUBLISH_ARGS[@]}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true

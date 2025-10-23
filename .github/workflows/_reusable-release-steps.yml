@@ -12,6 +12,8 @@ on:
     outputs:
       first-release:
         value: ${{ jobs.validate.outputs.first-release }}
+      validation-result:
+        value: ${{ jobs.validate.result }}
 
 env:
   NODE_VERSION: '20'
@@ -78,6 +80,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@scouts'
+          always-auth: true
           cache: 'pnpm'
 
       - name: Setup Go
@@ -96,6 +101,8 @@ jobs:
 
       - name: Detect first release
         id: first-release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "🔍 Verificando se é primeira release dos projetos..."
           FIRST_RELEASE=true
