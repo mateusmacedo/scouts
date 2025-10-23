@@ -10,6 +10,9 @@
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "release": "nx release",
+    "release:dry-run": "nx release --dry-run",
+    "release:version": "nx release --skip-publish",
+    "release:publish": "nx release publish",
     "ci": "nx affected -t lint test build --parallel=3"
   },
   "private": true,

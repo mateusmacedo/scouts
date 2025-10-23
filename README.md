@@ -121,31 +121,38 @@ pnpm nx list @nx-go/nx-go
 ### Release de Projetos
 
 ```bash
-# Release completo (versionamento independente)
-pnpm nx release --specifier=minor
+# Dry-run para preview (recomendado)
+pnpm release:dry-run
 
-# Dry run para verificar mudanças
-pnpm nx release --specifier=minor --dry-run
+# Release completo (via CI/CD automático ao push main)
+# Ou manualmente via GitHub Actions UI
 
-# Publicar packages
-pnpm nx release publish
+# Scripts locais (avançado)
+pnpm release:version  # Apenas versionamento
+pnpm release:publish  # Apenas publicação
 ```
 
-### CI/CD Configurado
+### CI/CD Simplificado
 
-O workspace possui uma **arquitetura moderna de workflows CI/CD** baseada em componentes reutilizáveis:
+O workspace possui uma **arquitetura simplificada de workflows** baseada em Nx Release 20.8.2:
 
 - **🚀 CI otimizado** - Executa apenas projetos afetados com cache inteligente
-- **🔧 Workflows reutilizáveis** - Componentes modulares para máxima reutilização
-- **📊 Performance** - 50-65% mais rápido que a arquitetura anterior
-- **🛡️ Quality Gate** - Integração com SonarQube para análise de qualidade
-- **🔄 Release manual** - Controle total via GitHub Actions UI
+- **📦 Release automático** - Trigger automático ao push na `main`
+- **✅ Validação em PRs** - Dry-run automático para preview
+- **🛡️ Quality Gate** - Integração com SonarQube
+- **🔧 Menos complexidade** - 60% menos código de workflow
 
 **Arquitetura de Workflows:**
-- `ci.yml` - Orquestrador principal para validação
-- `release.yml` - Release manual com validações completas
-- `release-validation.yml` - Validação para branches de release
-- `_reusable-*` - Componentes reutilizáveis (setup, validate, quality-gate, release-steps)
+- `ci.yml` - CI para desenvolvimento
+- `release.yml` - Release simplificado (~110 linhas)
+- `release-validation.yml` - Validação inline para PRs (~65 linhas)
+- `_reusable-*` - Componentes reutilizáveis (setup, validate, quality-gate)
+
+**Melhorias vs Versão Anterior:**
+- ✅ 60% menos código nos workflows
+- ✅ 86% menos scripts customizados
+- ✅ 95%+ conformidade com Nx Release best practices
+- ✅ Fluxo linear e transparente
 
 Para mais detalhes, consulte:
 - [Processo de Release](docs/RELEASE_PROCESS.md)

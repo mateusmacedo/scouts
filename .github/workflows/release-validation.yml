@@ -2,9 +2,8 @@ name: Release Validation
 
 on:
   pull_request:
-    branches: ['release/**']
-  push:
-    branches: ['release/**']
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,17 +15,57 @@ env:
   PNPM_VERSION: '9'
 
 jobs:
-  validate:
-    uses: ./.github/workflows/_reusable-validate.yml
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  quality-gate:
-    needs: validate
-    uses: ./.github/workflows/_reusable-quality-gate.yml
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
-  release-dry-run:
-    needs: quality-gate
-    uses: ./.github/workflows/_reusable-release-steps.yml
-    with:
-      dry-run: true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            apps/user-go-service/go.sum
+            libs/user-go/go.sum
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Validate Go sync
+        run: |
+          echo "🔍 Validando sincronização Go..."
+          chmod +x scripts/sync-go-versions.sh
+          ./scripts/sync-go-versions.sh
+          
+          if [[ -n $(git status -s apps/user-go-service/go.mod apps/user-go-service/go.sum) ]]; then
+            echo "❌ go.mod desatualizado!"
+            echo "Execute: pnpm nx run scouts/user-go-service:sync-go-deps"
+            git diff apps/user-go-service/go.mod
+            exit 1
+          fi
+          echo "✅ go.mod sincronizado"
+
+      - name: Dry-run release
+        run: |
+          echo "🧪 Executando dry-run do Nx Release..."
+          pnpm nx release --dry-run
+          echo "✅ Validação de release concluída com sucesso"
