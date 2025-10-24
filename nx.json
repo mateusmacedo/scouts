@@ -111,6 +111,7 @@
   },
   "cacheDirectory": ".nx/cache",
   "neverConnectToCloud": true,
+  // Test commit for workflow validation - config global change
   "release": {
     "projectsRelationship": "independent",
     "releaseTagPattern": "{projectName}@v{version}",
