@@ -109,8 +109,8 @@ describe('MetricsCollector', () => {
 			collector.recordRedactLatency(100);
 			collector.updateBufferUtilization(300, 1000);
 
-			// Aguardar para ter uptime > 0
-			await new Promise((resolve) => setTimeout(resolve, 10));
+			// Aguardar para ter uptime >= 1 segundo
+			await new Promise((resolve) => setTimeout(resolve, 1100));
 
 			const enhanced = collector.getEnhancedMetrics();
 
