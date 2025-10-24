@@ -39,12 +39,12 @@ jobs:
           version: 9.15.0
 
       - name: Configure pnpm store
-        run: pnpm config set store-dir ~/.pnpm-store
+        run: pnpm config set store-dir $HOME/.pnpm-store
 
       - name: Restore pnpm cache
         uses: actions/cache@v4
         with:
-          path: ~/.pnpm-store
+          path: $HOME/.pnpm-store
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
@@ -59,8 +59,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
+            $HOME/.cache/go-build
+            $HOME/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -83,8 +83,8 @@ jobs:
 
       - name: Configure npm authentication
         run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          chmod 600 ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > $HOME/.npmrc
+          chmod 600 $HOME/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
