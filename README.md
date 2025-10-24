@@ -148,7 +148,22 @@ Os workflows dependem dos seguintes segredos configurados no repositório:
 | Nome | Uso | Observações |
 | --- | --- | --- |
 | `NPM_TOKEN` | Autenticação para `pnpm nx release publish` publicar pacotes no npm. | Deve possuir permissão de publicação nos registries necessários. Também é exportado como `NODE_AUTH_TOKEN`. |
-| `GITHUB_TOKEN` | Operações de versionamento, criação de changelog e push de tags realizados pelo Nx Release. | O token padrão (`secrets.GITHUB_TOKEN`) já é suficiente; use um token com permissão de escrita em `contents` se necessário. |
+| `GITHUB_TOKEN` | Operações de versionamento, criação de changelog e push de tags realizados pelo Nx Release. | O token padrão (`secrets.GITHUB_TOKEN`) é suficiente quando o workflow declara `permissions: contents: write` (como em `release.yml`). Um token personalizado só é necessário em cenários especiais, como workflows executados a partir de forks ou quando permissões adicionais são exigidas. |
+
+> **Nota:** O workflow de release deve conter:
+> 
+> **Configuração explícita do token no passo de checkout:**
+> ```yaml
+> - uses: actions/checkout@v4
+>   with:
+>     token: ${{ secrets.GITHUB_TOKEN }}
+> ```
+> 
+> **Um passo para realizar o push das alterações (tags, changelog, etc):**
+> ```yaml
+> - name: Push changes
+>   run: git push --follow-tags
+> ```
 
 ## 🛠️ Ferramentas de Desenvolvimento
 
