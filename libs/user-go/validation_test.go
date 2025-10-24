@@ -4,6 +4,42 @@ import (
 	"testing"
 )
 
+func TestEmailRegex(t *testing.T) {
+	tests := []struct {
+		name     string
+		email    string
+		expected bool
+	}{
+		// Valid emails
+		{"valid simple", "user@domain.com", true},
+		{"valid with dots", "user.name@domain.com", true},
+		{"valid with plus", "user+tag@domain.com", true},
+		{"valid with underscore", "user_name@domain.com", true},
+		{"valid with percent", "user%name@domain.com", true},
+		{"valid with dash", "user-name@domain.com", true},
+		{"valid subdomain", "user@sub.domain.com", true},
+
+		// Invalid emails (should be rejected by stricter regex)
+		{"consecutive dots", "user..name@domain.com", false},
+		{"dot at start", ".user@domain.com", false},
+		{"dot at end", "user.@domain.com", false},
+		{"multiple consecutive dots", "user...name@domain.com", false},
+		{"empty local part", "@domain.com", false},
+		{"empty domain", "user@", false},
+		{"no domain extension", "user@domain", false},
+		{"invalid characters", "user@domain!.com", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := EmailRegex.MatchString(tt.email)
+			if result != tt.expected {
+				t.Errorf("EmailRegex.MatchString(%q) = %v, want %v", tt.email, result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestValidateCreateUserData(t *testing.T) {
 	tests := []struct {
 		name    string
