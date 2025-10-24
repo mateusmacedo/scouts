@@ -7,8 +7,9 @@ on:
       - develop
   pull_request:
 
-concurrency: ci-${{ github.ref }}
-cancel-in-progress: true
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
