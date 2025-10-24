@@ -111,7 +111,6 @@
   },
   "cacheDirectory": ".nx/cache",
   "neverConnectToCloud": true,
-  // Test commit for workflow validation - config global change
   "release": {
     "projectsRelationship": "independent",
     "releaseTagPattern": "{projectName}@v{version}",
@@ -130,7 +129,7 @@
       "tagMessage": "chore(release): publish {version}"
     },
     "publish": {
-      "projects": ["@scouts/logger-node", "@scouts/user-node", "@scouts/utils-nest", "@scouts/base-biome"]
+      "projects": ["@scouts/base-biome", "@scouts/logger-node", "@scouts/utils-nest", "@scouts/user-node" ]
     },
     "changelog": {
       "automaticFromRef": true,
