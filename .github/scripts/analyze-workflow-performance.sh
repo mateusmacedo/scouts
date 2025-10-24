@@ -70,7 +70,7 @@ get_workflow_runs() {
     
     # Obtém workflow ID
     local workflow_id
-    workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
+    workflow_id=$(gh api "repos/$GITHUB_REPO/actions/workflows" --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
     
     if [ -z "$workflow_id" ]; then
         log_error "Workflow '$workflow_name' not found"
@@ -80,7 +80,7 @@ get_workflow_runs() {
     log "Workflow ID: $workflow_id"
     
     # Obtém runs do workflow
-    gh api repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs \
+    gh api "repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs" \
         --jq ".workflows[0].runs[0:$limit] | .[] | {
             id: .id,
             status: .status,
@@ -101,7 +101,7 @@ get_job_details() {
     
     log "Fetching job details for run: $run_id"
     
-    gh api repos/$GITHUB_REPO/actions/runs/$run_id/jobs \
+    gh api "repos/$GITHUB_REPO/actions/runs/$run_id/jobs" \
         --jq ".jobs[] | {
             id: .id,
             name: .name,
@@ -193,7 +193,7 @@ analyze_performance() {
             log "Job: $job_name | Status: $job_status | Conclusion: $job_conclusion | Duration: $job_duration"
             
             # Analisa steps do job
-            echo "$job_data" | jq -r '.steps[] | "\(.name)|\(.status)|\(.conclusion)|\(.started_at)|\(.completed_at)"' | while IFS='|' read -r step_name step_status step_conclusion step_started step_completed; do
+            echo "$job_data" | jq -r '.steps[] | "\(.name)|\(.status)|\(.started_at)|\(.completed_at)"' | while IFS='|' read -r step_name step_status step_started step_completed; do
                 local step_duration
                 step_duration=$(calculate_duration "$step_started" "$step_completed")
                 log "  Step: $step_name | Status: $step_status | Duration: $step_duration"
@@ -309,7 +309,7 @@ monitor_workflow() {
     
     # Obtém workflow ID
     local workflow_id
-    workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
+    workflow_id=$(gh api "repos/$GITHUB_REPO/actions/workflows" --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
     
     if [ -z "$workflow_id" ]; then
         log_error "Workflow '$workflow_name' not found"
@@ -319,7 +319,7 @@ monitor_workflow() {
     # Monitora runs em tempo real
     while true; do
         local latest_run
-        latest_run=$(gh api repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs \
+        latest_run=$(gh api "repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs" \
             --jq ".workflows[0].runs[0] | select(.head_branch == \"$branch\")")
         
         if [ -n "$latest_run" ]; then
