@@ -2,6 +2,7 @@ package gouser
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -71,7 +72,11 @@ func (s *UserService) Create(ctx context.Context, data CreateUserData) (*User, e
 
 	// Validate email uniqueness
 	existingUser, err := s.FindByEmail(ctx, data.Email)
-	if err == nil && existingUser != nil {
+	if err != nil {
+		// Se erro ao buscar, não podemos garantir unicidade - falhar rápido
+		return nil, fmt.Errorf("failed to validate email uniqueness: %w", err)
+	}
+	if existingUser != nil {
 		return nil, ErrUserAlreadyExists
 	}
 
@@ -136,7 +141,10 @@ func (s *UserService) Update(ctx context.Context, id string, data UpdateUserData
 	// If email is being updated, check for conflicts
 	if data.Email != nil && *data.Email != existingUser.Email {
 		emailUser, err := s.FindByEmail(ctx, *data.Email)
-		if err == nil && emailUser != nil {
+		if err != nil {
+			return nil, fmt.Errorf("failed to validate email uniqueness during update: %w", err)
+		}
+		if emailUser != nil {
 			return nil, ErrUserAlreadyExists
 		}
 	}
