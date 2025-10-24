@@ -1,14 +1,14 @@
-# Scripts de Validação de Workflows GitHub Actions
+# Script de Validação de Workflows GitHub Actions
 
-Este diretório contém scripts para validação, simulação e análise de performance dos workflows GitHub Actions com Nx.
+Este diretório contém o script essencial para validação de workflows GitHub Actions com Nx.
 
-## Scripts Disponíveis
+## Script Disponível
 
-### 1. validate-workflows.sh
-**Propósito:** Validação estática completa dos workflows
+### validate-workflows-simple.sh
+**Propósito:** Validação estática completa dos workflows sem dependências externas
 
 **Funcionalidades:**
-- Validação de sintaxe YAML
+- Validação de sintaxe YAML básica
 - Verificação de versões de actions
 - Validação de secrets e permissions
 - Verificação de triggers e consistência
@@ -16,209 +16,82 @@ Este diretório contém scripts para validação, simulação e análise de perf
 
 **Uso:**
 ```bash
-./.github/scripts/validate-workflows.sh
+./.github/scripts/validate-workflows-simple.sh
 ```
 
 **Pré-requisitos:**
-- `yamllint` (pip install yamllint)
-- `gh` CLI (opcional, para validações avançadas)
-- `jq` (opcional, para parsing JSON)
+- Bash (disponível em qualquer sistema Unix/Linux/macOS)
+- Git (para operações de branch)
 
-### 2. simulate-ci.sh
-**Propósito:** Simulação local dos workflows para validação
-
-**Funcionalidades:**
-- Simulação de nx affected com diferentes bases
-- Execução local de lint/test/build
-- Verificação de cache do Nx
-- Simulação de setup de dependências
-- Geração de relatório de performance
-
-**Uso:**
-```bash
-./.github/scripts/simulate-ci.sh
-```
-
-**Pré-requisitos:**
-- `pnpm` (npm install -g pnpm)
-- `go` (Go 1.23+)
-- `nx` (npx nx@latest)
-- `git` (para operações de branch)
-
-### 3. analyze-workflow-performance.sh
-**Propósito:** Análise de performance dos workflows via GitHub API
-
-**Funcionalidades:**
-- Consulta GitHub API para métricas de workflows
-- Análise de tempo de execução por job/step
-- Identificação de bottlenecks
-- Geração de relatórios de performance
-- Monitoramento em tempo real
-
-**Uso:**
-```bash
-# Análise básica
-./.github/scripts/analyze-workflow-performance.sh
-
-# Análise com parâmetros
-GITHUB_REPOSITORY=mateusmacedo/scouts WORKFLOW_NAME=CI RUNS_LIMIT=20 ./.github/scripts/analyze-workflow-performance.sh
-
-# Monitoramento em tempo real
-./.github/scripts/analyze-workflow-performance.sh monitor CI test/workflow-validation
-```
-
-**Pré-requisitos:**
-- `gh` CLI (gh auth login)
-- `jq` (para parsing JSON)
-- Acesso ao repositório GitHub
-
-## Instalação de Pré-requisitos
+## Instalação
 
 ### Windows (PowerShell)
 ```powershell
-# yamllint
-pip install yamllint
+# Git (se não instalado)
+winget install Git.Git
 
-# GitHub CLI
-winget install GitHub.cli
-
-# jq
-winget install jqlang.jq
-
-# pnpm
-npm install -g pnpm
-
-# Go
-winget install GoLang.Go
-
-# nx
-npm install -g nx
+# Bash (via Git for Windows ou WSL)
+# Já incluído com Git for Windows
 ```
 
 ### Linux/macOS
 ```bash
-# yamllint
-pip install yamllint
-
-# GitHub CLI
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-sudo apt update
-sudo apt install gh
-
-# jq
-sudo apt install jq
-
-# pnpm
-npm install -g pnpm
-
-# Go
-sudo apt install golang-go
-
-# nx
-npm install -g nx
+# Git (se não instalado)
+sudo apt install git  # Ubuntu/Debian
+brew install git      # macOS
 ```
 
 ## Configuração
 
-### 1. Autenticação GitHub
+### 1. Permissões de Execução
 ```bash
-gh auth login
+chmod +x .github/scripts/validate-workflows-simple.sh
 ```
 
-### 2. Configuração de Variáveis de Ambiente
+### 2. Execução
 ```bash
-export GITHUB_REPOSITORY=mateusmacedo/scouts
-export WORKFLOW_NAME=CI
-export RUNS_LIMIT=10
+# Validação básica
+./.github/scripts/validate-workflows-simple.sh
+
+# Verificar relatório gerado
+cat .github/workflows/VALIDATION_RESULTS.md
 ```
 
-### 3. Permissões de Execução
-```bash
-chmod +x .github/scripts/*.sh
-```
-
-## Fluxo de Trabalho Recomendado
+## Fluxo de Trabalho
 
 ### 1. Validação Estática
 ```bash
 # Executa validação completa
-./.github/scripts/validate-workflows.sh
+./.github/scripts/validate-workflows-simple.sh
 
 # Verifica relatório gerado
 cat .github/workflows/VALIDATION_RESULTS.md
 ```
 
-### 2. Simulação Local
-```bash
-# Simula execução dos workflows
-./.github/scripts/simulate-ci.sh
-
-# Verifica relatório de performance
-cat .github/workflows/PERFORMANCE_REPORT.md
-```
-
-### 3. Análise de Performance
-```bash
-# Analisa workflows reais
-./.github/scripts/analyze-workflow-performance.sh
-
-# Verifica relatório de análise
-cat .github/workflows/PERFORMANCE_ANALYSIS.md
-```
-
-## Interpretação de Resultados
-
-### Relatório de Validação
+### 2. Interpretação de Resultados
 - **✅ Válido:** Todos os workflows passaram na validação
 - **⚠️ Avisos:** Problemas menores que não impedem execução
 - **❌ Erros:** Problemas críticos que impedem execução
-
-### Relatório de Performance
-- **Tempo de execução:** Duração total dos workflows
-- **Cache hit rate:** Percentual de cache hits
-- **Projetos afetados:** Número de projetos processados pelo Nx
-- **Bottlenecks:** Steps que demoram mais de 30s
-
-### Relatório de Análise
-- **Métricas de tempo:** Por job e step
-- **Status de execução:** Sucesso/falha dos workflows
-- **Recomendações:** Otimizações identificadas
 
 ## Troubleshooting
 
 ### Problemas Comuns
 
-#### 1. yamllint não encontrado
+#### 1. Permissões de execução
 ```bash
-pip install yamllint
+chmod +x .github/scripts/validate-workflows-simple.sh
 ```
 
-#### 2. gh CLI não autenticado
+#### 2. Script não encontrado
 ```bash
-gh auth login
+# Verificar se está no diretório correto
+ls -la .github/scripts/
 ```
 
-#### 3. jq não encontrado
+#### 3. Erro de sintaxe bash
 ```bash
-# Windows
-winget install jqlang.jq
-
-# Linux
-sudo apt install jq
-
-# macOS
-brew install jq
-```
-
-#### 4. nx não encontrado
-```bash
-npm install -g nx
-```
-
-#### 5. Permissões de execução
-```bash
-chmod +x .github/scripts/*.sh
+# Verificar sintaxe
+bash -n .github/scripts/validate-workflows-simple.sh
 ```
 
 ### Logs e Debug
@@ -226,19 +99,10 @@ chmod +x .github/scripts/*.sh
 #### 1. Habilitar debug
 ```bash
 set -x
-./.github/scripts/validate-workflows.sh
+./.github/scripts/validate-workflows-simple.sh
 ```
 
-#### 2. Verificar logs
-```bash
-# Logs do GitHub CLI
-gh auth status
-
-# Logs do Nx
-nx report
-```
-
-#### 3. Verificar configuração
+#### 2. Verificar configuração
 ```bash
 # Verificar nx.json
 cat nx.json
@@ -247,19 +111,29 @@ cat nx.json
 ls -la .github/workflows/
 ```
 
+## Relatório de Validação
+
+O script gera um relatório completo em `.github/workflows/VALIDATION_RESULTS.md` contendo:
+
+- **Resumo Executivo:** Status geral da validação
+- **Detalhes por Workflow:** Análise individual de cada arquivo
+- **Métricas de Consistência:** Versões de Node.js, pnpm, Go
+- **Configurações Nx:** Validação específica do workspace
+- **Recomendações:** Sugestões de melhorias
+
 ## Contribuição
 
-### Adicionando Novos Scripts
-1. Crie o script em `.github/scripts/`
-2. Adicione documentação no README.md
-3. Teste em ambiente local
-4. Adicione ao fluxo de trabalho
-
-### Melhorando Scripts Existentes
+### Melhorando o Script
 1. Identifique o problema
 2. Implemente a correção
 3. Teste localmente
 4. Documente as mudanças
+
+### Adicionando Novas Validações
+1. Adicione a função de validação
+2. Integre ao fluxo principal
+3. Atualize a documentação
+4. Teste com diferentes workflows
 
 ## Suporte
 
@@ -271,4 +145,4 @@ Para problemas ou dúvidas:
 
 ---
 
-**Nota:** Estes scripts são ferramentas de desenvolvimento e devem ser executados em ambiente local para validação e análise dos workflows GitHub Actions.
+**Nota:** Este script é uma ferramenta de desenvolvimento essencial para validação de workflows GitHub Actions, funcionando sem dependências externas e em qualquer ambiente.
