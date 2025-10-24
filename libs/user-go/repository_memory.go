@@ -2,6 +2,7 @@ package gouser
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -164,7 +165,7 @@ func (r *InMemoryUserRepository) Delete(ctx context.Context, id string) error {
 func (r *InMemoryUserRepository) generateID() string {
 	id := r.nextID
 	r.nextID++
-	return string(rune(id + '0')) // Simple string conversion
+	return strconv.Itoa(id) // Proper integer-to-string conversion
 }
 
 // Clear clears all users (useful for testing)

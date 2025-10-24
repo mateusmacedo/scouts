@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func TestInMemoryUserRepository_generateID(t *testing.T) {
+	repo := NewInMemoryUserRepository()
+
+	t.Run("should generate sequential IDs correctly", func(t *testing.T) {
+		// Test IDs 1-15 to ensure proper string conversion
+		expectedIDs := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"}
+
+		for i, expected := range expectedIDs {
+			actual := repo.generateID()
+			if actual != expected {
+				t.Errorf("generateID() = %v, want %v (iteration %d)", actual, expected, i)
+			}
+		}
+	})
+}
+
 func TestInMemoryUserRepository_Create(t *testing.T) {
 	repo := NewInMemoryUserRepository()
 	ctx := context.Background()
