@@ -5,8 +5,9 @@ import (
 	"strings"
 )
 
-// EmailRegex is a simple email validation regex
-var EmailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+// EmailRegex is a stricter email validation regex
+// Prevents consecutive dots and dots at start/end of local part
+var EmailRegex = regexp.MustCompile(`^(?i)[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$`)
 
 // PhoneRegex is a simple phone validation regex (supports international format)
 var PhoneRegex = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
