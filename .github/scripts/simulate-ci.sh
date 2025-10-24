@@ -31,9 +31,10 @@ log_error() {
 
 # Função para medir tempo de execução
 measure_time() {
-    local start_time=$(date +%s)
+    local start_time
     local end_time
     local duration
+    start_time=$(date +%s)
     
     # Executa o comando passado como parâmetro
     "$@"
@@ -56,7 +57,8 @@ simulate_nx_affected() {
     log "Base: $base, Head: $head"
     
     # Simula o comando nx affected
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     
     if [ "$base" = "origin/main" ] && [ "$head" = "HEAD" ]; then
         # Para pushes em main
@@ -69,8 +71,10 @@ simulate_nx_affected() {
         nx affected -t lint test build
     fi
     
-    local end_time=$(date +%s)
-    local duration=$((end_time - start_time))
+    local end_time
+    local duration
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
     
     log_success "nx affected completed in ${duration}s"
     return 0
@@ -81,11 +85,13 @@ check_nx_cache() {
     log "Checking Nx cache status..."
     
     if [ -d ".nx/cache" ]; then
-        local cache_size=$(du -sh .nx/cache | cut -f1)
+        local cache_size
+        cache_size=$(du -sh .nx/cache | cut -f1)
         log_success "Nx cache exists: $cache_size"
         
         # Lista arquivos de cache
-        local cache_files=$(find .nx/cache -name "*.json" | wc -l)
+        local cache_files
+        cache_files=$(find .nx/cache -name "*.json" | wc -l)
         log "Cache files: $cache_files"
     else
         log_warning "Nx cache directory not found"
@@ -143,13 +149,16 @@ simulate_cache_restore() {
 simulate_install() {
     log "Simulating dependency installation..."
     
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     
     # Instala dependências
     pnpm install --frozen-lockfile
     
-    local end_time=$(date +%s)
-    local duration=$((end_time - start_time))
+    local end_time
+    local duration
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
     
     log_success "Dependencies installed in ${duration}s"
 }
@@ -192,7 +201,8 @@ simulate_release_workflow() {
     log "Starting Release workflow simulation..."
     
     # Verifica se estamos na branch main
-    local current_branch=$(git branch --show-current)
+    local current_branch
+    current_branch=$(git branch --show-current)
     if [ "$current_branch" != "main" ]; then
         log_warning "Not on main branch (current: $current_branch)"
     fi
