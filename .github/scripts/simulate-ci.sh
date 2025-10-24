@@ -65,7 +65,7 @@ simulate_nx_affected() {
         nx affected -t lint test build --base=origin/main~1 --head=origin/main
     elif [ "$base" = "origin/main" ] && [ -n "$head" ]; then
         # Para PRs
-        nx affected -t lint test build --base=origin/main --head=$head
+        nx affected -t lint test build --base=origin/main --head="$head"
     else
         # Para desenvolvimento local
         nx affected -t lint test build
