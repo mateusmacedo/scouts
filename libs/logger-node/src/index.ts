@@ -67,3 +67,5 @@ export {
 } from './lib/test-utils/test-helpers';
 export type { TestLoggerOptions, CapturedLog } from './lib/test-utils/test-helpers';
 
+// Test commit for workflow validation - lib shared change
+
