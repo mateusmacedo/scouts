@@ -130,7 +130,7 @@ validate_secrets() {
     
     # Extrai secrets do arquivo
     local used_secrets
-    used_secrets=$(grep -o '\${{ secrets\.[^}]* }}' "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g')
+    used_secrets=$(grep -o "\${{ secrets\.[^}]* }}" "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g')
     
     # Verifica se todos os secrets esperados estão sendo usados
     for secret in "${expected_secrets[@]}"; do
@@ -324,7 +324,8 @@ EOF
     # Valida cada workflow
     for workflow_file in "$WORKFLOWS_DIR"/*.yml; do
         if [ -f "$workflow_file" ]; then
-            local filename=$(basename "$workflow_file")
+            local filename
+            filename=$(basename "$workflow_file")
             log "Validating workflow: $filename"
             
             cat >> "$VALIDATION_REPORT" << EOF

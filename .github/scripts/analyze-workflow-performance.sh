@@ -141,7 +141,8 @@ calculate_duration() {
         return
     fi
     
-    local duration=$((end_epoch - start_epoch))
+    local duration
+    duration=$((end_epoch - start_epoch))
     echo "${duration}s"
 }
 
@@ -166,27 +167,35 @@ analyze_performance() {
         log "Processing run: $run_id"
         
         # Obtém detalhes do job
-        local job_details=$(get_job_details "$run_id")
+        local job_details
+        job_details=$(get_job_details "$run_id")
         
         # Analisa cada job
         echo "$job_details" | jq -r '.name' | while read -r job_name; do
             log "Analyzing job: $job_name"
             
             # Extrai métricas do job
-            local job_data=$(echo "$job_details" | jq -r "select(.name == \"$job_name\")")
+            local job_data
+            job_data=$(echo "$job_details" | jq -r "select(.name == \"$job_name\")")
             
-            local job_status=$(echo "$job_data" | jq -r '.status')
-            local job_conclusion=$(echo "$job_data" | jq -r '.conclusion')
-            local job_started=$(echo "$job_data" | jq -r '.started_at')
-            local job_completed=$(echo "$job_data" | jq -r '.completed_at')
+            local job_status
+            local job_conclusion
+            local job_started
+            local job_completed
+            job_status=$(echo "$job_data" | jq -r '.status')
+            job_conclusion=$(echo "$job_data" | jq -r '.conclusion')
+            job_started=$(echo "$job_data" | jq -r '.started_at')
+            job_completed=$(echo "$job_data" | jq -r '.completed_at')
             
-            local job_duration=$(calculate_duration "$job_started" "$job_completed")
+            local job_duration
+            job_duration=$(calculate_duration "$job_started" "$job_completed")
             
             log "Job: $job_name | Status: $job_status | Conclusion: $job_conclusion | Duration: $job_duration"
             
             # Analisa steps do job
             echo "$job_data" | jq -r '.steps[] | "\(.name)|\(.status)|\(.conclusion)|\(.started_at)|\(.completed_at)"' | while IFS='|' read -r step_name step_status step_conclusion step_started step_completed; do
-                local step_duration=$(calculate_duration "$step_started" "$step_completed")
+                local step_duration
+                step_duration=$(calculate_duration "$step_started" "$step_completed")
                 log "  Step: $step_name | Status: $step_status | Duration: $step_duration"
             done
         done
@@ -221,9 +230,12 @@ EOF
     
     if [ -n "$runs" ]; then
         # Calcula estatísticas básicas
-        local total_runs=$(echo "$runs" | jq -s 'length')
-        local successful_runs=$(echo "$runs" | jq -s '[.[] | select(.conclusion == "success")] | length')
-        local failed_runs=$(echo "$runs" | jq -s '[.[] | select(.conclusion == "failure")] | length')
+        local total_runs
+        local successful_runs
+        local failed_runs
+        total_runs=$(echo "$runs" | jq -s 'length')
+        successful_runs=$(echo "$runs" | jq -s '[.[] | select(.conclusion == "success")] | length')
+        failed_runs=$(echo "$runs" | jq -s '[.[] | select(.conclusion == "failure")] | length')
         
         cat >> "$output_file" << EOF
 
@@ -238,11 +250,16 @@ EOF
 
         # Adiciona detalhes de cada run
         echo "$runs" | jq -r '.id' | while read -r run_id; do
-            local run_data=$(echo "$runs" | jq -r "select(.id == $run_id)")
-            local run_status=$(echo "$run_data" | jq -r '.status')
-            local run_conclusion=$(echo "$run_data" | jq -r '.conclusion')
-            local run_branch=$(echo "$run_data" | jq -r '.head_branch')
-            local run_title=$(echo "$run_data" | jq -r '.display_title')
+            local run_data
+            local run_status
+            local run_conclusion
+            local run_branch
+            local run_title
+            run_data=$(echo "$runs" | jq -r "select(.id == $run_id)")
+            run_status=$(echo "$run_data" | jq -r '.status')
+            run_conclusion=$(echo "$run_data" | jq -r '.conclusion')
+            run_branch=$(echo "$run_data" | jq -r '.head_branch')
+            run_title=$(echo "$run_data" | jq -r '.display_title')
             
             cat >> "$output_file" << EOF
 
@@ -291,7 +308,8 @@ monitor_workflow() {
     log "Monitoring workflow: $workflow_name for branch: $branch"
     
     # Obtém workflow ID
-    local workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
+    local workflow_id
+    workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
     
     if [ -z "$workflow_id" ]; then
         log_error "Workflow '$workflow_name' not found"
@@ -300,13 +318,17 @@ monitor_workflow() {
     
     # Monitora runs em tempo real
     while true; do
-        local latest_run=$(gh api repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs \
+        local latest_run
+        latest_run=$(gh api repos/$GITHUB_REPO/actions/workflows/$workflow_id/runs \
             --jq ".workflows[0].runs[0] | select(.head_branch == \"$branch\")")
         
         if [ -n "$latest_run" ]; then
-            local run_id=$(echo "$latest_run" | jq -r '.id')
-            local status=$(echo "$latest_run" | jq -r '.status')
-            local conclusion=$(echo "$latest_run" | jq -r '.conclusion')
+            local run_id
+            local status
+            local conclusion
+            run_id=$(echo "$latest_run" | jq -r '.id')
+            status=$(echo "$latest_run" | jq -r '.status')
+            conclusion=$(echo "$latest_run" | jq -r '.conclusion')
             
             log "Latest run: $run_id | Status: $status | Conclusion: $conclusion"
             
