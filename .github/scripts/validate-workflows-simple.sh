@@ -95,8 +95,10 @@ validate_action_versions() {
     while IFS= read -r line; do
         if [[ "$line" =~ uses:\ ([^[:space:]]+) ]]; then
             local action="${BASH_REMATCH[1]}"
-            local action_name=$(echo "$action" | cut -d'@' -f1)
-            local action_version=$(echo "$action" | cut -d'@' -f2)
+            local action_name
+            local action_version
+            action_name=$(echo "$action" | cut -d'@' -f1)
+            action_version=$(echo "$action" | cut -d'@' -f2)
             
             if [[ "$action_name" == actions/* ]] || [[ "$action_name" == pnpm/* ]]; then
                 local recommended_version="${recommended_versions[$action_name]}"
@@ -127,7 +129,8 @@ validate_secrets() {
     local expected_secrets=("GITHUB_TOKEN" "NPM_TOKEN")
     
     # Extrai secrets do arquivo
-    local used_secrets=$(grep -o '\${{ secrets\.[^}]* }}' "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g')
+    local used_secrets
+    used_secrets=$(grep -o '\${{ secrets\.[^}]* }}' "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g')
     
     # Verifica se todos os secrets esperados estão sendo usados
     for secret in "${expected_secrets[@]}"; do
@@ -242,7 +245,8 @@ validate_nx_configurations() {
     fi
     
     # Verifica se há comando nx affected nos workflows
-    local affected_usage=$(grep -r "nx affected" "$WORKFLOWS_DIR" | wc -l)
+    local affected_usage
+    affected_usage=$(grep -r "nx affected" "$WORKFLOWS_DIR" | wc -l)
     if [ "$affected_usage" -gt 0 ]; then
         log_success "nx affected command found in $affected_usage workflow(s)"
     else
@@ -259,8 +263,10 @@ validate_consistency() {
     log "Validating consistency between workflows..."
     
     # Verifica versões de Node.js
-    local node_versions=$(grep -r "node-version:" "$WORKFLOWS_DIR" | sed 's/.*node-version: *"\([^"]*\)".*/\1/' | sort -u)
-    local unique_node_versions=$(echo "$node_versions" | wc -l)
+    local node_versions
+    local unique_node_versions
+    node_versions=$(grep -r "node-version:" "$WORKFLOWS_DIR" | sed 's/.*node-version: *"\([^"]*\)".*/\1/' | sort -u)
+    unique_node_versions=$(echo "$node_versions" | wc -l)
     
     if [ "$unique_node_versions" -eq 1 ]; then
         log_success "Node.js version consistent: $(echo "$node_versions" | head -1)"
@@ -270,8 +276,10 @@ validate_consistency() {
     fi
     
     # Verifica versões de pnpm
-    local pnpm_versions=$(grep -r "version:" "$WORKFLOWS_DIR" | grep pnpm | sed 's/.*version: *\([^[:space:]]*\).*/\1/' | sort -u)
-    local unique_pnpm_versions=$(echo "$pnpm_versions" | wc -l)
+    local pnpm_versions
+    local unique_pnpm_versions
+    pnpm_versions=$(grep -r "version:" "$WORKFLOWS_DIR" | grep pnpm | sed 's/.*version: *\([^[:space:]]*\).*/\1/' | sort -u)
+    unique_pnpm_versions=$(echo "$pnpm_versions" | wc -l)
     
     if [ "$unique_pnpm_versions" -eq 1 ]; then
         log_success "pnpm version consistent: $(echo "$pnpm_versions" | head -1)"
@@ -281,8 +289,10 @@ validate_consistency() {
     fi
     
     # Verifica versões de Go
-    local go_versions=$(grep -r "go-version:" "$WORKFLOWS_DIR" | sed 's/.*go-version: *"\([^"]*\)".*/\1/' | sort -u)
-    local unique_go_versions=$(echo "$go_versions" | wc -l)
+    local go_versions
+    local unique_go_versions
+    go_versions=$(grep -r "go-version:" "$WORKFLOWS_DIR" | sed 's/.*go-version: *"\([^"]*\)".*/\1/' | sort -u)
+    unique_go_versions=$(echo "$go_versions" | wc -l)
     
     if [ "$unique_go_versions" -eq 1 ]; then
         log_success "Go version consistent: $(echo "$go_versions" | head -1)"

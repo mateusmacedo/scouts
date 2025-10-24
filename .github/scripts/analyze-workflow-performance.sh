@@ -69,7 +69,8 @@ get_workflow_runs() {
     log "Fetching workflow runs for: $workflow_name (limit: $limit)"
     
     # Obtém workflow ID
-    local workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
+    local workflow_id
+    workflow_id=$(gh api repos/$GITHUB_REPO/actions/workflows --jq ".workflows[] | select(.name == \"$workflow_name\") | .id")
     
     if [ -z "$workflow_id" ]; then
         log_error "Workflow '$workflow_name' not found"
@@ -130,8 +131,10 @@ calculate_duration() {
     fi
     
     # Converte timestamps para segundos
-    local start_epoch=$(date -d "$start_time" +%s 2>/dev/null || echo "0")
-    local end_epoch=$(date -d "$end_time" +%s 2>/dev/null || echo "0")
+    local start_epoch
+    local end_epoch
+    start_epoch=$(date -d "$start_time" +%s 2>/dev/null || echo "0")
+    end_epoch=$(date -d "$end_time" +%s 2>/dev/null || echo "0")
     
     if [ "$start_epoch" -eq 0 ] || [ "$end_epoch" -eq 0 ]; then
         echo "N/A"
@@ -150,7 +153,8 @@ analyze_performance() {
     log "Analyzing performance for workflow: $workflow_name"
     
     # Obtém runs do workflow
-    local runs=$(get_workflow_runs "$workflow_name" "$limit")
+    local runs
+    runs=$(get_workflow_runs "$workflow_name" "$limit")
     
     if [ -z "$runs" ]; then
         log_error "No workflow runs found"
@@ -212,7 +216,8 @@ generate_performance_report() {
 EOF
 
     # Obtém runs do workflow
-    local runs=$(get_workflow_runs "$workflow_name" "$limit")
+    local runs
+    runs=$(get_workflow_runs "$workflow_name" "$limit")
     
     if [ -n "$runs" ]; then
         # Calcula estatísticas básicas
