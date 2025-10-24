@@ -10,7 +10,9 @@
     "@scouts/logger-node": "workspace:*",
     "@scouts/utils-nest": "workspace:*",
     "@scouts/user-node": "workspace:*",
+    "axios": "^1.6.0",
     "class-validator": "^0.14.0",
+    "rxjs": "^7.8.0",
     "@nx/webpack": "20.8.2"
   }
 }

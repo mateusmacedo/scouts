@@ -10,6 +10,7 @@ import {
 } from '@scouts/user-node';
 import { CreateUserDto as AppCreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto as AppUpdateUserDto } from './dto/update-user.dto';
+import { NotificationsService } from './notifications.service';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +19,8 @@ export class UsersService {
 
 	constructor(
 		private readonly logger: NestLoggerService,
-		private readonly advancedLogger: AdvancedLoggerService
+		private readonly advancedLogger: AdvancedLoggerService,
+		private readonly notificationsService: NotificationsService
 	) {
 		// Initialize repository and service
 		this.userRepository = new InMemoryUserRepository();
@@ -55,7 +57,25 @@ export class UsersService {
 			address: createUserDto.address,
 		};
 
-		return this.userService.create(userDto);
+		const user = await this.userService.create(userDto);
+
+		// Orquestração: Enviar notificação de boas-vindas
+		try {
+			await this.notificationsService.sendWelcomeEmail(user);
+			this.advancedLogger.info('Welcome email notification sent', {
+				userId: user.id,
+				userEmail: user.email
+			});
+		} catch (error) {
+			// Log do erro mas não falha a criação do usuário
+			this.advancedLogger.warn('Failed to send welcome email notification', {
+				userId: user.id,
+				userEmail: user.email,
+				error: error instanceof Error ? error.message : 'Unknown error'
+			});
+		}
+
+		return user;
 	}
 
 	async findAll(): Promise<User[]> {
@@ -95,7 +115,27 @@ export class UsersService {
 				address: updateUserDto.address,
 			};
 
-			return await this.userService.update(id, userDto);
+			const updatedUser = await this.userService.update(id, userDto);
+
+			// Orquestração: Enviar notificação de atualização
+			if (updatedUser) {
+				try {
+					await this.notificationsService.sendUserUpdateNotification(updatedUser);
+					this.advancedLogger.info('User update notification sent', {
+						userId: updatedUser.id,
+						userPhone: updatedUser.phone
+					});
+				} catch (error) {
+					// Log do erro mas não falha a atualização do usuário
+					this.advancedLogger.warn('Failed to send user update notification', {
+						userId: updatedUser.id,
+						userPhone: updatedUser.phone,
+						error: error instanceof Error ? error.message : 'Unknown error'
+					});
+				}
+			}
+
+			return updatedUser;
 		} catch (error) {
 			this.logger.warn(`User not found for update with id: ${id}`, 'UsersService');
 			this.advancedLogger.warn('User not found for update', { userId: id });

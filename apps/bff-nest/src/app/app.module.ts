@@ -7,10 +7,17 @@ import { MonitoringController } from './monitoring/monitoring.controller';
 import { MonitoringService } from './monitoring/monitoring.service';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
+import { NotificationsService } from './users/notifications.service';
 
 @Module({
 	imports: [
-		HttpModule,
+		HttpModule.register({
+			baseURL: process.env['EXPRESS_NOTIFIER_URL'] || 'http://localhost:3001',
+			timeout: 10000,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		}),
 		HealthModule.forRoot(), // Configuração básica sem indicadores customizados
 		LoggerModule.forRoot({
 			service: 'bff-nest',
@@ -21,7 +28,7 @@ import { UsersService } from './users/users.service';
 		}),
 	],
 	controllers: [AppController, UsersController, MonitoringController],
-	providers: [AppService, UsersService, MonitoringService],
+	providers: [AppService, UsersService, NotificationsService, MonitoringService],
 })
 export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

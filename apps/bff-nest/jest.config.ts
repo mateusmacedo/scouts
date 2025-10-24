@@ -17,6 +17,5 @@ export default {
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
 	coverageDirectory: '../../coverage/apps/bff-nest',
-	maxWorkers: '50%',
 	cache: true,
 };

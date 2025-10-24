@@ -3,22 +3,34 @@ import { LOGGER_TOKEN, LoggerModule, AdvancedLoggerService } from '@scouts/utils
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
-import { InMemoryUserRepository } from '@scouts/user-node';
+import { NotificationsService } from './notifications.service';
 
 describe('UsersService', () => {
 	let service: UsersService;
 	let logger: any;
 	let advancedLogger: AdvancedLoggerService;
+	let notificationsService: NotificationsService;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			imports: [LoggerModule.forRoot()],
-			providers: [UsersService],
+			providers: [
+				UsersService,
+				{
+					provide: NotificationsService,
+					useValue: {
+						sendWelcomeEmail: jest.fn(),
+						sendUserUpdateNotification: jest.fn(),
+						getNotificationStatus: jest.fn()
+					}
+				}
+			],
 		}).compile();
 
 		service = module.get<UsersService>(UsersService);
 		logger = module.get(LOGGER_TOKEN);
 		advancedLogger = module.get<AdvancedLoggerService>(AdvancedLoggerService);
+		notificationsService = module.get<NotificationsService>(NotificationsService);
 
 		// Mock the logger methods
 		jest.spyOn(logger, 'info').mockImplementation(() => {});
@@ -48,13 +60,22 @@ describe('UsersService', () => {
 	});
 
 	describe('create', () => {
-		it('should create a user with all fields', async () => {
+		it('should create a user with all fields and send welcome notification', async () => {
 			const createUserDto: CreateUserDto = {
 				name: 'John Doe',
 				email: 'john@example.com',
 				phone: '123456789',
 				address: '123 Main St',
 			};
+
+			// Mock successful notification
+			jest.spyOn(notificationsService, 'sendWelcomeEmail').mockResolvedValue({
+				id: 'notification-123',
+				status: 'sent',
+				type: 'email',
+				recipient: 'john@example.com',
+				createdAt: new Date().toISOString()
+			});
 
 			const result = await service.create(createUserDto);
 
@@ -71,6 +92,45 @@ describe('UsersService', () => {
 			expect(advancedLogger.logBusinessEvent).toHaveBeenCalledWith('user_created', {
 				userId: '1',
 				userData: { name: 'John Doe', email: 'john@example.com' },
+			});
+
+			// Verify notification was sent
+			expect(notificationsService.sendWelcomeEmail).toHaveBeenCalledWith(result);
+			expect(advancedLogger.info).toHaveBeenCalledWith('Welcome email notification sent', {
+				userId: '1',
+				userEmail: 'john@example.com'
+			});
+		});
+
+		it('should create user even if welcome notification fails', async () => {
+			const createUserDto: CreateUserDto = {
+				name: 'John Doe',
+				email: 'john@example.com',
+				phone: '123456789',
+				address: '123 Main St',
+			};
+
+			// Mock failed notification
+			jest.spyOn(notificationsService, 'sendWelcomeEmail').mockRejectedValue(new Error('Notification service unavailable'));
+
+			const result = await service.create(createUserDto);
+
+			expect(result).toEqual({
+				id: '1',
+				name: 'John Doe',
+				email: 'john@example.com',
+				phone: '123456789',
+				address: '123 Main St',
+				createdAt: expect.any(Date),
+				updatedAt: expect.any(Date),
+			});
+
+			// Verify notification was attempted
+			expect(notificationsService.sendWelcomeEmail).toHaveBeenCalledWith(result);
+			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send welcome email notification', {
+				userId: '1',
+				userEmail: 'john@example.com',
+				error: 'Notification service unavailable'
 			});
 		});
 
@@ -249,6 +309,147 @@ describe('UsersService', () => {
 			expect(result?.name).toBe(createdUser.name);
 			expect(result?.email).toBe(createdUser.email);
 			expect(result?.address).toBe(createdUser.address);
+		});
+
+		it('should send SMS notification on successful user update', async () => {
+			const createUserDto: CreateUserDto = {
+				name: 'John Doe',
+				email: 'john@example.com',
+				phone: '123456789',
+				address: '123 Main St',
+			};
+
+			const createdUser = await service.create(createUserDto);
+			const updateUserDto: UpdateUserDto = {
+				name: 'John Updated',
+				phone: '987654321',
+			};
+
+			// Mock successful SMS notification
+			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockResolvedValue({
+				id: 'notification-456',
+				status: 'sent',
+				type: 'sms',
+				recipient: '987654321',
+				createdAt: new Date().toISOString()
+			});
+
+			const result = await service.update(createdUser.id, updateUserDto);
+
+			expect(result).toEqual({
+				...createdUser,
+				name: 'John Updated',
+				phone: '987654321',
+				updatedAt: expect.any(Date),
+			});
+
+			// Verify SMS notification was sent
+			expect(notificationsService.sendUserUpdateNotification).toHaveBeenCalledWith(result);
+			expect(advancedLogger.info).toHaveBeenCalledWith('User update notification sent', {
+				userId: result?.id,
+				userPhone: result?.phone
+			});
+		});
+
+		it('should handle SMS notification failure during user update', async () => {
+			const createUserDto: CreateUserDto = {
+				name: 'John Doe',
+				email: 'john@example.com',
+				phone: '123456789',
+				address: '123 Main St',
+			};
+
+			const createdUser = await service.create(createUserDto);
+			const updateUserDto: UpdateUserDto = {
+				name: 'John Updated',
+				phone: '987654321',
+			};
+
+			// Mock failed SMS notification
+			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockRejectedValue(new Error('SMS service unavailable'));
+
+			const result = await service.update(createdUser.id, updateUserDto);
+
+			expect(result).toEqual({
+				...createdUser,
+				name: 'John Updated',
+				phone: '987654321',
+				updatedAt: expect.any(Date),
+			});
+
+			// Verify SMS notification was attempted
+			expect(notificationsService.sendUserUpdateNotification).toHaveBeenCalledWith(result);
+			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send user update notification', {
+				userId: result?.id,
+				userPhone: result?.phone,
+				error: 'SMS service unavailable'
+			});
+		});
+
+		it('should update user even if SMS notification fails', async () => {
+			const createUserDto: CreateUserDto = {
+				name: 'John Doe',
+				email: 'john@example.com',
+				phone: '123456789',
+			};
+
+			const createdUser = await service.create(createUserDto);
+			const updateUserDto: UpdateUserDto = {
+				name: 'John Updated',
+			};
+
+			// Mock failed SMS notification
+			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockRejectedValue(new Error('SMS service unavailable'));
+
+			const result = await service.update(createdUser.id, updateUserDto);
+
+			// User update should succeed even if notification fails
+			expect(result).toEqual({
+				...createdUser,
+				name: 'John Updated',
+				updatedAt: expect.any(Date),
+			});
+
+			// Verify notification was attempted but user update still succeeded
+			expect(notificationsService.sendUserUpdateNotification).toHaveBeenCalledWith(result);
+			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send user update notification', {
+				userId: result?.id,
+				userPhone: result?.phone,
+				error: 'SMS service unavailable'
+			});
+		});
+
+		it('should not send notification for user without phone', async () => {
+			const createUserDto: CreateUserDto = {
+				name: 'John Doe',
+				email: 'john@example.com',
+				// No phone provided
+			};
+
+			const createdUser = await service.create(createUserDto);
+			const updateUserDto: UpdateUserDto = {
+				name: 'John Updated',
+			};
+
+			// Mock SMS notification
+			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockResolvedValue({
+				id: 'notification-456',
+				status: 'sent',
+				type: 'sms',
+				recipient: undefined,
+				createdAt: new Date().toISOString()
+			});
+
+			const result = await service.update(createdUser.id, updateUserDto);
+
+			expect(result).toEqual({
+				...createdUser,
+				name: 'John Updated',
+				updatedAt: expect.any(Date),
+			});
+
+			// SMS notification should still be attempted (service handles empty phone)
+			expect(notificationsService.sendUserUpdateNotification).toHaveBeenCalledWith(result);
 		});
 	});
 
