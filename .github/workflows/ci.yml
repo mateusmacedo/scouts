@@ -7,18 +7,25 @@ on:
       - develop
   pull_request:
 
+concurrency: ci-${{ github.ref }}
+cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   quality:
     name: Lint, Test and Build Affected Projects
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           check-latest: true
@@ -55,8 +62,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Run Nx affected targets
-        run: pnpm nx affected -t lint test build
+        run: pnpm nx affected -t lint test build --base=origin/main --head=${{ github.head_ref || github.ref_name }} --parallel=3
