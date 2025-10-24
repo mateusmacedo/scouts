@@ -4,18 +4,10 @@ on:
   push:
   pull_request:
 
-permissions:
-  contents: read
-  packages: read
-
 jobs:
   quality:
     name: Lint, Test and Build Affected Projects
     runs-on: ubuntu-latest
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

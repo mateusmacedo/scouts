@@ -121,7 +121,7 @@ pnpm nx list @nx-go/nx-go
 ### Workflows disponíveis
 
 - **`ci.yml`** – Executa lint, testes e build apenas dos projetos afetados em pushes e pull requests, com caches de pnpm e Go para acelerar execuções.
-- **`release.yml`** – Ao receber pushes na `main` ou novas tags, gera changelog, versiona os pacotes e publica artefatos utilizando os comandos `pnpm nx release version` e `pnpm nx release publish`.
+- **`release.yml`** – Ao receber pushes na `main` (exceto commits de release), gera changelog, versiona os pacotes e publica artefatos utilizando os comandos `pnpm nx release version` e `pnpm nx release publish`.
 - **`release-validation.yml`** – Valida PRs executando `pnpm nx release version --dry-run`, garantindo a conformidade das convenções de commit e a integridade da configuração de release antes do merge.
 
 ### Release de Projetos
