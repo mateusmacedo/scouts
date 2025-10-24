@@ -18,6 +18,8 @@ import (
 
 const version = "1.0.0"
 
+// Test commit for workflow validation - app isolated change
+
 // CustomValidator is a custom validator for Echo
 type CustomValidator struct{}
 
