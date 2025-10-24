@@ -84,7 +84,7 @@ export class MetricsCollector extends BaseMetricsCollector {
 
 		return {
 			...baseMetrics,
-			logsPerSecond: uptimeSeconds > 0 ? baseMetrics.logsWritten / uptimeSeconds : 0,
+			logsPerSecond: uptimeSeconds >= 1 ? baseMetrics.logsWritten / uptimeSeconds : 0,
 			errorRate: baseMetrics.logsWritten > 0 ? baseMetrics.errorCount / baseMetrics.logsWritten : 0,
 			averageRedactLatency: this.calculateAverageLatency(),
 			bufferUtilizationRate: this.getBufferUtilization(),
