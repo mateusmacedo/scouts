@@ -19,6 +19,5 @@ export default async (): Promise<Config> => ({
       statements: 65,
     },
   },
-  maxWorkers: '50%',
 	cache: true,
 });
