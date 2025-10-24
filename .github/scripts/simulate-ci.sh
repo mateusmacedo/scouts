@@ -128,14 +128,14 @@ simulate_cache_restore() {
     log "Simulating cache restore..."
     
     # Simula cache do pnpm
-    if [ -d "~/.pnpm-store" ]; then
+    if [ -d "$HOME/.pnpm-store" ]; then
         log_success "pnpm cache found"
     else
         log_warning "pnpm cache not found (first run)"
     fi
     
     # Simula cache do Go
-    if [ -d "~/.cache/go-build" ] || [ -d "~/go/pkg/mod" ]; then
+    if [ -d "$HOME/.cache/go-build" ] || [ -d "$HOME/go/pkg/mod" ]; then
         log_success "Go cache found"
     else
         log_warning "Go cache not found (first run)"
@@ -252,8 +252,8 @@ $(date)
 
 ### Cache Status
 - **Nx cache:** $(if [ -d ".nx/cache" ]; then echo "Presente"; else echo "Ausente"; fi)
-- **pnpm cache:** $(if [ -d "~/.pnpm-store" ]; then echo "Presente"; else echo "Ausente"; fi)
-- **Go cache:** $(if [ -d "~/.cache/go-build" ]; then echo "Presente"; else echo "Ausente"; fi)
+- **pnpm cache:** $(if [ -d "$HOME/.pnpm-store" ]; then echo "Presente"; else echo "Ausente"; fi)
+- **Go cache:** $(if [ -d "$HOME/.cache/go-build" ]; then echo "Presente"; else echo "Ausente"; fi)
 
 ### Dependências
 - **pnpm:** $(pnpm --version 2>/dev/null || echo "Não instalado")
