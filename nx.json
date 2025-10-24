@@ -48,7 +48,7 @@
       "exclude": ["*-e2e/**/*"]
     },
     "@nx-go/nx-go",
-    "@nx/eslint/plugin",
+    "@nx/eslint/plugin"
   ],
   "targetDefaults": {
     "@nx/js:tsc": {
