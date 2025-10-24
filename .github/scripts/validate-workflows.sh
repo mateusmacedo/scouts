@@ -238,8 +238,10 @@ validate_action_versions() {
     
     while IFS= read -r action; do
         if [ -n "$action" ]; then
-            local action_name=$(echo "$action" | cut -d'@' -f1)
-            local action_version=$(echo "$action" | cut -d'@' -f2)
+            local action_name
+            local action_version
+            action_name=$(echo "$action" | cut -d'@' -f1)
+            action_version=$(echo "$action" | cut -d'@' -f2)
             
             if [[ "$action_name" == actions/* ]] || [[ "$action_name" == pnpm/* ]]; then
                 local latest_version="${latest_versions[$action_name]}"
@@ -303,7 +305,7 @@ validate_secrets() {
         return 0
     fi
     
-    if ! used_secrets=$(grep -o '\${{ secrets\.[^}]* }}' "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g' 2>/dev/null); then
+    if ! used_secrets=$(grep -o "\${{ secrets\.[^}]* }}" "$file" | sed 's/\${{ secrets\.//g' | sed 's/ }}//g' 2>/dev/null); then
         log_warning "Failed to extract secrets from: $file"
         return 0
     fi
@@ -494,7 +496,8 @@ validate_consistency() {
             log_warning "Failed to extract Node.js versions"
             node_versions=""
         fi
-        local unique_node_versions=$(echo "$node_versions" | wc -l)
+        local unique_node_versions
+        unique_node_versions=$(echo "$node_versions" | wc -l)
         
         if [ "$unique_node_versions" -eq 1 ]; then
             log_success "Node.js version consistent: $(echo "$node_versions" | head -1)"
@@ -514,7 +517,8 @@ validate_consistency() {
             log_warning "Failed to extract pnpm versions"
             pnpm_versions=""
         fi
-        local unique_pnpm_versions=$(echo "$pnpm_versions" | wc -l)
+        local unique_pnpm_versions
+        unique_pnpm_versions=$(echo "$pnpm_versions" | wc -l)
         
         if [ "$unique_pnpm_versions" -eq 1 ]; then
             log_success "pnpm version consistent: $(echo "$pnpm_versions" | head -1)"
@@ -534,7 +538,8 @@ validate_consistency() {
             log_warning "Failed to extract Go versions"
             go_versions=""
         fi
-        local unique_go_versions=$(echo "$go_versions" | wc -l)
+        local unique_go_versions
+        unique_go_versions=$(echo "$go_versions" | wc -l)
         
         if [ "$unique_go_versions" -eq 1 ]; then
             log_success "Go version consistent: $(echo "$go_versions" | head -1)"
@@ -672,7 +677,8 @@ EOF
     local workflow_count=0
     for workflow_file in "$WORKFLOWS_DIR"/*.yml; do
         if [ -f "$workflow_file" ]; then
-            local filename=$(basename "$workflow_file")
+            local filename
+            filename=$(basename "$workflow_file")
             log "Validating workflow: $filename"
             workflow_count=$((workflow_count + 1))
             
