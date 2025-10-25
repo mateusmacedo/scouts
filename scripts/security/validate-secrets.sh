@@ -7,7 +7,7 @@ echo "🔐 Validando secrets obrigatórios..."
 
 # Lista de secrets obrigatórios
 REQUIRED_SECRETS=(
-    "GL_TOKEN"
+    "GH_TOKEN"
     "NPM_TOKEN" 
     "SONAR_TOKEN"
 )
