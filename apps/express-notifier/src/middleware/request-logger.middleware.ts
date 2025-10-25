@@ -1,12 +1,13 @@
 import type { Logger } from '@scouts/logger-node';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
+import type { CustomRequest } from '../types/express';
 
 /**
  * Middleware para logging de requisições
  * Demonstra uso direto do logger-node para capturar métricas
  */
 export function requestLoggerMiddleware(logger: Logger) {
-	return (req: Request, res: Response, next: NextFunction) => {
+	return (req: CustomRequest, res: Response, next: NextFunction) => {
 		const startTime = Date.now();
 
 		// Capturar dados da requisição
@@ -15,7 +16,7 @@ export function requestLoggerMiddleware(logger: Logger) {
 			url: req.url,
 			userAgent: req.headers['user-agent'],
 			ip: req.ip || req.connection?.remoteAddress,
-			correlationId: (req as any).correlationId,
+			correlationId: req.correlationId,
 		};
 
 		// Log da requisição
@@ -32,7 +33,7 @@ export function requestLoggerMiddleware(logger: Logger) {
 				url: req.url,
 				statusCode: res.statusCode,
 				duration: `${duration}ms`,
-				correlationId: (req as any).correlationId,
+				correlationId: req.correlationId,
 			});
 
 			// Log de performance se demorou muito
@@ -41,7 +42,7 @@ export function requestLoggerMiddleware(logger: Logger) {
 					method: req.method,
 					url: req.url,
 					duration: `${duration}ms`,
-					correlationId: (req as any).correlationId,
+					correlationId: req.correlationId,
 				});
 			}
 

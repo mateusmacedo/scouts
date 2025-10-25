@@ -1,22 +1,23 @@
 import type { Logger } from '@scouts/logger-node';
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
+import type { CustomRequest, LogFields } from '../types/express';
 
 /**
  * Middleware para tratamento global de erros
  * Demonstra logging estruturado de exceções com logger-node
  */
 export function errorHandlerMiddleware(logger: Logger) {
-	return (error: Error, req: Request, res: Response, _next: NextFunction) => {
-		const correlationId = (req as any).correlationId;
+	return (error: Error, req: CustomRequest, res: Response, _next: NextFunction) => {
+		const correlationId = req.correlationId;
 		const requestLogger = correlationId
 			? {
-					info: (message: string, fields?: any) =>
+					info: (message: string, fields?: LogFields) =>
 						logger.info(message, { ...fields, correlationId }),
-					debug: (message: string, fields?: any) =>
+					debug: (message: string, fields?: LogFields) =>
 						logger.debug(message, { ...fields, correlationId }),
-					warn: (message: string, fields?: any) =>
+					warn: (message: string, fields?: LogFields) =>
 						logger.warn(message, { ...fields, correlationId }),
-					error: (message: string, fields?: any) =>
+					error: (message: string, fields?: LogFields) =>
 						logger.error(message, { ...fields, correlationId }),
 				}
 			: logger;

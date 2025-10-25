@@ -1,14 +1,13 @@
 import express from 'express';
 import request from 'supertest';
-import { createLogger } from '../config/logger.config';
 import { notificationRoutes } from './notifications.routes';
 
 describe('Notification Routes', () => {
 	let app: express.Application;
-	let mockLogger: any;
+	let _mockLogger: any;
 
 	beforeEach(() => {
-		mockLogger = {
+		_mockLogger = {
 			info: jest.fn(),
 			debug: jest.fn(),
 			warn: jest.fn(),
@@ -19,7 +18,7 @@ describe('Notification Routes', () => {
 		app.use(express.json());
 
 		// Mock correlation-id middleware
-		app.use((req: any, res, next) => {
+		app.use((req: any, _res, next) => {
 			req.correlationId = 'test-correlation-id';
 			next();
 		});

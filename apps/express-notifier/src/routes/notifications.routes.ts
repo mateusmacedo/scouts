@@ -1,10 +1,11 @@
-import { Request, Response, Router } from 'express';
+import { Response, Router } from 'express';
 import { createLogger } from '../config/logger.config';
 import {
 	EmailNotification,
 	NotificationService,
 	SMSNotification,
 } from '../services/notification.service';
+import type { CustomRequest, LogFields } from '../types/express';
 
 const router = Router();
 const logger = createLogger();
@@ -14,15 +15,17 @@ const notificationService = new NotificationService(logger);
  * POST /api/v1/notifications/email
  * Enviar notificação por email
  */
-router.post('/email', async (req: Request, res: Response): Promise<void> => {
-	const correlationId = (req as any).correlationId;
+router.post('/email', async (req: CustomRequest, res: Response): Promise<void> => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -86,15 +89,17 @@ router.post('/email', async (req: Request, res: Response): Promise<void> => {
  * POST /api/v1/notifications/sms
  * Enviar notificação por SMS
  */
-router.post('/sms', async (req: Request, res: Response): Promise<void> => {
-	const correlationId = (req as any).correlationId;
+router.post('/sms', async (req: CustomRequest, res: Response): Promise<void> => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -155,15 +160,17 @@ router.post('/sms', async (req: Request, res: Response): Promise<void> => {
  * GET /api/v1/notifications/:id/status
  * Obter status de uma notificação
  */
-router.get('/:id/status', async (req: Request, res: Response): Promise<void> => {
-	const correlationId = (req as any).correlationId;
+router.get('/:id/status', (req: CustomRequest, res: Response): void => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -210,15 +217,17 @@ router.get('/:id/status', async (req: Request, res: Response): Promise<void> => 
  * GET /api/v1/notifications
  * Listar todas as notificações
  */
-router.get('/', async (req: Request, res: Response) => {
-	const correlationId = (req as any).correlationId;
+router.get('/', (req: CustomRequest, res: Response) => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;

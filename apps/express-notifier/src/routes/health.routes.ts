@@ -1,5 +1,6 @@
-import { Request, Response, Router } from 'express';
+import { Response, Router } from 'express';
 import { createLogger } from '../config/logger.config';
+import type { CustomRequest, LogFields } from '../types/express';
 
 const router = Router();
 const logger = createLogger();
@@ -8,15 +9,17 @@ const logger = createLogger();
  * GET /health
  * Health check básico
  */
-router.get('/', (req: Request, res: Response) => {
-	const correlationId = (req as any).correlationId;
+router.get('/', (req: CustomRequest, res: Response) => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -36,15 +39,17 @@ router.get('/', (req: Request, res: Response) => {
  * GET /health/ready
  * Readiness check - verificar se o serviço está pronto para receber tráfego
  */
-router.get('/ready', async (req: Request, res: Response) => {
-	const correlationId = (req as any).correlationId;
+router.get('/ready', async (req: CustomRequest, res: Response) => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -86,15 +91,17 @@ router.get('/ready', async (req: Request, res: Response) => {
  * GET /health/live
  * Liveness check - verificar se o serviço está vivo
  */
-router.get('/live', (req: Request, res: Response) => {
-	const correlationId = (req as any).correlationId;
+router.get('/live', (req: CustomRequest, res: Response) => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -114,15 +121,17 @@ router.get('/live', (req: Request, res: Response) => {
  * GET /health/metrics
  * Expor métricas do logger-node
  */
-router.get('/metrics', (req: Request, res: Response) => {
-	const correlationId = (req as any).correlationId;
+router.get('/metrics', (req: CustomRequest, res: Response) => {
+	const correlationId = req.correlationId;
 	const requestLogger = correlationId
 		? {
-				info: (message: string, fields?: any) => logger.info(message, { ...fields, correlationId }),
-				debug: (message: string, fields?: any) =>
+				info: (message: string, fields?: LogFields) =>
+					logger.info(message, { ...fields, correlationId }),
+				debug: (message: string, fields?: LogFields) =>
 					logger.debug(message, { ...fields, correlationId }),
-				warn: (message: string, fields?: any) => logger.warn(message, { ...fields, correlationId }),
-				error: (message: string, fields?: any) =>
+				warn: (message: string, fields?: LogFields) =>
+					logger.warn(message, { ...fields, correlationId }),
+				error: (message: string, fields?: LogFields) =>
 					logger.error(message, { ...fields, correlationId }),
 			}
 		: logger;
@@ -164,9 +173,7 @@ router.get('/metrics', (req: Request, res: Response) => {
 /**
  * Realizar verificações de readiness
  */
-async function performReadinessChecks(): Promise<
-	Array<{ name: string; status: string; message?: string }>
-> {
+function performReadinessChecks(): Array<{ name: string; status: string; message?: string }> {
 	const checks = [];
 
 	// Check 1: Verificar se o logger está funcionando

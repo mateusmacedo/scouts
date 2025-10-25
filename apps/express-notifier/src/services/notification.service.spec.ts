@@ -1,4 +1,3 @@
-import { createLogger } from '../config/logger.config';
 import { EmailNotification, NotificationService, SMSNotification } from './notification.service';
 
 describe('NotificationService', () => {

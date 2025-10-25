@@ -6,14 +6,14 @@ export interface EmailNotification {
 	subject: string;
 	body: string;
 	template?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, unknown>;
 }
 
 export interface SMSNotification {
 	to: string;
 	message: string;
 	template?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, unknown>;
 }
 
 export interface NotificationResult {

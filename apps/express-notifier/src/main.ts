@@ -27,7 +27,7 @@ const PORT = process.env['PORT'] || 3001;
 
 // Middlewares de segurança e performance
 app.use(helmet());
-app.use(compression() as any);
+app.use(compression());
 app.use(
 	cors({
 		origin: process.env['CORS_ORIGINS']?.split(',') || ['http://localhost:3000'],
