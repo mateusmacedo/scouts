@@ -4,29 +4,94 @@
 
 Esta documentação descreve a arquitetura de CI/CD otimizada implementada para o monorepo Nx, focando em eficiência, economia e boas práticas de DevOps.
 
-## Arquitetura Atual
+## Arquitetura Otimizada
 
-### 1. Pipeline CI Principal (`.github/workflows/ci.yml`)
+### 1. Pipeline CI Development (`.github/workflows/ci-development.yml`)
 
-**Objetivo:** Executar lint, test e build de forma otimizada e paralela.
+**Objetivo:** Verificações rápidas para branches de desenvolvimento.
+
+**Triggers:**
+- `push`: branches `feat/*`, `feature/*`, `bugfix/*`, `hotfix/*`
+- `pull_request`: branch `develop`
 
 **Estrutura:**
 ```
-setup → [lint, test] → build → aggregate
+detect-changes → setup-conditional → [quick-checks, tests] → build-check
 ```
 
 **Características:**
-- **Jobs Paralelos:** Lint, test e build executam em paralelo após setup
-- **Matrix Strategy:** Distribui carga entre múltiplos runners
-- **Cache Inteligente:** Reutiliza dependências e artifacts entre jobs
-- **Nx Affected:** Executa apenas projetos afetados pelas mudanças
+- **Detecção Inteligente:** Detecta mudanças JS/TS vs Go
+- **Setup Condicional:** Node/pnpm sempre, Go apenas se necessário
+- **Verificações Rápidas:** Lint, format, typecheck (não bloqueantes)
+- **Testes Obrigatórios:** Unit tests (JS/TS + Go se aplicável)
+- **Build Check:** Não bloqueante para velocidade
 
 **Métricas Esperadas:**
-- Tempo total: ~2-3 minutos (vs ~5 minutos anterior)
-- Cache hit rate: >80%
-- Paralelismo: 3-5 tasks simultâneas
+- Tempo total: ~5-8 minutos
+- Cache hit rate: >70%
+- Paralelismo: 3 tasks simultâneas
 
-### 2. Pipeline de Preview (`.github/workflows/preview.yml`)
+### 2. Pipeline CI Quality Gate (`.github/workflows/ci-quality-gate.yml`)
+
+**Objetivo:** Verificações completas de qualidade para main/develop.
+
+**Triggers:**
+- `push`: branches `main`, `develop`
+- `pull_request`: branches `main`, `develop`
+- `workflow_dispatch`: com input para stress tests
+
+**Estrutura:**
+```
+quality-check → sonar-analysis → stress-tests (opcional)
+```
+
+**Jobs:**
+1. **quality-check:** Lint, format, typecheck, build, tests, E2E, coverage
+2. **sonar-analysis:** Análise SonarCloud com coverage
+3. **stress-tests:** Testes de stress (opcional via workflow_dispatch)
+
+**Características:**
+- **Quality Checks:** Paralelos (lint, format, typecheck, build)
+- **Testes Completos:** Unit, integration, E2E com coverage
+- **SonarCloud:** Análise completa com Quality Gate
+- **Security:** Trivy para vulnerabilidades
+- **Artifacts:** Build artifacts e coverage reports
+
+**Métricas Esperadas:**
+- Tempo total: ~15-20 minutos
+- Cache hit rate: >80%
+- Coverage: >80% para projetos afetados
+
+### 3. Pipeline de Release (`.github/workflows/release.yml`)
+
+**Objetivo:** Versionamento e publicação automatizada de pacotes.
+
+**Triggers:**
+- `push`: branch `main` (automático)
+- `workflow_dispatch`: manual com input `version-specifier`
+
+**Estrutura:**
+```
+pre-release → [version, publish] → post-release
+```
+
+**Jobs:**
+1. **pre-release:** Validação rápida e dry-run
+2. **release:** Versionamento + publicação (matrix: version, publish)
+3. **post-release:** Resumo e upload de changelogs
+
+**Características:**
+- **Estratégia Híbrida:** Manual + automático em main
+- **Registry:** npmjs.org (público)
+- **Recuperação Resiliente:** Tags não publicadas
+- **Artifacts:** Cache entre jobs
+
+**Métricas Esperadas:**
+- Tempo total: ~8-12 minutos
+- Cache hit rate: >90%
+- Publicação: Apenas projetos com mudanças
+
+### 4. Pipeline de Preview (`.github/workflows/preview.yml`)
 
 **Objetivo:** Deploy automático de ambientes de preview para Pull Requests.
 
@@ -40,19 +105,42 @@ setup → [lint, test] → build → aggregate
 - Formato: `https://{owner}.github.io/{repo}/pr-{number}/`
 - Aplicações: bff-nest, express-notifier, user-go-service
 
-### 3. Pipeline de Release (`.github/workflows/release.yml`)
-
-**Objetivo:** Versionamento e publicação automatizada de pacotes.
-
-**Estrutura:**
-```
-pre-release → [version, publish] → post-release
-```
-
 **Características:**
 - **Dry-run:** Validação antes da execução real
 - **Matrix Strategy:** Version e publish em paralelo
 - **Cache Reuse:** Reutiliza cache do CI anterior
+
+## Composite Actions
+
+### Estrutura Reutilizável
+
+Todas as composite actions estão em `.github/actions/`:
+
+- **setup-node-pnpm:** Configuração otimizada do Node.js + pnpm
+- **setup-go:** Configuração condicional do Go
+- **restore-nx-cache:** Cache Nx para builds/testes
+- **setup-playwright:** Setup Playwright com cache de browsers
+- **cache-manager:** Gerenciamento centralizado de cache
+
+### Benefícios
+
+- **Reutilização:** Mesma configuração em todos os workflows
+- **Manutenibilidade:** Mudanças centralizadas
+- **Consistência:** Comportamento padronizado
+- **Métricas:** Logs estruturados de cache
+
+### Scripts de Suporte
+
+Scripts utilitários em `scripts/`:
+
+- **setup-npm-registry.sh:** Configuração centralizada do registry
+- **validate-secrets.sh:** Validação de secrets obrigatórios
+- **health-check-ci.sh:** Health check de serviços externos
+- **coverage-strategy.sh:** Estratégia de coverage (affected vs all)
+- **generate-go-coverage.sh:** Geração de coverage Go
+- **consolidate-coverage.js:** Consolidação de coverage JS/TS + Go
+- **cleanup-coverage.js:** Limpeza de arquivos temporários
+- **incremental-analysis.sh:** Análise incremental SonarCloud
 - **Conventional Commits:** Versionamento automático baseado em commits
 
 ### 4. Análise de Performance (`.github/workflows/performance.yml`)

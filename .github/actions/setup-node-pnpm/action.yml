@@ -1,0 +1,64 @@
+name: 'Setup Node.js and pnpm with optimized caching'
+description: 'Setup Node.js and pnpm with intelligent caching strategy'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  pnpm-version:
+    description: 'pnpm version to use'
+    required: false
+    default: '9.15.0'
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.pnpm-cache.outputs.cache-hit }}
+  store-path:
+    description: 'pnpm store directory path'
+    value: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: ${{ inputs.node-version }}
+        check-latest: true
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Get pnpm store directory
+      id: pnpm-cache-dir
+      shell: bash
+      run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+    - name: Cache pnpm dependencies
+      id: pnpm-cache
+      uses: ./.github/actions/cache-manager
+      with:
+        path: ${{ steps.pnpm-cache-dir.outputs.STORE_PATH }}
+        prefix: pnpm
+        key: ${{ hashFiles('**/pnpm-lock.yaml') }}
+
+    - name: Configure NPM Registry
+      shell: bash
+      run: |
+        echo "🔧 Configurando registry npm usando script centralizado..."
+        bash scripts/utils/setup-npm-registry.sh ci
+
+    - name: Install dependencies
+      shell: bash
+      run: bash scripts/utils/retry-with-backoff.sh 3 5 "pnpm install --frozen-lockfile"
+
+    - name: Cache hit status
+      shell: bash
+      run: |
+        if [ "${{ steps.pnpm-cache.outputs.cache-hit }}" = "true" ]; then
+          echo "✅ pnpm cache hit - dependencies restored from cache"
+        else
+          echo "ℹ️ pnpm cache miss - installing dependencies from scratch"
+        fi

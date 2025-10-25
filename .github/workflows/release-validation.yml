@@ -19,57 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: "20"
-          check-latest: true
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.0
-
-      - name: Verify pnpm installation
-        run: pnpm --version
-
-      - name: Configure pnpm store
-        run: pnpm config set store-dir $HOME/.pnpm-store
-
-      - name: Restore pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: $HOME/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+        id: node-pnpm-setup
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GL_TOKEN }}
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: ./.github/actions/setup-go
         with:
-          go-version: "1.23"
-          check-latest: true
-
-      - name: Restore Go cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            $HOME/.cache/go-build
-            $HOME/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          has-go-changes: 'true'
+        id: go-setup
 
       - name: Restore Nx cache
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        uses: ./.github/actions/restore-nx-cache
+        id: nx-cache
 
       - name: Dry-run release versioning
         run: pnpm nx release version --dry-run
