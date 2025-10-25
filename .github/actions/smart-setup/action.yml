@@ -51,27 +51,12 @@ runs:
         echo "✅ Script permissions fixed"
       shell: bash
 
-    - name: Cache Dependencies
-      id: cache
-      if: ${{ inputs.cache-dependencies == 'true' }}
-      uses: actions/cache@v4
-      with:
-        path: |
-          node_modules
-          ~/.pnpm-store
-          ~/.pnpm-cache
-          .nx/cache
-        key: ${{ runner.os }}-smart-setup-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-smart-setup-
-
     - name: Setup Node.js
       id: setup-node
       if: ${{ contains(inputs.languages, 'node') || contains(inputs.languages, 'both') }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
 
     - name: Setup Go
       id: setup-go
@@ -88,6 +73,20 @@ runs:
         npm install -g pnpm@${{ inputs.pnpm-version }}
         echo "pnpm-version=$(pnpm --version)" >> $GITHUB_OUTPUT
       shell: bash
+
+    - name: Cache Dependencies
+      id: cache
+      if: ${{ inputs.cache-dependencies == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          ~/.pnpm-store
+          ~/.pnpm-cache
+          .nx/cache
+        key: ${{ runner.os }}-smart-setup-${{ hashFiles('pnpm-lock.yaml', 'go.work', 'go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-smart-setup-
 
     - name: Configure pnpm
       if: ${{ contains(inputs.languages, 'node') || contains(inputs.languages, 'both') }}
