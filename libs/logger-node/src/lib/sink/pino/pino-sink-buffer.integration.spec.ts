@@ -1,6 +1,6 @@
+import type { LogEntry } from '../../logger/logger';
 import { PinoSinkAdapter } from './pino-sink.adapter';
 import { createPinoSink } from './pino-sink.factory';
-import type { LogEntry } from '../../logger/logger';
 
 // Mock do Pino
 const mockPinoLogger = {

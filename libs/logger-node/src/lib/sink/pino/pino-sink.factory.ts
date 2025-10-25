@@ -1,6 +1,6 @@
 import type { Sink } from '../sink';
-import type { PinoSinkOptions, PinoLike } from './pino-sink.options';
 import { PinoSinkAdapter } from './pino-sink.adapter';
+import type { PinoLike, PinoSinkOptions } from './pino-sink.options';
 
 // Re-export PinoSinkAdapter for external use
 export { PinoSinkAdapter } from './pino-sink.adapter';

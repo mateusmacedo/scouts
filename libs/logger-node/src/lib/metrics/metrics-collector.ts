@@ -24,10 +24,6 @@ export class MetricsCollector extends BaseMetricsCollector {
 	private bufferSize: number = 0;
 	private bufferCapacity: number = 1000; // Default capacity
 
-	constructor() {
-		super();
-	}
-
 	/**
 	 * Incrementa uma métrica básica (sobrescreve para incluir novos campos)
 	 */

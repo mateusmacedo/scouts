@@ -1,5 +1,4 @@
-import type { Logger } from '../logger/logger';
-import type { LogEntry } from '../logger/logger';
+import type { LogEntry, Logger } from '../logger/logger';
 
 /**
  * Utilitários para testes do logger
@@ -73,9 +72,9 @@ export function createTestLogger(options: TestLoggerOptions = {}): {
 		warn: createLogMethod('warn', 3),
 		error: createLogMethod('error', 4),
 		fatal: createLogMethod('fatal', 5),
-		child: (fields: Record<string, unknown>) => createTestLogger(options).logger,
-		withFields: (fields: Record<string, unknown>) => createTestLogger(options).logger,
-		withCorrelationId: (correlationId: string) => createTestLogger(options).logger,
+		child: (_fields: Record<string, unknown>) => createTestLogger(options).logger,
+		withFields: (_fields: Record<string, unknown>) => createTestLogger(options).logger,
+		withCorrelationId: (_correlationId: string) => createTestLogger(options).logger,
 		flush: () => Promise.resolve(),
 		close: () => Promise.resolve(),
 	} as Logger;

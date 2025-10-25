@@ -1,6 +1,6 @@
-import type { Sink } from '../sink/sink';
 import type { LoggerWithMetrics } from '../metrics/metrics';
 import type { LoggerWithRedactor } from '../redactor/redactor';
+import type { Sink } from '../sink/sink';
 
 /**
  * Níveis de log disponíveis

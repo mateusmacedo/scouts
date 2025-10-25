@@ -117,7 +117,7 @@ export class ProcessHandlerManager {
 		});
 
 		// unhandledRejection - emergency shutdown
-		process.on('unhandledRejection', (reason, promise) => {
+		process.on('unhandledRejection', (reason, _promise) => {
 			console.error(
 				'ProcessHandlerManager: unhandledRejection, iniciando emergency shutdown...',
 				reason

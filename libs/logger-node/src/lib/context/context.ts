@@ -120,4 +120,3 @@ export const ensureCid = (incoming?: string | string[], opts: EnsureOpts = {}): 
  * }
  * ```
  */
-

@@ -223,4 +223,3 @@ function isPromiseLike<T = unknown>(val: unknown): val is Promise<T> {
 		typeof (val as { then?: unknown; catch?: unknown }).catch === 'function'
 	);
 }
-

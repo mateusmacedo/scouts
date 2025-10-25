@@ -1,21 +1,18 @@
 // Core interfaces
-export type { Sink, SinkOptions, LoggerWithSink } from './sink';
-
-// Factory
-export { createSinkForEnvironment } from './sink';
-
-// Decorator
-export { SinkDecorator } from './sink.decorator';
-
-// Helpers
-export {
-	createLogEntry,
-	formatScope,
-	formatError,
-	enrichFields,
-	validateLogEntry,
-} from './helpers';
 
 // Implementations
 export { ConsoleSinkAdapter } from './console/console-sink.adapter';
-export { PinoSinkAdapter, createPinoSink } from './pino/pino-sink.factory';
+// Helpers
+export {
+	createLogEntry,
+	enrichFields,
+	formatError,
+	formatScope,
+	validateLogEntry,
+} from './helpers';
+export { createPinoSink, PinoSinkAdapter } from './pino/pino-sink.factory';
+export type { LoggerWithSink, Sink, SinkOptions } from './sink';
+// Factory
+export { createSinkForEnvironment } from './sink';
+// Decorator
+export { SinkDecorator } from './sink.decorator';

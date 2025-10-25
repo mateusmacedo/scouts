@@ -5,14 +5,14 @@ import { MetricsCollector } from '../metrics/metrics-collector';
 import type { LoggerOptions } from '../options/options';
 import type { LoggerWithRedactor, Redactor } from '../redactor/redactor';
 import { attachRedactor } from '../redactor/redactor';
+import type { PinoSinkOptions } from '../sink/pino/pino-sink.options';
 import {
 	createSinkForEnvironment,
+	type LoggerWithSink,
 	type Sink,
 	type SinkOptions,
-	type LoggerWithSink,
 } from '../sink/sink';
 import { SinkDecorator } from '../sink/sink.decorator';
-import type { PinoSinkOptions } from '../sink/pino/pino-sink.options';
 
 /**
  * Opções para criação de logger composto
