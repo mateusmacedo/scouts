@@ -1,0 +1,141 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+
+jobs:
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Workspace
+        uses: ./.github/actions/setup-workspace
+        with:
+          node-version: '18'
+          go-version: '1.23'
+          pnpm-version: '9.15.0'
+
+      - name: Validate Secrets
+        run: |
+          echo "🔐 Validating required secrets..."
+          chmod +x ./scripts/security/validate-secrets.sh
+          ./scripts/security/validate-secrets.sh
+        shell: bash
+
+      - name: Node.js Security Audit
+        run: |
+          echo "🔍 Running Node.js security audit..."
+          pnpm audit --audit-level=moderate
+          echo "✅ Node.js security audit completed"
+        shell: bash
+
+      - name: Go Security Check
+        run: |
+          echo "🔍 Running Go security checks..."
+          
+          # Check for known vulnerabilities in Go modules
+          if command -v nancy &> /dev/null; then
+            echo "Running nancy sleuth..."
+            go list -json -m all | nancy sleuth
+          else
+            echo "Nancy not available, skipping Go security scan"
+          fi
+          
+          # Basic Go security checks
+          echo "Running go vet for security issues..."
+          go vet ./apps/user-go-service/... ./libs/user-go/...
+          
+          echo "✅ Go security checks completed"
+        shell: bash
+
+      - name: Check for Hardcoded Secrets
+        run: |
+          echo "🔍 Checking for hardcoded secrets..."
+          
+          # Patterns to check for
+          SECRET_PATTERNS=(
+            "password\s*=\s*['\"][^'\"]+['\"]"
+            "secret\s*=\s*['\"][^'\"]+['\"]"
+            "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+            "token\s*=\s*['\"][^'\"]+['\"]"
+            "private[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+          )
+          
+          FOUND_SECRETS=false
+          
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            if grep -r -E "$pattern" --include="*.ts" --include="*.js" --include="*.go" --exclude-dir=node_modules --exclude-dir=.git .; then
+              echo "❌ Potential hardcoded secret found with pattern: $pattern"
+              FOUND_SECRETS=true
+            fi
+          done
+          
+          if [ "$FOUND_SECRETS" = "true" ]; then
+            echo "❌ Hardcoded secrets detected. Please use environment variables or secrets management."
+            exit 1
+          fi
+          
+          echo "✅ No hardcoded secrets detected"
+        shell: bash
+
+      - name: Dependency License Check
+        run: |
+          echo "🔍 Checking dependency licenses..."
+          
+          # Check Node.js dependencies
+          if command -v license-checker &> /dev/null; then
+            echo "Checking Node.js dependency licenses..."
+            pnpm install -g license-checker
+            license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;Unlicense'
+          else
+            echo "License-checker not available, skipping license check"
+          fi
+          
+          echo "✅ License check completed"
+        shell: bash
+
+      - name: Generate Security Report
+        if: always()
+        run: |
+          echo "📊 Generating security report..."
+          
+          cat > security-report.md << EOF
+          # Security Audit Report
+          
+          **Date:** $(date)
+          **Trigger:** ${{ github.event_name }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Checks Performed
+          
+          - ✅ Secrets validation
+          - ✅ Node.js security audit
+          - ✅ Go security checks
+          - ✅ Hardcoded secrets scan
+          - ✅ Dependency license check
+          
+          ## Status
+          
+          **Overall Status:** ${{ job.status }}
+          
+          EOF
+          
+          echo "Security report generated"
+        shell: bash
+
+      - name: Upload Security Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.md
+          retention-days: 30

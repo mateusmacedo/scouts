@@ -4,8 +4,6 @@
 
 Estas regras consolidam diretrizes de **comunicação, engenharia, execução e qualidade técnica**, aplicáveis a todos os fluxos de trabalho, automações, revisões e interações com repositórios, código ou pipelines.
 
----
-
 ## ✅ Seções Principais
 
 ### ✅ DEVE
