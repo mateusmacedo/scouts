@@ -1,29 +1,33 @@
 # Scripts Utilitários
 
-Este diretório contém scripts utilitários reutilizáveis para automação de CI/CD.
+Este diretório contém funções comuns adaptadas para Nx 20.
+**IMPORTANTE:** Use funcionalidades nativas do Nx sempre que possível.
 
 ## 📁 Estrutura
 
 ```
 utils/
 ├── README.md                        # Este arquivo
-├── common-functions.sh              # Funções comuns reutilizáveis
-├── detect-language-changes.sh       # Detecção de mudanças por linguagem
-├── cache-coverage-results.sh        # Cache inteligente de coverage
-├── validate-cache-integrity.sh      # Validação de integridade de cache
-├── detect-changed-projects.sh       # Detecção de projetos alterados
-├── get-publishable-projects.sh      # Obter projetos publicáveis
-├── health-check-ci.sh              # Health check de serviços
-├── retry-with-backoff.sh            # Retry com exponential backoff
-├── check-publish-conflicts.sh       # Verificar conflitos de publicação
-├── setup-npm-registry.sh            # Configuração do registry npm
-└── setup-playwright-background.sh   # Setup do Playwright
+└── common-functions.sh              # Funções comuns (adaptado para Nx 20)
 ```
 
-## 🔧 Scripts Principais
+## ⚠️ IMPORTANTE: Use Nx 20 nativo
+
+**NÃO use funções customizadas para funcionalidades que o Nx 20 já fornece:**
+
+- **Detecção de mudanças:** `nx affected --target=test --base=origin/main`
+- **Cobertura:** `nx test --coverage` ou `nx affected --target=test --coverage`
+- **Cache:** Nx gerencia automaticamente via `nx.json`
+- **Retry:** Nx tem retry nativo via configuração
+- **Paralelização:** `nx run-many --target=test --parallel=3`
+- **Análise:** `nx graph`, `nx report`, `nx show projects`
+- **Execução:** `nx exec` para scripts customizados
+- **Configuração:** `nx.json` com `targetDefaults`, `namedInputs`
+
+## 🔧 Funções Disponíveis
 
 ### `common-functions.sh`
-Biblioteca central com funções comuns reutilizáveis por todos os scripts.
+Biblioteca de funções comuns adaptada para Nx 20.
 
 #### Funções de Logging
 ```bash
@@ -46,28 +50,13 @@ if is_ci_environment; then
 fi
 ```
 
-#### Funções de Execução
+#### Funções de Informação
 ```bash
-# Executar com retry automático
-execute_with_retry 3 5 "pnpm nx test"
+# Obter informações do workspace
+get_workspace_info
 
-# Obter paralelização dinâmica
-PARALLEL=$(get_dynamic_parallel 4)
-```
-
-#### Funções de Cache
-```bash
-# Validar integridade de cache
-validate_cache_integrity "$CACHE_PATH" "pnpm"
-
-# Limpar cache corrompido
-cleanup_corrupted_cache "pnpm" "$CACHE_PATH"
-```
-
-#### Funções de Detecção
-```bash
-# Detectar mudanças por linguagem
-detect_language_changes "HEAD~1"
+# Calcular hash de arquivos
+calculate_files_hash "*.ts" "node_modules"
 
 # Verificar labels de PR
 check_pr_labels
@@ -76,274 +65,31 @@ check_pr_labels
 check_commit_messages "$GITHUB_HEAD_COMMIT_MESSAGE"
 ```
 
-### `detect-changed-projects.sh`
-Detecta projetos com mudanças reais e por linguagem.
+## 📝 Como Usar
 
-**Uso:**
+### Para funcionalidades padrão, use Nx 20:
 ```bash
-./scripts/utils/detect-changed-projects.sh [all_projects] [base_ref] [output_format]
+# Detecção de mudanças
+nx affected --target=test --base=origin/main
+
+# Cobertura
+nx test --coverage
+
+# Paralelização
+nx run-many --target=test --parallel=3
+
+# Análise
+nx graph
+nx report
 ```
 
-**Parâmetros:**
-- `all_projects`: Lista de projetos (opcional)
-- `base_ref`: Referência base (padrão: HEAD~1)
-- `output_format`: github, json ou env
-
-**Outputs:**
-- `go-changed`, `node-changed`, `config-changed`, `skip-ci`
-- `affected-projects`, `has_changes`, `publishable_changed`
-
-### `cache-coverage-results.sh`
-Gerencia cache inteligente de resultados de coverage.
-
-**Uso:**
+### Para funcionalidades específicas, use funções:
 ```bash
-./scripts/utils/cache-coverage-results.sh [action] [language] [cache_key] [cache_dir]
-```
-
-**Ações:**
-- `restore`: Restaurar cache de coverage
-- `save`: Salvar cache de coverage
-- `cleanup`: Limpar cache antigo (>7 dias)
-- `list`: Listar caches disponíveis
-
-**Parâmetros:**
-- `action`: Ação a executar
-- `language`: Linguagem (`node`, `go`, `all`)
-- `cache_key`: Chave do cache (padrão: `coverage-YYYYMMDD`)
-- `cache_dir`: Diretório de cache (padrão: `~/.cache/coverage`)
-
-**Exemplos:**
-```bash
-# Restaurar cache de Node.js
-./scripts/utils/cache-coverage-results.sh restore node
-
-# Salvar cache de Go
-./scripts/utils/cache-coverage-results.sh save go coverage-go-$(date +%Y%m%d)
-
-# Limpar cache antigo
-./scripts/utils/cache-coverage-results.sh cleanup
-
-# Listar caches disponíveis
-./scripts/utils/cache-coverage-results.sh list
-```
-
-**Outputs:**
-- `cache-hit`: boolean - Cache encontrado e válido
-- `cache-saved`: boolean - Cache salvo com sucesso
-
-### `validate-cache-integrity.sh`
-Valida integridade de diferentes tipos de cache.
-
-**Uso:**
-```bash
-./scripts/utils/validate-cache-integrity.sh [cache_type] [cache_path] [auto_cleanup]
-```
-
-**Tipos de Cache:**
-- `pnpm`: Cache do pnpm (`~/.pnpm-store`)
-- `nx`: Cache do Nx (`.nx/cache`)
-- `go`: Cache do Go (`~/.cache/go-build`)
-- `coverage`: Cache de coverage (`~/.cache/coverage`)
-- `all`: Todos os caches
-
-**Parâmetros:**
-- `cache_type`: Tipo de cache a validar
-- `cache_path`: Caminho personalizado do cache
-- `auto_cleanup`: Limpar cache corrompido automaticamente (`true`/`false`)
-
-**Exemplos:**
-```bash
-# Validar cache pnpm
-./scripts/utils/validate-cache-integrity.sh pnpm
-
-# Validar todos os caches
-./scripts/utils/validate-cache-integrity.sh all
-
-# Validar e limpar cache corrompido
-./scripts/utils/validate-cache-integrity.sh nx "" true
-```
-
-**Outputs:**
-- `{type}-valid`: boolean - Cache válido
-- `all-valid`: boolean - Todos os caches válidos
-
-## 🛠️ Scripts de Suporte
-
-### `health-check-ci.sh`
-Executa health check de serviços externos.
-
-**Verifica:**
-- npm registry (https://registry.npmjs.org/)
-- GitHub API (https://api.github.com)
-- SonarCloud (se configurado)
-
-### `retry-with-backoff.sh`
-Executa comando com retry e exponential backoff.
-
-**Uso:**
-```bash
-./scripts/utils/retry-with-backoff.sh <max_attempts> <delay> <command>
-```
-
-**Exemplo:**
-```bash
-./scripts/utils/retry-with-backoff.sh 3 5 "pnpm nx test"
-```
-
-### `cleanup-obsolete-files.sh`
-Remove arquivos obsoletos/legados/temporários após otimizações.
-
-**Uso:**
-```bash
-./scripts/utils/cleanup-obsolete-files.sh [--dry-run] [--force]
-```
-
-**Parâmetros:**
-- `--dry-run`: Mostra o que seria removido sem remover
-- `--force`: Força remoção sem confirmação
-
-**Exemplo:**
-```bash
-# Ver o que seria removido
-./scripts/utils/cleanup-obsolete-files.sh --dry-run
-
-# Remover arquivos obsoletos
-./scripts/utils/cleanup-obsolete-files.sh
-```
-
-### `detect-changed-projects.sh`
-Detecta projetos com mudanças reais (baseado em Nx affected).
-
-**Uso:**
-```bash
-./scripts/utils/detect-changed-projects.sh <all_projects>
-```
-
-### `get-publishable-projects.sh`
-Obtém lista de projetos publicáveis do workspace.
-
-**Output:**
-- `publishable`: Lista de projetos publicáveis
-
-## 🎯 Padrões de Uso
-
-### Em Scripts Próprios
-
-```bash
-#!/bin/bash
-set -e
-
 # Carregar funções comuns
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/utils/common-functions.sh"
+source scripts/utils/common-functions.sh
 
-# Validar pré-requisitos
+# Usar funções específicas
+log_info "Iniciando operação específica"
 validate_prerequisites
-
-# Logging padronizado
-log_info "Iniciando operação..."
-log_step "Executando passo crítico..."
-
-# Executar com retry
-execute_with_retry 3 5 "comando-crítico"
-
-log_success "Operação concluída"
+get_workspace_info
 ```
-
-### Em GitHub Actions
-
-```yaml
-- name: Detect Changes
-  id: detect
-  run: |
-    source scripts/utils/common-functions.sh
-    ./scripts/utils/detect-language-changes.sh origin/main github
-
-- name: Run Tests
-  if: steps.detect.outputs.go-changed == 'true'
-  run: |
-    ./scripts/generate-go-coverage.sh
-```
-
-### Em Workflows Nx
-
-```bash
-# Usar detecção de mudanças
-source scripts/utils/detect-language-changes.sh HEAD~1 env
-
-if [ "$GO_CHANGED" = "true" ]; then
-    pnpm nx run-many --target=test --projects=go-projects
-fi
-```
-
-## 🔍 Troubleshooting
-
-### Problemas Comuns
-
-#### Cache corrompido
-```bash
-# Validar todos os caches
-./scripts/utils/validate-cache-integrity.sh all
-
-# Limpar cache corrompido
-./scripts/utils/validate-cache-integrity.sh all "" true
-```
-
-#### Falhas de conectividade
-```bash
-# Health check
-./scripts/utils/health-check-ci.sh
-
-# Retry manual
-./scripts/utils/retry-with-backoff.sh 3 10 "pnpm install"
-```
-
-#### Detecção de mudanças incorreta
-```bash
-# Debug verbose
-./scripts/utils/detect-language-changes.sh HEAD~1 github true
-
-# Forçar execução completa
-echo "[ci full]" >> commit message
-```
-
-### Logs e Debug
-
-#### Habilitar debug
-```bash
-# Todos os scripts suportam verbose
-./scripts/utils/detect-language-changes.sh HEAD~1 github true
-```
-
-#### Verificar pré-requisitos
-```bash
-# Validação automática em todos os scripts
-# Logs mostram ferramentas faltando
-```
-
-## 📊 Métricas de Performance
-
-### Cache Hit Rate
-- **pnpm**: 85% hit rate médio
-- **nx**: 90% hit rate médio
-- **go**: 80% hit rate médio
-- **coverage**: 75% hit rate médio
-
-### Tempo de Execução
-- **Detecção de mudanças**: <2s
-- **Validação de cache**: <5s
-- **Health check**: <10s
-- **Cache operations**: <30s
-
-### Confiabilidade
-- **Taxa de sucesso**: 95% com retry
-- **Falhas de rede**: 70% redução
-- **Cache corrompido**: 90% detecção
-
-## 🚀 Próximos Passos
-
-1. **Métricas avançadas**: Dashboard de performance
-2. **Cache distribuído**: Compartilhamento entre runners
-3. **Alertas automáticos**: Notificações de problemas
-4. **Integração com monitoring**: Prometheus/Grafana

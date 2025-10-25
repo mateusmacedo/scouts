@@ -1,6 +1,5 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "_trigger": "force-all-affected",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [

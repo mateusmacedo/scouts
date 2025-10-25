@@ -1,27 +1,26 @@
 # GitHub Actions Workflows
 
-Este diretório contém os workflows de CI/CD para o monorepo Nx com projetos Go e Node.js.
+Este diretório contém workflows de CI/CD otimizados para Nx 20, seguindo padrões oficiais.
 
 ## Workflows Disponíveis
 
-### 1. CI (`.github/workflows/ci.yml`)
+### 1. CI Optimized (`.github/workflows/ci-optimized.yml`)
 
 **Triggers:**
 - Push em qualquer branch
 - Pull requests para qualquer branch
 
-**Jobs:**
-- `setup`: Configuração do ambiente (Node.js, Go, pnpm, Nx)
-- `lint-node`: Lint de projetos Node.js/TypeScript
-- `lint-go`: Validações Go (fmt, vet, lint)
-- `test-node`: Testes Node.js com cobertura
-- `test-go`: Testes Go com cobertura
-- `build`: Build de todos os projetos afetados
-- `coverage-report`: Consolidação de relatórios de cobertura
+**Jobs (usando padrões Nx 20):**
+- `setup`: Setup e detecção de mudanças usando `nx affected`
+- `lint`: Lint de todos os projetos usando `nx affected`
+- `test`: Testes com cobertura usando `nx affected`
+- `build`: Build de projetos afetados usando `nx affected`
+- `summary`: Resumo usando padrões Nx 20
 
 **Estratégia:**
-- **Pull Requests**: Apenas projetos afetados (`nx affected`)
-- **Push em main/develop**: Todos os projetos (`nx run-many --all`)
+- **Todos os jobs**: Usam `nx affected` para detecção inteligente
+- **Cache nativo**: Aproveita cache automático do Nx
+- **Padrões oficiais**: Segue documentação oficial do Nx 20
 
 ### 2. PR Validation (`.github/workflows/pr-validation.yml`)
 
@@ -36,32 +35,32 @@ Este diretório contém os workflows de CI/CD para o monorepo Nx com projetos Go
 - Comentários automáticos no PR
 
 
-## Actions Reutilizáveis
+## Actions Reutilizáveis (Nx 20 Compliant)
 
 ### Setup Workspace (`.github/actions/setup-workspace/`)
 
-Configura o ambiente de desenvolvimento:
+Configura o ambiente seguindo padrões Nx 20:
 - Node.js 18.x
 - Go 1.23
 - pnpm 9.15.0
 - Instalação de dependências
-- Configuração de cache
+- Cache nativo do Nx
 
 ### Go Validation (`.github/actions/go-validation/`)
 
-Validações para projetos Go:
+Validações específicas para Go (não duplicam Nx):
 - `go fmt` (formatação)
 - `go vet` (análise estática)
 - `go mod tidy` (dependências)
-- Lint via Nx
+- Lint via Nx (`nx affected`)
 - Sincronização de versões
 
 ### Node.js Validation (`.github/actions/node-validation/`)
 
-Validações para projetos Node.js:
-- ESLint
+Validações específicas para Node.js (não duplicam Nx):
+- ESLint via Nx (`nx affected`)
 - Biome format check
-- Testes com cobertura
+- Testes com cobertura via Nx (`nx affected`)
 
 ## Configuração
 
@@ -72,44 +71,44 @@ Configurar em **Settings > Secrets and variables > Actions**:
 - `GH_TOKEN`: Token GitHub (para releases/comentários)
 - `NPM_TOKEN`: Token npm (para publicação futura - opcional)
 
-### Cache
+### Cache (Nx 20 Native)
 
-O workflow utiliza cache agressivo para:
-- Dependências pnpm (`~/.pnpm-store`, `~/.pnpm-cache`)
-- Cache do Nx (`.nx/cache`)
-- Módulos Go (via `go.work`)
+O workflow utiliza cache nativo do Nx 20:
+- **Cache automático**: Nx gerencia cache automaticamente
+- **Dependências**: Cache via `nx.json` configuration
+- **Build artifacts**: Cache via `nx.json` configuration
+- **Test results**: Cache via `nx.json` configuration
 
-### Permissões de Scripts
+### Configuração Nx 20
 
-O workflow corrige automaticamente as permissões de execução de todos os scripts `.sh` no diretório `scripts/` para evitar erros de "Permission denied".
-
-### Threshold de Cobertura
-
-Configurado em `nx.json`:
-- **Branches**: 70%
-- **Functions**: 70%
-- **Lines**: 70%
-- **Statements**: 70%
+Configurado em `nx.json` com padrões oficiais:
+- **targetDefaults**: Configuração de targets
+- **namedInputs**: Inputs nomeados
+- **cache**: Configuração de cache
+- **coverage**: Thresholds de cobertura
 
 ## Comandos Úteis
 
-### Executar Localmente
+### Executar Localmente (Nx 20 Patterns)
 
 ```bash
-# Lint todos os projetos
-pnpm nx run-many -t lint --all
+# Lint projetos afetados (recomendado)
+pnpm nx affected --target=lint --base=origin/main
 
-# Testes com cobertura
-pnpm nx run-many -t test --all --coverage
+# Testes com cobertura (projetos afetados)
+pnpm nx affected --target=test --base=origin/main --coverage
 
-# Build todos os projetos
-pnpm nx run-many -t build --all
+# Build projetos afetados (recomendado)
+pnpm nx affected --target=build --base=origin/main
 
-# Apenas projetos afetados
-pnpm nx affected -t lint,test,build --base=origin/main
+# Todos os projetos (quando necessário)
+pnpm nx run-many --target=lint,test,build --all
+
+# Análise de dependências
+pnpm nx graph
 ```
 
-### Validações Go
+### Validações Go (Nx 20 Compliant)
 
 ```bash
 # Formatação
@@ -122,49 +121,50 @@ go vet ./apps/user-go-service/... ./libs/user-go/...
 cd apps/user-go-service && go mod tidy
 cd libs/user-go && go mod tidy
 
-# Sincronização de versões
-./scripts/sync-go-versions.sh
+# Lint via Nx (recomendado)
+pnpm nx affected --target=lint --base=origin/main
 ```
 
-### Validações Node.js
+### Validações Node.js (Nx 20 Compliant)
 
 ```bash
-# ESLint
-pnpm nx run-many -t lint --all
+# ESLint via Nx (recomendado)
+pnpm nx affected --target=lint --base=origin/main
 
 # Biome format
 pnpm biome format --check .
 
-# Testes
-pnpm nx run-many -t test --all
+# Testes via Nx (recomendado)
+pnpm nx affected --target=test --base=origin/main --coverage
 ```
 
-## Troubleshooting
+## Troubleshooting (Nx 20)
 
-### Cache Miss
+### Cache Issues
 
 Se o cache não estiver funcionando:
-1. Verificar se `pnpm-lock.yaml` está atualizado
-2. Verificar se `go.work` e `go.sum` estão corretos
-3. Limpar cache manualmente se necessário
+1. Verificar configuração em `nx.json`
+2. Executar `pnpm nx reset` para limpar cache
+3. Verificar `nx.json` targetDefaults
 
-### Falha de Dependências
+### Dependências
 
-Se houver falha na instalação de dependências:
-1. Verificar se `pnpm-lock.yaml` está commitado
-2. Verificar se todas as dependências estão no `package.json`
-3. Executar `pnpm install` localmente
+Se houver falha na instalação:
+1. Verificar `pnpm-lock.yaml` está commitado
+2. Executar `pnpm install` localmente
+3. Verificar configuração em `nx.json`
 
-### Falha de Testes
+### Testes
 
 Se os testes falharem:
-1. Verificar se todos os arquivos de teste estão corretos
-2. Verificar se a cobertura atinge o threshold (70%)
-3. Executar testes localmente: `pnpm nx test <project-name>`
+1. Executar `pnpm nx affected --target=test --base=origin/main`
+2. Verificar configuração de cobertura em `nx.json`
+3. Usar `pnpm nx graph` para análise de dependências
 
-## Próximos Passos
+## Benefícios Nx 20
 
-- [ ] Deploy automático em staging
-- [ ] Notificações Slack/Discord
-- [ ] Análise de performance de build
-- [ ] E2E tests em ambiente isolado
+- **Cache inteligente**: Automático e eficiente
+- **Detecção de mudanças**: `nx affected` nativo
+- **Paralelização**: Automática e otimizada
+- **Configuração centralizada**: `nx.json`
+- **Padrões oficiais**: Documentação e suporte
