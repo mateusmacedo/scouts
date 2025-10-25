@@ -36,7 +36,7 @@ runs:
     - name: Biome Format Check
       run: |
         echo "🔍 Checking Biome formatting..."
-        pnpm biome format --check .
+        pnpm biome check --formatter-enabled=true .
         echo "✅ Biome format check passed"
       shell: bash
 
