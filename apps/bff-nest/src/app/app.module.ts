@@ -1,13 +1,13 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MonitoringController } from './monitoring/monitoring.controller';
 import { MonitoringService } from './monitoring/monitoring.service';
+import { NotificationsService } from './users/notifications.service';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
-import { NotificationsService } from './users/notifications.service';
 
 @Module({
 	imports: [
@@ -35,4 +35,3 @@ export class AppModule implements NestModule {
 		consumer.apply(CorrelationIdMiddleware).forRoutes('*');
 	}
 }
-

@@ -11,4 +11,3 @@ export class AppService {
 		return { message: `${user} - ${loggerInfo}` };
 	}
 }
-

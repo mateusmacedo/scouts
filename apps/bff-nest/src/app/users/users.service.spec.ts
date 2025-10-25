@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LOGGER_TOKEN, LoggerModule, AdvancedLoggerService } from '@scouts/utils-nest';
+import { AdvancedLoggerService, LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UsersService } from './users.service';
 import { NotificationsService } from './notifications.service';
+import { UsersService } from './users.service';
 
 describe('UsersService', () => {
 	let service: UsersService;
@@ -21,9 +21,9 @@ describe('UsersService', () => {
 					useValue: {
 						sendWelcomeEmail: jest.fn(),
 						sendUserUpdateNotification: jest.fn(),
-						getNotificationStatus: jest.fn()
-					}
-				}
+						getNotificationStatus: jest.fn(),
+					},
+				},
 			],
 		}).compile();
 
@@ -74,7 +74,7 @@ describe('UsersService', () => {
 				status: 'sent',
 				type: 'email',
 				recipient: 'john@example.com',
-				createdAt: new Date().toISOString()
+				createdAt: new Date().toISOString(),
 			});
 
 			const result = await service.create(createUserDto);
@@ -98,7 +98,7 @@ describe('UsersService', () => {
 			expect(notificationsService.sendWelcomeEmail).toHaveBeenCalledWith(result);
 			expect(advancedLogger.info).toHaveBeenCalledWith('Welcome email notification sent', {
 				userId: '1',
-				userEmail: 'john@example.com'
+				userEmail: 'john@example.com',
 			});
 		});
 
@@ -111,7 +111,9 @@ describe('UsersService', () => {
 			};
 
 			// Mock failed notification
-			jest.spyOn(notificationsService, 'sendWelcomeEmail').mockRejectedValue(new Error('Notification service unavailable'));
+			jest
+				.spyOn(notificationsService, 'sendWelcomeEmail')
+				.mockRejectedValue(new Error('Notification service unavailable'));
 
 			const result = await service.create(createUserDto);
 
@@ -127,11 +129,14 @@ describe('UsersService', () => {
 
 			// Verify notification was attempted
 			expect(notificationsService.sendWelcomeEmail).toHaveBeenCalledWith(result);
-			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send welcome email notification', {
-				userId: '1',
-				userEmail: 'john@example.com',
-				error: 'Notification service unavailable'
-			});
+			expect(advancedLogger.warn).toHaveBeenCalledWith(
+				'Failed to send welcome email notification',
+				{
+					userId: '1',
+					userEmail: 'john@example.com',
+					error: 'Notification service unavailable',
+				}
+			);
 		});
 
 		it('should create a user with minimal required fields', async () => {
@@ -281,7 +286,9 @@ describe('UsersService', () => {
 			const result = await service.update('999', updateUserDto);
 
 			expect(result).toBeNull();
-			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for update', { userId: '999' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for update', {
+				userId: '999',
+			});
 		});
 
 		it('should update only provided fields', async () => {
@@ -331,7 +338,7 @@ describe('UsersService', () => {
 				status: 'sent',
 				type: 'sms',
 				recipient: '987654321',
-				createdAt: new Date().toISOString()
+				createdAt: new Date().toISOString(),
 			});
 
 			const result = await service.update(createdUser.id, updateUserDto);
@@ -347,7 +354,7 @@ describe('UsersService', () => {
 			expect(notificationsService.sendUserUpdateNotification).toHaveBeenCalledWith(result);
 			expect(advancedLogger.info).toHaveBeenCalledWith('User update notification sent', {
 				userId: result?.id,
-				userPhone: result?.phone
+				userPhone: result?.phone,
 			});
 		});
 
@@ -366,7 +373,9 @@ describe('UsersService', () => {
 			};
 
 			// Mock failed SMS notification
-			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockRejectedValue(new Error('SMS service unavailable'));
+			jest
+				.spyOn(notificationsService, 'sendUserUpdateNotification')
+				.mockRejectedValue(new Error('SMS service unavailable'));
 
 			const result = await service.update(createdUser.id, updateUserDto);
 
@@ -382,7 +391,7 @@ describe('UsersService', () => {
 			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send user update notification', {
 				userId: result?.id,
 				userPhone: result?.phone,
-				error: 'SMS service unavailable'
+				error: 'SMS service unavailable',
 			});
 		});
 
@@ -399,7 +408,9 @@ describe('UsersService', () => {
 			};
 
 			// Mock failed SMS notification
-			jest.spyOn(notificationsService, 'sendUserUpdateNotification').mockRejectedValue(new Error('SMS service unavailable'));
+			jest
+				.spyOn(notificationsService, 'sendUserUpdateNotification')
+				.mockRejectedValue(new Error('SMS service unavailable'));
 
 			const result = await service.update(createdUser.id, updateUserDto);
 
@@ -415,7 +426,7 @@ describe('UsersService', () => {
 			expect(advancedLogger.warn).toHaveBeenCalledWith('Failed to send user update notification', {
 				userId: result?.id,
 				userPhone: result?.phone,
-				error: 'SMS service unavailable'
+				error: 'SMS service unavailable',
 			});
 		});
 
@@ -437,7 +448,7 @@ describe('UsersService', () => {
 				status: 'sent',
 				type: 'sms',
 				recipient: undefined,
-				createdAt: new Date().toISOString()
+				createdAt: new Date().toISOString(),
 			});
 
 			const result = await service.update(createdUser.id, updateUserDto);
@@ -474,7 +485,9 @@ describe('UsersService', () => {
 			const result = await service.remove('999');
 
 			expect(result).toBe(false);
-			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for removal', { userId: '999' });
+			expect(advancedLogger.warn).toHaveBeenCalledWith('User not found for removal', {
+				userId: '999',
+			});
 		});
 
 		it('should maintain other users when removing one', async () => {

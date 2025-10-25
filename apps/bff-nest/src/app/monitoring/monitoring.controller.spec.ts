@@ -164,7 +164,6 @@ describe('MonitoringController', () => {
 		});
 	});
 
-
 	describe('getLoggerStats', () => {
 		it('should return formatted logger statistics', () => {
 			mockMonitoringService.getLoggerMetrics.mockReturnValue(mockLoggerMetrics);

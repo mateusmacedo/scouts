@@ -97,6 +97,4 @@ export class MonitoringService {
 			timestamp: new Date().toISOString(),
 		};
 	}
-
 }
-

@@ -244,7 +244,6 @@ describe('MonitoringService', () => {
 		});
 	});
 
-
 	describe('logger integration', () => {
 		it('should have logger injected', () => {
 			expect(service['logger']).toBeDefined();
