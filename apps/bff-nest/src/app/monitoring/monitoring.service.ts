@@ -40,9 +40,9 @@ export class MonitoringService {
 		const memoryUsage = process.memoryUsage();
 
 		return {
-			logsWritten: metrics?.logsWritten || 0,
-			errorCount: metrics?.errorCount || 0,
-			uptimeMs: metrics?.uptimeMs || 0,
+			logsWritten: (metrics?.logsWritten as number) || 0,
+			errorCount: (metrics?.errorCount as number) || 0,
+			uptimeMs: (metrics?.uptimeMs as number) || 0,
 			memoryUsage,
 			timestamp: new Date().toISOString(),
 		};
