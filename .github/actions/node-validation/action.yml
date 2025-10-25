@@ -26,7 +26,13 @@ runs:
       run: |
         echo "🔍 Running ESLint..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+          # Verificar se a branch base existe antes de usar affected
+          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
+            pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+          else
+            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
+            pnpm nx run-many --target=lint --all --projects=@scouts/*,express-notifier
+          fi
         else
           pnpm nx run-many --target=lint --all --projects=@scouts/*,express-notifier
         fi
@@ -44,7 +50,13 @@ runs:
       run: |
         echo "🧪 Running Node.js tests..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          pnpm nx affected --target=test --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+          # Verificar se a branch base existe antes de usar affected
+          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
+            pnpm nx affected --target=test --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+          else
+            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
+            pnpm nx run-many --target=test --all --projects=@scouts/*,express-notifier
+          fi
         else
           pnpm nx run-many --target=test --all --projects=@scouts/*,express-notifier
         fi
