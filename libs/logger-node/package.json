@@ -1,6 +1,6 @@
 {
 	"name": "@scouts/logger-node",
-	"version": "0.0.0",
+	"version": "0.1.1",
 	"type": "commonjs",
 	"author": "Mateus Macedo Dos Anjos",
 	"repository": {

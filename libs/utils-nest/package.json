@@ -1,6 +1,6 @@
 {
 	"name": "@scouts/utils-nest",
-	"version": "0.0.0",
+	"version": "0.1.1",
 	"type": "commonjs",
 	"repository": {
 		"type": "git",

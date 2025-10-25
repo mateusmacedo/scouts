@@ -104,7 +104,6 @@
             "statements": 70
           }
         },
-        "maxWorkers": "50%",
         "parallel": true
       }
     },
