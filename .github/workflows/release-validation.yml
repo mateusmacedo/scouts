@@ -30,6 +30,9 @@ jobs:
         with:
           version: 9.15.0
 
+      - name: Verify pnpm installation
+        run: pnpm --version
+
       - name: Configure pnpm store
         run: pnpm config set store-dir $HOME/.pnpm-store
 
