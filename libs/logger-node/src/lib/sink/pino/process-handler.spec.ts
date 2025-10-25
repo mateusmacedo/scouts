@@ -1,10 +1,25 @@
 import { LogBuffer } from './log-buffer';
 import { ProcessHandlerManager } from './process-handler';
 
+// Declaração global para flag de desabilitação de handlers
+declare global {
+  var __DISABLE_GLOBAL_HANDLERS__: boolean;
+}
+
 describe('ProcessHandlerManager', () => {
 	let manager: ProcessHandlerManager;
 	let mockSink: { close: jest.Mock };
 	let mockBuffer: LogBuffer;
+
+	beforeAll(() => {
+		// Desabilitar handlers globais do Jest
+		global.__DISABLE_GLOBAL_HANDLERS__ = true;
+	});
+
+	afterAll(() => {
+		// Reabilitar handlers globais
+		global.__DISABLE_GLOBAL_HANDLERS__ = false;
+	});
 
 	beforeEach(() => {
 		// Reset singleton
@@ -23,6 +38,10 @@ describe('ProcessHandlerManager', () => {
 		if (mockBuffer) {
 			await mockBuffer.close();
 		}
+		
+		// Reset singleton and cleanup
+		ProcessHandlerManager.resetForTesting();
+		jest.restoreAllMocks();
 	});
 
 	describe('Singleton Pattern', () => {
@@ -165,6 +184,18 @@ describe('ProcessHandlerManager', () => {
 	});
 
 	describe('Process Signal Handling', () => {
+		beforeEach(() => {
+			// Remover TODOS os listeners existentes para garantir isolamento
+			process.removeAllListeners('SIGTERM');
+			process.removeAllListeners('SIGINT');
+			process.removeAllListeners('uncaughtException');
+			process.removeAllListeners('unhandledRejection');
+			
+			// Recriar manager com handlers limpos
+			ProcessHandlerManager.resetForTesting();
+			manager = ProcessHandlerManager.getInstance();
+		});
+
 		test('should handle SIGTERM gracefully', async () => {
 			const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
@@ -176,47 +207,47 @@ describe('ProcessHandlerManager', () => {
 			// Aguardar processamento
 			await new Promise((resolve) => setTimeout(resolve, 10));
 
-			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGTERM recebido'));
+			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGTERM recebido, iniciando graceful shutdown'));
 
 			consoleSpy.mockRestore();
 		});
 
-		test('should handle SIGINT gracefully', async () => {
-			const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+	test('should handle SIGINT gracefully', async () => {
+		const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-			manager.registerSink(mockSink);
+		manager.registerSink(mockSink);
 
-			// Simular SIGINT
-			process.emit('SIGINT' as any);
+		// Simular SIGINT
+		process.emit('SIGINT' as any);
 
-			// Aguardar processamento
-			await new Promise((resolve) => setTimeout(resolve, 10));
+		// Aguardar processamento
+		await new Promise((resolve) => setTimeout(resolve, 10));
 
-			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGINT recebido'));
+		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGINT recebido, iniciando graceful shutdown'));
 
-			consoleSpy.mockRestore();
-		});
+		consoleSpy.mockRestore();
+	});
 
-		test('should handle uncaughtException', async () => {
-			const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-			const exitSpy = jest.spyOn(process, 'exit').mockImplementation();
+	test('should handle uncaughtException', async () => {
+		const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+		const exitSpy = jest.spyOn(process, 'exit').mockImplementation();
 
-			manager.registerSink(mockSink);
+		manager.registerSink(mockSink);
 
-			// Simular uncaughtException
-			process.emit('uncaughtException' as any, new Error('Test error'));
+		// Simular uncaughtException
+		process.emit('uncaughtException' as any, new Error('Test error'));
 
-			// Aguardar processamento
-			await new Promise((resolve) => setTimeout(resolve, 10));
+		// Aguardar processamento
+		await new Promise((resolve) => setTimeout(resolve, 10));
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('uncaughtException'),
-				expect.any(Error)
-			);
+		expect(consoleSpy).toHaveBeenCalledWith(
+			expect.stringContaining('uncaughtException'),
+			expect.any(Error)
+		);
 
-			consoleSpy.mockRestore();
-			exitSpy.mockRestore();
-		});
+		consoleSpy.mockRestore();
+		exitSpy.mockRestore();
+	});
 	});
 
 	describe('Multiple Instances', () => {

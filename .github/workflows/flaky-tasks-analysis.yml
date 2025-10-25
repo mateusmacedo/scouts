@@ -1,0 +1,314 @@
+name: Flaky Tasks Analysis
+
+on:
+  schedule:
+    # Executar toda segunda-feira às 9:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Período de análise em dias'
+        required: false
+        default: '30'
+        type: string
+      threshold:
+        description: 'Threshold de falha para considerar flaky (%)'
+        required: false
+        default: '5'
+        type: string
+      force_analysis:
+        description: 'Forçar análise mesmo sem dados suficientes'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  GO_VERSION: '1.23'
+  PNPM_VERSION: '9.15.0'
+
+jobs:
+  analyze-flaky-tasks:
+    name: Analyze Flaky Tasks
+    runs-on: ubuntu-latest
+    outputs:
+      flaky-tasks-count: ${{ steps.analysis.outputs.flaky-tasks-count }}
+      analysis-report: ${{ steps.analysis.outputs.analysis-report }}
+      should-create-issues: ${{ steps.analysis.outputs.should-create-issues }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install pnpm
+        run: |
+          npm install -g pnpm@${{ env.PNPM_VERSION }}
+
+      - name: Install Dependencies
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Make Scripts Executable
+        run: |
+          chmod +x scripts/utils/*.sh
+
+      - name: Analyze Flaky Tasks
+        id: analysis
+        run: |
+          echo "🔍 Analisando tasks flaky..."
+          
+          # Executar análise de flaky tasks
+          ./scripts/utils/detect-flaky-tasks.sh \
+            --threshold=${{ github.event.inputs.threshold || '5' }} \
+            --days=${{ github.event.inputs.days || '30' }} \
+            --output=json \
+            --verbose > flaky-analysis.json
+          
+          # Extrair métricas
+          local flaky_count=$(jq '.metadata.total_flaky_tasks' flaky-analysis.json)
+          local analysis_report=$(cat flaky-analysis.json)
+          
+          echo "flaky-tasks-count=$flaky_count" >> $GITHUB_OUTPUT
+          echo "analysis-report<<EOF" >> $GITHUB_OUTPUT
+          echo "$analysis_report" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Determinar se deve criar issues
+          if [ "$flaky_count" -gt 0 ]; then
+            echo "should-create-issues=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-create-issues=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "📊 Análise concluída: $flaky_count tasks flaky detectadas"
+        shell: bash
+
+      - name: Generate Analysis Report
+        run: |
+          echo "📋 Gerando relatório de análise..."
+          
+          # Criar relatório em markdown
+          cat > flaky-analysis-report.md << EOF
+          # 🚨 Relatório de Análise de Flaky Tasks
+          
+          **Data da Análise:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Período:** ${{ github.event.inputs.days || '30' }} dias
+          **Threshold:** ${{ github.event.inputs.threshold || '5' }}%
+          
+          ## Resumo Executivo
+          
+          - **Total de tasks flaky:** ${{ steps.analysis.outputs.flaky-tasks-count }}
+          - **Status:** ${{ steps.analysis.outputs.flaky-tasks-count > 0 && '🚨 Atenção necessária' || '✅ Nenhuma task flaky detectada' }}
+          
+          ## Detalhes da Análise
+          
+          EOF
+          
+          # Adicionar detalhes das tasks flaky
+          if [ "${{ steps.analysis.outputs.flaky-tasks-count }}" -gt 0 ]; then
+            echo "### Tasks Flaky Detectadas" >> flaky-analysis-report.md
+            echo "" >> flaky-analysis-report.md
+            echo "| Task | Taxa de Falha | Execuções | Recomendação |" >> flaky-analysis-report.md
+            echo "|------|----------------|-----------|--------------|" >> flaky-analysis-report.md
+            
+            jq -r '.flaky_tasks[] | "| \(.name) | \(.failure_rate | tonumber | floor)% | \(.failed_runs)/\(.total_runs) | 🔧 Investigar |"' flaky-analysis.json >> flaky-analysis-report.md
+          fi
+          
+          # Adicionar recomendações
+          cat >> flaky-analysis-report.md << EOF
+          
+          ## Recomendações
+          
+          1. **Implementar retry automático** para tasks com alta taxa de falha
+          2. **Investigar causas raiz** das falhas intermitentes
+          3. **Adicionar timeouts apropriados** para tasks longas
+          4. **Melhorar isolamento de testes** para evitar dependências externas
+          5. **Implementar circuit breaker** para evitar cascata de falhas
+          
+          ## Próximos Passos
+          
+          - [ ] Revisar tasks flaky identificadas
+          - [ ] Implementar correções sugeridas
+          - [ ] Monitorar melhoria na taxa de sucesso
+          - [ ] Atualizar configurações de retry se necessário
+          
+          EOF
+          
+          echo "✅ Relatório gerado: flaky-analysis-report.md"
+
+      - name: Upload Analysis Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-analysis-report
+          path: |
+            flaky-analysis.json
+            flaky-analysis-report.md
+          retention-days: 30
+
+      - name: Create Issues for Flaky Tasks
+        if: steps.analysis.outputs.should-create-issues == 'true'
+        run: |
+          echo "🎫 Criando issues para tasks flaky..."
+          
+          # Criar issue para cada task flaky
+          jq -r '.flaky_tasks[] | @base64' flaky-analysis.json | while read -r task_data; do
+            local task=$(echo "$task_data" | base64 -d)
+            local task_name=$(echo "$task" | jq -r '.name')
+            local failure_rate=$(echo "$task" | jq -r '.failure_rate')
+            local failed_runs=$(echo "$task" | jq -r '.failed_runs')
+            local total_runs=$(echo "$task" | jq -r '.total_runs')
+            
+            # Criar issue
+            local issue_title="🚨 Flaky Task: $task_name"
+            local issue_body="## Task Flaky Detectada
+          
+          **Task:** $task_name
+          **Taxa de Falha:** ${failure_rate}%
+          **Execuções:** $failed_runs/$total_runs
+          
+          ## Análise
+          
+          Esta task apresenta falhas intermitentes que podem indicar:
+          - Dependências externas instáveis
+          - Race conditions
+          - Timeouts inadequados
+          - Problemas de isolamento de testes
+          
+          ## Ações Recomendadas
+          
+          - [ ] Investigar logs de falha para identificar padrões
+          - [ ] Verificar dependências externas
+          - [ ] Revisar timeouts e configurações
+          - [ ] Implementar retry automático se apropriado
+          - [ ] Melhorar isolamento de testes
+          
+          ## Labels
+          
+          - flaky-task
+          - ci-cd
+          - investigation-needed
+          
+          ---
+          
+          *Issue criada automaticamente pelo workflow de análise de flaky tasks*"
+          
+            # Criar issue via GitHub CLI
+            gh issue create \
+              --title "$issue_title" \
+              --body "$issue_body" \
+              --label "flaky-task,ci-cd,investigation-needed" \
+              --assignee "${{ github.actor }}" || echo "Erro ao criar issue para $task_name"
+          done
+          
+          echo "✅ Issues criadas para tasks flaky"
+
+      - name: Update Project Metrics
+        run: |
+          echo "📊 Atualizando métricas do projeto..."
+          
+          # Salvar métricas em arquivo para histórico
+          local metrics_file=".nx/cache/flaky-tasks-metrics.json"
+          mkdir -p "$(dirname "$metrics_file")"
+          
+          local current_metrics
+          if [ -f "$metrics_file" ]; then
+            current_metrics=$(cat "$metrics_file")
+          else
+            current_metrics='{"history": []}'
+          fi
+          
+          local new_entry
+          new_entry=$(jq -n --argjson tasks "$(cat flaky-analysis.json | jq '.flaky_tasks')" --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" '{
+            timestamp: $timestamp,
+            flaky_tasks: $tasks,
+            total_count: ($tasks | length)
+          }')
+          
+          echo "$current_metrics" | jq --argjson entry "$new_entry" '.history += [$entry] | .last_updated = now | strftime("%Y-%m-%dT%H:%M:%SZ")' > "$metrics_file"
+          
+          echo "✅ Métricas atualizadas"
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "📋 Resumo da Análise de Flaky Tasks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Data:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "**Período de Análise:** ${{ github.event.inputs.days || '30' }} dias" >> $GITHUB_STEP_SUMMARY
+          echo "**Threshold:** ${{ github.event.inputs.threshold || '5' }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tasks Flaky Detectadas:** ${{ steps.analysis.outputs.flaky-tasks-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.analysis.outputs.flaky-tasks-count }}" -gt 0 ]; then
+            echo "### 🚨 Tasks que Precisam de Atenção" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Task | Taxa de Falha | Execuções |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|----------------|-----------|" >> $GITHUB_STEP_SUMMARY
+            
+            jq -r '.flaky_tasks[] | "| \(.name) | \(.failure_rate | tonumber | floor)% | \(.failed_runs)/\(.total_runs) |"' flaky-analysis.json >> $GITHUB_STEP_SUMMARY
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Ações Recomendadas:**" >> $GITHUB_STEP_SUMMARY
+            echo "- Investigar causas raiz das falhas" >> $GITHUB_STEP_SUMMARY
+            echo "- Implementar retry automático" >> $GITHUB_STEP_SUMMARY
+            echo "- Melhorar isolamento de testes" >> $GITHUB_STEP_SUMMARY
+            echo "- Revisar timeouts e configurações" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Nenhuma Task Flaky Detectada" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "O pipeline está funcionando de forma estável!" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Artefatos Gerados:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Relatório JSON: flaky-analysis.json" >> $GITHUB_STEP_SUMMARY
+          echo "- Relatório Markdown: flaky-analysis-report.md" >> $GITHUB_STEP_SUMMARY
+          echo "- Métricas históricas: .nx/cache/flaky-tasks-metrics.json" >> $GITHUB_STEP_SUMMARY
+
+  notify-team:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: analyze-flaky-tasks
+    if: always()
+    steps:
+      - name: Notify on Slack
+        if: env.SLACK_WEBHOOK_URL
+        run: |
+          local flaky_count="${{ needs.analyze-flaky-tasks.outputs.flaky-tasks-count }}"
+          local message
+          
+          if [ "$flaky_count" -gt 0 ]; then
+            message="🚨 *Flaky Tasks Detectadas*\\n\\n$flaky_count tasks flaky foram identificadas no pipeline. Verifique o relatório para detalhes."
+          else
+            message="✅ *Pipeline Estável*\\n\\nNenhuma task flaky foi detectada. O pipeline está funcionando corretamente."
+          fi
+          
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"$message\"}" \
+            "$SLACK_WEBHOOK_URL"
+        shell: bash
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Email Notification
+        if: env.EMAIL_NOTIFICATIONS_ENABLED == 'true'
+        run: |
+          echo "📧 Enviando notificação por email..."
+          # Implementar envio de email se necessário
+          echo "Notificação por email não implementada ainda"
+        env:
+          EMAIL_NOTIFICATIONS_ENABLED: ${{ vars.EMAIL_NOTIFICATIONS_ENABLED }}

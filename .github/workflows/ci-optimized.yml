@@ -2,15 +2,9 @@ name: CI Optimized
 
 on:
   push:
-    branches: 
-      - 'feature/optimize-*'
-      - 'feature/**'
-      - 'develop'
-      - 'main'
+    branches: ['**']
   pull_request:
-    branches: 
-      - 'develop'
-      - 'main'
+    branches: ['**']
 
 # Cancelar runs duplicados
 concurrency:
@@ -64,6 +58,11 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
+      - name: Fix Script Permissions
+        run: |
+          find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
+          echo "✅ Script permissions fixed"
+
       - name: Cache Dependencies
         id: cache-node
         if: steps.detect.outputs.node-changed == 'true'
@@ -95,7 +94,7 @@ jobs:
     name: Lint ${{ matrix.language }}
     runs-on: ubuntu-latest
     needs: detect-and-setup
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
     strategy:
       matrix:
         include:
@@ -142,7 +141,7 @@ jobs:
     name: Test ${{ matrix.language }}
     runs-on: ubuntu-latest
     needs: [detect-and-setup, lint]
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
     strategy:
       matrix:
         include:
@@ -170,18 +169,22 @@ jobs:
           cache-type: 'dependencies'
           cache-key: ${{ needs.detect-and-setup.outputs.cache-key-node }}
 
-      - name: Test Node.js
+      - name: Test Node.js with Retry
         if: matrix.language == 'node'
         run: |
-          echo "🧪 Running Node.js tests with coverage..."
-          ./scripts/coverage-strategy.sh affected ${{ github.base_ref || 'HEAD~1' }}
+          echo "🧪 Running Node.js tests with coverage and retry..."
+          # Usar função de retry específica para testes
+          source scripts/utils/common-functions.sh
+          execute_task_with_retry "test" 3 5 "./scripts/coverage-strategy.sh affected ${{ github.base_ref || 'HEAD~1' }}"
         shell: bash
 
-      - name: Test Go
+      - name: Test Go with Retry
         if: matrix.language == 'go'
         run: |
-          echo "🧪 Running Go tests with coverage..."
-          ./scripts/generate-go-coverage.sh
+          echo "🧪 Running Go tests with coverage and retry..."
+          # Usar função de retry específica para testes
+          source scripts/utils/common-functions.sh
+          execute_task_with_retry "test" 3 5 "./scripts/generate-go-coverage.sh"
         shell: bash
 
       - name: Upload Node.js Coverage
@@ -200,12 +203,24 @@ jobs:
           path: coverage/go/
           retention-days: 7
 
+      - name: Detect Flaky Tasks
+        if: always()
+        run: |
+          echo "🔍 Detecting flaky tasks..."
+          # Executar detecção de flaky tasks
+          ./scripts/utils/detect-flaky-tasks.sh \
+            --threshold=5 \
+            --days=7 \
+            --output=github \
+            --verbose || echo "⚠️ Flaky tasks detection completed with warnings"
+        shell: bash
+
   # FASE 4: Build Otimizado
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: [detect-and-setup, lint, test]
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true' || needs.detect-and-setup.outputs.config-changed == 'true') }}
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true' || needs.detect-and-setup.outputs.config-changed == 'true') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -230,8 +245,16 @@ jobs:
         run: |
           echo "🔨 Building projects..."
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            pnpm nx affected --target=build --base=${{ github.base_ref || 'HEAD~1' }}
+            # Verificar se a branch base existe antes de usar affected
+            if git rev-parse --verify origin/${{ github.base_ref }} >/dev/null 2>&1; then
+              echo "✅ Usando estratégia affected com base origin/${{ github.base_ref }}"
+              pnpm nx affected --target=build --base=origin/${{ github.base_ref }}
+            else
+              echo "⚠️ Base branch origin/${{ github.base_ref }} not found, running all projects instead"
+              pnpm nx run-many --target=build --all
+            fi
           else
+            echo "✅ Usando estratégia run-many para push"
             pnpm nx run-many --target=build --all
           fi
         shell: bash

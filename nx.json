@@ -87,6 +87,19 @@
       ],
       "options": {
         "parallel": true
+      },
+      "retry": {
+        "maxRetries": 2,
+        "retryDelay": 2000,
+        "retryableErrorPatterns": [
+          "ECONNRESET",
+          "ETIMEDOUT",
+          "ENOTFOUND",
+          "Network error",
+          "Timeout",
+          "Build timeout",
+          "Compilation timeout"
+        ]
       }
     },
     "test": {
@@ -105,6 +118,20 @@
           }
         },
         "parallel": true
+      },
+      "retry": {
+        "maxRetries": 3,
+        "retryDelay": 3000,
+        "retryableErrorPatterns": [
+          "ECONNRESET",
+          "ETIMEDOUT",
+          "ENOTFOUND",
+          "Network error",
+          "Timeout",
+          "Test timeout",
+          "Jest timeout",
+          "Connection refused"
+        ]
       }
     },
     "lint": {
@@ -112,6 +139,18 @@
       "inputs": ["linting", "sharedGlobals"],
       "options": {
         "parallel": true
+      },
+      "retry": {
+        "maxRetries": 2,
+        "retryDelay": 1000,
+        "retryableErrorPatterns": [
+          "ECONNRESET",
+          "ETIMEDOUT",
+          "ENOTFOUND",
+          "Network error",
+          "Timeout",
+          "Lint timeout"
+        ]
       }
     },
     "@nx/js:swc": {

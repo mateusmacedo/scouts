@@ -44,31 +44,153 @@ validate_prerequisites() {
     log_success "Pré-requisitos validados"
 }
 
-# Função para executar comando com retry
+# Função para executar comando com retry inteligente
 execute_with_retry() {
     local max_attempts=${1:-3}
-    local delay=${2:-5}
-    shift 2
+    local base_delay=${2:-5}
+    local jitter_max=${3:-2}
+    local retryable_patterns=${4:-"ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused"}
+    shift 4
     local command="$*"
     
     log_step "Executando: $command"
-    log_info "Máximo de tentativas: $max_attempts, Delay: ${delay}s"
+    log_info "Máximo de tentativas: $max_attempts, Delay base: ${base_delay}s, Jitter: ${jitter_max}s"
     
-    for attempt in $(seq 1 $max_attempts); do
-        if eval "$command"; then
+    local attempt=1
+    local delay=$base_delay
+    
+    while [ $attempt -le $max_attempts ]; do
+        log_debug "Tentativa $attempt/$max_attempts"
+        
+        # Executar comando e capturar output
+        local output
+        local exit_code
+        
+        if output=$(eval "$command" 2>&1); then
             log_success "Comando executado com sucesso na tentativa $attempt"
             return 0
         else
+            exit_code=$?
+            log_warning "Tentativa $attempt falhou com código $exit_code"
+            
+            # Verificar se o erro é retriável
+            if echo "$output" | grep -qE "$retryable_patterns"; then
+                log_info "Erro retriável detectado: $(echo "$output" | grep -E "$retryable_patterns" | head -1)"
+            else
+                log_error "Erro não retriável detectado: $(echo "$output" | head -1)"
+                return $exit_code
+            fi
+            
+            # Se não é a última tentativa, calcular delay com jitter
             if [ $attempt -lt $max_attempts ]; then
-                log_warning "Tentativa $attempt falhou, aguardando ${delay}s..."
-                sleep $delay
-                delay=$((delay * 2))  # Exponential backoff
+                # Exponential backoff com jitter
+                local jitter=$((RANDOM % jitter_max + 1))
+                local actual_delay=$((delay + jitter))
+                
+                log_warning "Aguardando ${actual_delay}s antes da próxima tentativa (base: ${delay}s + jitter: ${jitter}s)..."
+                sleep $actual_delay
+                
+                # Próximo delay (exponential backoff)
+                delay=$((delay * 2))
+                attempt=$((attempt + 1))
             else
                 log_error "Todas as $max_attempts tentativas falharam"
-                return 1
+                log_error "Último erro: $output"
+                return $exit_code
             fi
         fi
     done
+}
+
+# Função para executar com retry específico por tipo de task
+execute_task_with_retry() {
+    local task_type="$1"
+    local max_attempts="$2"
+    local base_delay="$3"
+    shift 3
+    local command="$*"
+    
+    # Configurações específicas por tipo de task
+    case "$task_type" in
+        "test")
+            local retryable_patterns="ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused|Test timeout|Jest timeout"
+            local jitter_max=3
+            ;;
+        "build")
+            local retryable_patterns="ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused|Build timeout|Compilation timeout"
+            local jitter_max=5
+            ;;
+        "coverage")
+            local retryable_patterns="ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused|Coverage timeout|Report generation failed"
+            local jitter_max=2
+            ;;
+        "lint")
+            local retryable_patterns="ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused|Lint timeout"
+            local jitter_max=1
+            ;;
+        *)
+            local retryable_patterns="ECONNRESET|ETIMEDOUT|ENOTFOUND|Network error|Timeout|Connection refused"
+            local jitter_max=2
+            ;;
+    esac
+    
+    log_info "Executando task $task_type com retry específico"
+    execute_with_retry "$max_attempts" "$base_delay" "$jitter_max" "$retryable_patterns" "$command"
+}
+
+# Função para executar com circuit breaker
+execute_with_circuit_breaker() {
+    local max_failures=${1:-5}
+    local reset_timeout=${2:-300}  # 5 minutos
+    local command="$2"
+    shift 2
+    
+    local circuit_file="/tmp/circuit_breaker_$(echo "$command" | md5sum | cut -d' ' -f1)"
+    local current_time=$(date +%s)
+    
+    # Verificar se o circuit breaker está aberto
+    if [ -f "$circuit_file" ]; then
+        local last_failure=$(cat "$circuit_file")
+        local time_since_failure=$((current_time - last_failure))
+        
+        if [ $time_since_failure -lt $reset_timeout ]; then
+            log_warning "Circuit breaker aberto. Aguardando $((reset_timeout - time_since_failure))s antes de tentar novamente"
+            return 1
+        else
+            log_info "Circuit breaker resetado, removendo arquivo de controle"
+            rm -f "$circuit_file"
+        fi
+    fi
+    
+    # Executar comando
+    if eval "$command"; then
+        log_success "Comando executado com sucesso"
+        # Remover arquivo de circuit breaker se existir
+        rm -f "$circuit_file"
+        return 0
+    else
+        local exit_code=$?
+        log_warning "Comando falhou com código $exit_code"
+        
+        # Registrar falha
+        echo "$current_time" > "$circuit_file"
+        
+        # Verificar se deve abrir o circuit breaker
+        local failure_count=1
+        if [ -f "${circuit_file}_count" ]; then
+            failure_count=$(cat "${circuit_file}_count")
+            failure_count=$((failure_count + 1))
+        fi
+        
+        echo "$failure_count" > "${circuit_file}_count"
+        
+        if [ $failure_count -ge $max_failures ]; then
+            log_error "Circuit breaker aberto após $failure_count falhas consecutivas"
+            log_error "Aguardando $reset_timeout segundos antes de permitir novas tentativas"
+        fi
+        
+        return $exit_code
+    fi
 }
 
 # Função para detectar se estamos em ambiente CI
@@ -313,7 +435,7 @@ show_performance_stats() {
 
 # Exportar funções para uso em outros scripts
 export -f log_info log_success log_error log_warning log_debug log_step
-export -f validate_prerequisites execute_with_retry is_ci_environment
+export -f validate_prerequisites execute_with_retry execute_task_with_retry execute_with_circuit_breaker is_ci_environment
 export -f get_workspace_info validate_cache_integrity cleanup_corrupted_cache
 export -f calculate_files_hash detect_language_changes check_pr_labels
 export -f check_commit_messages get_dynamic_parallel run_health_check

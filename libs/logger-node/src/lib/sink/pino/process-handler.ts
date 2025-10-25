@@ -88,7 +88,7 @@ export class ProcessHandlerManager {
 	/**
 	 * Configura handlers de processo
 	 */
-	private setupProcessHandlers(): void {
+	public setupProcessHandlers(): void {
 		// SIGTERM - graceful shutdown
 		process.on('SIGTERM', () => {
 			console.log('ProcessHandlerManager: SIGTERM recebido, iniciando graceful shutdown...');
@@ -221,5 +221,20 @@ export class ProcessHandlerManager {
 			buffersCount: this.buffers.size,
 			isShuttingDown: this.isShuttingDown,
 		};
+	}
+
+	/**
+	 * Resets the singleton instance for testing purposes.
+	 * Clears all event listeners, sinks, and internal state.
+	 * Should ONLY be used in test environments.
+	 */
+	static resetForTesting(): void {
+		if (ProcessHandlerManager.instance) {
+			ProcessHandlerManager.instance.cleanupListeners();
+			ProcessHandlerManager.instance.sinks.clear();
+			ProcessHandlerManager.instance.buffers.clear();
+			ProcessHandlerManager.instance.isShuttingDown = false;
+		}
+		ProcessHandlerManager.instance = null;
 	}
 }

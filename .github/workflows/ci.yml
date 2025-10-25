@@ -6,39 +6,54 @@ on:
   pull_request:
     branches: ['**']
 
+# Cancelar runs duplicados
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '18'
   GO_VERSION: '1.23'
   PNPM_VERSION: '9.15.0'
 
 jobs:
-  setup:
-    name: Setup Workspace
+  # FASE 1: Setup Inteligente e Detecção de Mudanças
+  detect-and-setup:
+    name: Detect Changes & Setup
     runs-on: ubuntu-latest
     outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+      go-changed: ${{ steps.detect.outputs.go-changed }}
+      node-changed: ${{ steps.detect.outputs.node-changed }}
+      config-changed: ${{ steps.detect.outputs.config-changed }}
+      skip-ci: ${{ steps.detect.outputs.skip-ci }}
+      affected-projects: ${{ steps.detect.outputs.affected-projects }}
+      cache-key-node: ${{ steps.cache-node.outputs.cache-key }}
+      cache-key-go: ${{ steps.cache-go.outputs.cache-key }}
+      cache-key-nx: ${{ steps.cache-nx.outputs.cache-key }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Cache Nx
-        id: cache
-        uses: actions/cache@v4
+      - name: Detect Changes
+        id: detect
+        uses: ./.github/actions/detect-changes
         with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
+          base-ref: ${{ github.base_ref || 'HEAD~1' }}
+          output-format: 'github'
+          verbose: 'true'
 
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
+      - name: Skip CI Check
+        if: steps.detect.outputs.skip-ci == 'true'
+        run: |
+          echo "⏭️ CI skipped due to commit message or labels"
+          exit 0
+
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
         with:
+          languages: ${{ steps.detect.outputs.go-changed == 'true' && steps.detect.outputs.node-changed == 'true' && 'both' || steps.detect.outputs.go-changed == 'true' && 'go' || steps.detect.outputs.node-changed == 'true' && 'node' || 'both' }}
           node-version: ${{ env.NODE_VERSION }}
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -48,229 +63,201 @@ jobs:
           find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
           echo "✅ Script permissions fixed"
 
-  lint-node:
-    name: Lint Node.js
+      - name: Cache Dependencies
+        id: cache-node
+        if: steps.detect.outputs.node-changed == 'true'
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'dependencies'
+          validate-integrity: 'true'
+          auto-cleanup: 'true'
+
+      - name: Cache Go Dependencies
+        id: cache-go
+        if: steps.detect.outputs.go-changed == 'true'
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'dependencies'
+          validate-integrity: 'true'
+          auto-cleanup: 'true'
+
+      - name: Cache Nx
+        id: cache-nx
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'build'
+          validate-integrity: 'true'
+          auto-cleanup: 'true'
+
+  # FASE 2: Lint com Matrix Strategy
+  lint:
+    name: Lint ${{ matrix.language }}
     runs-on: ubuntu-latest
-    needs: setup
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    needs: detect-and-setup
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
+    strategy:
+      matrix:
+        include:
+          - language: node
+            condition: ${{ needs.detect-and-setup.outputs.node-changed == 'true' }}
+          - language: go
+            condition: ${{ needs.detect-and-setup.outputs.go-changed == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
         with:
+          languages: ${{ matrix.language }}
           node-version: ${{ env.NODE_VERSION }}
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Cache Nx
-        uses: actions/cache@v4
+      - name: Restore Cache
+        uses: ./.github/actions/smart-cache
         with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
+          cache-type: 'dependencies'
+          cache-key: ${{ needs.detect-and-setup.outputs.cache-key-node }}
 
-      - name: Validate Node.js
+      - name: Lint Node.js
+        if: matrix.language == 'node'
         uses: ./.github/actions/node-validation
         with:
-          strategy: ${{ github.event_name == 'pull_request' && 'affected' || 'all' }}
-          base-ref: ${{ github.base_ref }}
+          strategy: 'affected'
+          base-ref: ${{ github.base_ref || 'HEAD~1' }}
 
-  lint-go:
-    name: Lint Go
-    runs-on: ubuntu-latest
-    needs: setup
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          go-version: ${{ env.GO_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Validate Go
+      - name: Lint Go
+        if: matrix.language == 'go'
         uses: ./.github/actions/go-validation
         with:
-          strategy: ${{ github.event_name == 'pull_request' && 'affected' || 'all' }}
-          base-ref: ${{ github.base_ref }}
+          strategy: 'affected'
+          base-ref: ${{ github.base_ref || 'HEAD~1' }}
 
-  test-node:
-    name: Test Node.js
+  # FASE 3: Test com Matrix Strategy
+  test:
+    name: Test ${{ matrix.language }}
     runs-on: ubuntu-latest
-    needs: setup
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    needs: [detect-and-setup, lint]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
+    strategy:
+      matrix:
+        include:
+          - language: node
+            condition: ${{ needs.detect-and-setup.outputs.node-changed == 'true' }}
+          - language: go
+            condition: ${{ needs.detect-and-setup.outputs.go-changed == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
         with:
+          languages: ${{ matrix.language }}
           node-version: ${{ env.NODE_VERSION }}
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Cache Nx
-        uses: actions/cache@v4
+      - name: Restore Cache
+        uses: ./.github/actions/smart-cache
         with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
+          cache-type: 'dependencies'
+          cache-key: ${{ needs.detect-and-setup.outputs.cache-key-node }}
 
-      - name: Run Node.js Tests
+      - name: Test Node.js with Retry
+        if: matrix.language == 'node'
         run: |
-          # Verificar ambiente Node.js
-          echo "🔍 Verificando ambiente Node.js..."
-          node --version
-          pnpm --version
-          
+          echo "🧪 Running Node.js tests with coverage and retry..."
+          # Usar função de retry específica para testes
+          source scripts/utils/common-functions.sh
+          execute_task_with_retry "test" 3 5 "./scripts/coverage-strategy.sh affected ${{ github.base_ref || 'HEAD~1' }}"
+        shell: bash
+
+      - name: Test Go with Retry
+        if: matrix.language == 'go'
+        run: |
+          echo "🧪 Running Go tests with coverage and retry..."
+          # Usar função de retry específica para testes
+          source scripts/utils/common-functions.sh
+          execute_task_with_retry "test" 3 5 "./scripts/generate-go-coverage.sh"
+        shell: bash
+
+      - name: Upload Node.js Coverage
+        if: matrix.language == 'node'
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-coverage-${{ matrix.language }}
+          path: coverage/
+          retention-days: 7
+
+      - name: Upload Go Coverage
+        if: matrix.language == 'go'
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage-${{ matrix.language }}
+          path: coverage/go/
+          retention-days: 7
+
+      - name: Detect Flaky Tasks
+        if: always()
+        run: |
+          echo "🔍 Detecting flaky tasks..."
+          # Executar detecção de flaky tasks
+          ./scripts/utils/detect-flaky-tasks.sh \
+            --threshold=5 \
+            --days=7 \
+            --output=github \
+            --verbose || echo "⚠️ Flaky tasks detection completed with warnings"
+        shell: bash
+
+  # FASE 4: Build Otimizado
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [detect-and-setup, lint, test]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true' || needs.detect-and-setup.outputs.config-changed == 'true') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
+        with:
+          languages: ${{ needs.detect-and-setup.outputs.go-changed == 'true' && needs.detect-and-setup.outputs.node-changed == 'true' && 'both' || needs.detect-and-setup.outputs.go-changed == 'true' && 'go' || needs.detect-and-setup.outputs.node-changed == 'true' && 'node' || 'both' }}
+          node-version: ${{ env.NODE_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore Cache
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'build'
+          cache-key: ${{ needs.detect-and-setup.outputs.cache-key-nx }}
+
+      - name: Build Projects
+        run: |
+          echo "🔨 Building projects..."
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             # Verificar se a branch base existe antes de usar affected
             if git rev-parse --verify origin/${{ github.base_ref }} >/dev/null 2>&1; then
               echo "✅ Usando estratégia affected com base origin/${{ github.base_ref }}"
-              pnpm nx affected --target=test --base=origin/${{ github.base_ref }}
+              pnpm nx affected --target=build --base=origin/${{ github.base_ref }}
             else
               echo "⚠️ Base branch origin/${{ github.base_ref }} not found, running all projects instead"
-              pnpm nx run-many --target=test --all
+              pnpm nx run-many --target=build --all
             fi
           else
             echo "✅ Usando estratégia run-many para push"
-            pnpm nx run-many --target=test --all
-          fi
-
-      - name: Upload Node.js Coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: node-coverage
-          path: coverage/
-          retention-days: 7
-
-  test-go:
-    name: Test Go
-    runs-on: ubuntu-latest
-    needs: setup
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          go-version: ${{ env.GO_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Run Go Tests
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            # Verificar se a branch base existe antes de usar affected
-            if git rev-parse --verify origin/${{ github.base_ref }} >/dev/null 2>&1; then
-              pnpm nx affected --target=test --base=origin/${{ github.base_ref }}
-            else
-              echo "⚠️ Base branch origin/${{ github.base_ref }} not found, running all projects instead"
-              pnpm nx run-many --target=test --all
-            fi
-          else
-            pnpm nx run-many --target=test --all
-          fi
-
-      - name: Generate Go Coverage
-        run: ./scripts/generate-go-coverage.sh
-
-      - name: Upload Go Coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: go-coverage
-          path: coverage/go/
-          retention-days: 7
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [lint-node, lint-go]
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          go-version: ${{ env.GO_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
-
-      - name: Cache Nx
-        uses: actions/cache@v4
-        with:
-          path: |
-            .nx/cache
-            node_modules
-            ~/.pnpm-store
-            ~/.pnpm-cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-nx-
-
-      - name: Build Projects
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            pnpm nx affected --target=build --base=origin/${{ github.base_ref }}
-          else
             pnpm nx run-many --target=build --all
           fi
+        shell: bash
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -280,32 +267,66 @@ jobs:
           path: dist/
           retention-days: 7
 
+  # FASE 5: Coverage Report Otimizado
   coverage-report:
     name: Coverage Report
     runs-on: ubuntu-latest
-    needs: [test-node, test-go]
-    if: always() && (needs.test-node.result == 'success' || needs.test-go.result == 'success')
+    needs: [detect-and-setup, test]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && always() && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download Node.js Coverage
         uses: actions/download-artifact@v4
         with:
-          name: node-coverage
+          name: node-coverage-node
           path: coverage/
+        continue-on-error: true
 
       - name: Download Go Coverage
         uses: actions/download-artifact@v4
         with:
-          name: go-coverage
+          name: go-coverage-go
           path: coverage/go/
+        continue-on-error: true
 
       - name: Consolidate Coverage
         run: |
-          mkdir -p coverage-reports
-          cp -r coverage/* coverage-reports/ 2>/dev/null || true
+          echo "📊 Consolidating coverage reports..."
+          node scripts/consolidate-coverage.js
+          echo "✅ Coverage consolidated"
+        shell: bash
 
       - name: Upload Consolidated Coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
-          path: coverage-reports/
+          path: coverage/consolidated/
           retention-days: 30
+
+  # FASE 6: Summary e Métricas
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [detect-and-setup, lint, test, build, coverage-report]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "📊 CI Summary:"
+          echo "  Go changed: ${{ needs.detect-and-setup.outputs.go-changed }}"
+          echo "  Node.js changed: ${{ needs.detect-and-setup.outputs.node-changed }}"
+          echo "  Config changed: ${{ needs.detect-and-setup.outputs.config-changed }}"
+          echo "  Skip CI: ${{ needs.detect-and-setup.outputs.skip-ci }}"
+          echo ""
+          echo "Job Results:"
+          echo "  Lint: ${{ needs.lint.result }}"
+          echo "  Test: ${{ needs.test.result }}"
+          echo "  Build: ${{ needs.build.result }}"
+          echo "  Coverage: ${{ needs.coverage-report.result }}"
+          echo ""
+          echo "Affected Projects: ${{ needs.detect-and-setup.outputs.affected-projects }}"
+        shell: bash
