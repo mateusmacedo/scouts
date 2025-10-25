@@ -4,14 +4,6 @@ Este documento descreve como usar os geradores Nx disponíveis no workspace para
 
 ## 🚀 Geradores Principais
 
-### Gerar Workflow de CI
-
-```bash
-# Gera workflow otimizado de CI
-pnpm nx g @nx/workspace:ci-workflow --ci=github
-```
-
-> **Nota:** O workspace já possui workflows GitHub Actions configurados. Consulte o [Processo de Release](RELEASE_PROCESS.md) para mais detalhes.
 
 ### Gerar Nova Biblioteca
 
@@ -162,28 +154,7 @@ pnpm nx g @nx/js:release-config --project=my-project
 pnpm nx g @nx/js:changelog --project=my-project
 ```
 
-> **Nota:** O workspace já possui configuração de release independente. Consulte o [Processo de Release](RELEASE_PROCESS.md) para mais detalhes.
 
-## 🚀 Geradores de CI/CD
-
-### Gerar Workflow GitHub Actions
-
-```bash
-# Workflow básico
-pnpm nx g @nx/workspace:ci-workflow --ci=github
-
-# Workflow com Nx Cloud
-pnpm nx g @nx/workspace:ci-workflow --ci=github --cloud=true
-```
-
-### Gerar Workflow para Deploy
-
-```bash
-# Workflow de deploy
-pnpm nx g @nx/workspace:deploy-workflow --ci=github --project=my-app
-```
-
-> **Nota:** O workspace já possui workflows GitHub Actions configurados. Consulte o [Processo de Release](RELEASE_PROCESS.md) para mais detalhes.
 
 ## 📚 Geradores de Documentação
 
@@ -364,4 +335,3 @@ pnpm ls @nx/js
 - [Creating Custom Generators](https://20.nx.dev/recipes/generators/local-generators)
 - [Nx Plugin Development](https://20.nx.dev/recipes/generators/workspace-generators)
 - [Generator Best Practices](https://20.nx.dev/recipes/generators/generator-options)
-- [Processo de Release](RELEASE_PROCESS.md) - Como fazer releases dos projetos

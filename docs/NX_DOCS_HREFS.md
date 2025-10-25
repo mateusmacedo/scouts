@@ -5,12 +5,11 @@ Consolidado a partir de múltiplas fontes da documentação.
 
 **Base URL:** https://20.nx.dev
 
-**Total de links:** 311
-**Seções:** 11
+**Total de links:** 306
+**Seções:** 10
 
 ## Índice
 
-- [CI Features](#ci-features) (5 links)
 - [Concepts](#concepts) (5 links)
 - [Enterprise](#enterprise) (4 links)
 - [Features](#features) (9 links)
@@ -22,13 +21,6 @@ Consolidado a partir de múltiplas fontes da documentação.
 - [Troubleshooting](#troubleshooting) (6 links)
 - [Índice](#índice) (10 links)
 
-## CI Features
-
-- [Automatically Split E2E Tasks](https://20.nx.dev/ci/features/split-e2e-tasks)
-- [Distribute Task Execution (Nx Agents)](https://20.nx.dev/ci/features/distribute-task-execution)
-- [Dynamically Allocate Agents](https://20.nx.dev/ci/features/dynamic-agents)
-- [Identify and Re-run Flaky Tasks](https://20.nx.dev/ci/features/flaky-tasks)
-- [Use Remote Caching (Nx Replay)](https://20.nx.dev/ci/features/remote-cache)
 
 ## Concepts
 
@@ -446,7 +438,6 @@ Consolidado a partir de múltiplas fontes da documentação.
 
 ## Índice
 
-- [CI Features](#ci-features)
 - [Concepts](#concepts)
 - [Enterprise](#enterprise)
 - [Features](#features)

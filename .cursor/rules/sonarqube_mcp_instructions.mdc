@@ -1,9 +1,6 @@
 ---
-description: SonarQube MCP Server usage guidelines
-globs:
-alwaysApply: true
+alwaysApply: false
 ---
-
 These are some guidelines when using the SonarQube MCP server.
 
 # Important Tool Guidelines

@@ -52,8 +52,7 @@ scouts/
 │   ├── utils-nest/              # Utilitários NestJS (TypeScript)
 │   └── biome-base/              # Configuração Biome
 ├── docs/                         # Documentação
-├── scripts/                      # Scripts de automação
-└── .github/workflows/           # CI/CD workflows
+└── scripts/                      # Scripts de automação
 ```
 
 ## Arquitetura por Camadas
@@ -247,38 +246,6 @@ Client → Echo Handler → UserHandler → UserService (lib) → InMemoryReposi
 - **Type Checking**: TypeScript, Go compiler
 - **Testing**: Jest (TS), Go testing package
 
-## CI/CD Pipeline
-
-### Workflows GitHub Actions
-
-#### 1. CI Workflow (`.github/workflows/ci.yml`)
-- Trigger: Push/PR para main/develop
-- Steps:
-  - Setup Node.js 20 + pnpm 9.15.0
-  - Setup Go 1.23
-  - Install dependencies
-  - Build affected projects
-  - Test affected projects
-  - Lint affected projects
-  - Check module boundaries
-  - Upload coverage
-
-#### 2. Release Workflow (`.github/workflows/release.yml`)
-- Trigger: Push para main
-- Steps:
-  - Build all projects
-  - Test all projects
-  - Release version and changelog
-  - Publish to NPM (TypeScript libs)
-  - Push changes and tags (Go libs)
-
-#### 3. Release Validation (`.github/workflows/release-validation.yml`)
-- Trigger: PR para main
-- Steps:
-  - Build affected projects
-  - Test affected projects
-  - Release dry-run
-
 ## Monitoramento e Observabilidade
 
 ### Logging Estruturado
@@ -339,7 +306,6 @@ Client → Echo Handler → UserHandler → UserService (lib) → InMemoryReposi
 ## Roadmap Técnico
 
 ### Fase 1: Infraestrutura Base ✅
-- [x] Workflows GitHub Actions
 - [x] Quality gates
 - [x] Module boundaries
 
