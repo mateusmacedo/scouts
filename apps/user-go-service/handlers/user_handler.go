@@ -84,6 +84,30 @@ func (h *UserHandler) Create(c echo.Context) error {
 				Message: "User with this email already exists",
 			})
 		}
+		if err == gouser.ErrInvalidEmail {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "invalid_email",
+				Message: "Invalid email format",
+			})
+		}
+		if err == gouser.ErrEmptyName {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "empty_name",
+				Message: "Name cannot be empty",
+			})
+		}
+		if err == gouser.ErrInvalidPhone {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "invalid_phone",
+				Message: "Invalid phone format",
+			})
+		}
+		if err == gouser.ErrEmptyEmail {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "empty_email",
+				Message: "Email cannot be empty",
+			})
+		}
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to create user",
@@ -210,6 +234,30 @@ func (h *UserHandler) Update(c echo.Context) error {
 			return c.JSON(http.StatusConflict, ErrorResponse{
 				Error:   "user_already_exists",
 				Message: "User with this email already exists",
+			})
+		}
+		if err == gouser.ErrInvalidEmail {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "invalid_email",
+				Message: "Invalid email format",
+			})
+		}
+		if err == gouser.ErrEmptyName {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "empty_name",
+				Message: "Name cannot be empty",
+			})
+		}
+		if err == gouser.ErrInvalidPhone {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "invalid_phone",
+				Message: "Invalid phone format",
+			})
+		}
+		if err == gouser.ErrEmptyEmail {
+			return c.JSON(http.StatusBadRequest, ErrorResponse{
+				Error:   "empty_email",
+				Message: "Email cannot be empty",
 			})
 		}
 		return c.JSON(http.StatusInternalServerError, ErrorResponse{
