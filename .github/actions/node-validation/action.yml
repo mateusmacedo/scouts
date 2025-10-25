@@ -1,0 +1,52 @@
+name: 'Node.js Validation'
+description: 'Validate Node.js code with ESLint, Biome format and tests'
+
+inputs:
+  strategy:
+    description: 'Execution strategy (affected or all)'
+    required: true
+    default: 'affected'
+  base-ref:
+    description: 'Base reference for affected strategy'
+    required: false
+    default: 'origin/main'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Node.js projects exist
+      run: |
+        if [ ! -d "apps/bff-nest" ] && [ ! -d "apps/express-notifier" ] && [ ! -d "libs" ]; then
+          echo "No Node.js projects found, skipping Node.js validation"
+          exit 0
+        fi
+      shell: bash
+
+    - name: ESLint
+      run: |
+        echo "🔍 Running ESLint..."
+        if [ "${{ inputs.strategy }}" = "affected" ]; then
+          pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+        else
+          pnpm nx run-many --target=lint --all --projects=@scouts/*,express-notifier
+        fi
+        echo "✅ ESLint passed"
+      shell: bash
+
+    - name: Biome Format Check
+      run: |
+        echo "🔍 Checking Biome formatting..."
+        pnpm biome format --check .
+        echo "✅ Biome format check passed"
+      shell: bash
+
+    - name: Node.js Tests
+      run: |
+        echo "🧪 Running Node.js tests..."
+        if [ "${{ inputs.strategy }}" = "affected" ]; then
+          pnpm nx affected --target=test --base=${{ inputs.base-ref }} --projects=@scouts/*,express-notifier
+        else
+          pnpm nx run-many --target=test --all --projects=@scouts/*,express-notifier
+        fi
+        echo "✅ Node.js tests passed"
+      shell: bash
