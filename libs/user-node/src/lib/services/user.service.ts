@@ -1,110 +1,116 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { User, CreateUserData, UpdateUserData, UserRepository, UserEvents } from '../domain/user.entity';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+	CreateUserData,
+	UpdateUserData,
+	User,
+	UserEvents,
+	UserRepository,
+} from '../domain/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly userEvents?: UserEvents
-  ) {}
+	constructor(
+		private readonly userRepository: UserRepository,
+		private readonly userEvents?: UserEvents
+	) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    // Verificar se email já existe
-    const existingUser = await this.findByEmail(createUserDto.email);
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
+	async create(createUserDto: CreateUserDto): Promise<User> {
+		// Verificar se email já existe
+		const existingUser = await this.findByEmail(createUserDto.email);
+		if (existingUser) {
+			throw new ConflictException('User with this email already exists');
+		}
 
-    const userData: CreateUserData = {
-      name: createUserDto.name,
-      email: createUserDto.email,
-      phone: createUserDto.phone,
-      address: createUserDto.address,
-    };
+		const userData: CreateUserData = {
+			name: createUserDto.name,
+			email: createUserDto.email,
+			phone: createUserDto.phone,
+			address: createUserDto.address,
+		};
 
-    const user = await this.userRepository.create(userData);
-    
-    // Emitir evento de usuário criado
-    this.userEvents?.onUserCreated(user);
+		const user = await this.userRepository.create(userData);
 
-    return user;
-  }
+		// Emitir evento de usuário criado
+		this.userEvents?.onUserCreated(user);
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.findAll();
-  }
+		return user;
+	}
 
-  async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findById(id);
-    
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+	async findAll(): Promise<User[]> {
+		return this.userRepository.findAll();
+	}
 
-    return user;
-  }
+	async findById(id: string): Promise<User> {
+		const user = await this.userRepository.findById(id);
 
-  async findByEmail(email: string): Promise<User | null> {
-    const users = await this.userRepository.findAll();
-    return users.find(user => user.email === email) || null;
-  }
+		if (!user) {
+			throw new NotFoundException(`User with ID ${id} not found`);
+		}
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    // Verificar se usuário existe
-    const existingUser = await this.userRepository.findById(id);
-    if (!existingUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+		return user;
+	}
 
-    // Se email está sendo atualizado, verificar se não conflita
-    if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
-      const emailExists = await this.findByEmail(updateUserDto.email);
-      if (emailExists) {
-        throw new ConflictException('User with this email already exists');
-      }
-    }
+	async findByEmail(email: string): Promise<User | null> {
+		const users = await this.userRepository.findAll();
+		return users.find((user) => user.email === email) || null;
+	}
 
-    const updateData: UpdateUserData = {};
-    
-    if (updateUserDto.name !== undefined) {
-      updateData.name = updateUserDto.name;
-    }
-    if (updateUserDto.email !== undefined) {
-      updateData.email = updateUserDto.email;
-    }
-    if (updateUserDto.phone !== undefined) {
-      updateData.phone = updateUserDto.phone;
-    }
-    if (updateUserDto.address !== undefined) {
-      updateData.address = updateUserDto.address;
-    }
+	async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+		// Verificar se usuário existe
+		const existingUser = await this.userRepository.findById(id);
+		if (!existingUser) {
+			throw new NotFoundException(`User with ID ${id} not found`);
+		}
 
-    const updatedUser = await this.userRepository.update(id, updateData);
-    
-    if (!updatedUser) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+		// Se email está sendo atualizado, verificar se não conflita
+		if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
+			const emailExists = await this.findByEmail(updateUserDto.email);
+			if (emailExists) {
+				throw new ConflictException('User with this email already exists');
+			}
+		}
 
-    // Emitir evento de usuário atualizado
-    this.userEvents?.onUserUpdated(updatedUser);
+		const updateData: UpdateUserData = {};
 
-    return updatedUser;
-  }
+		if (updateUserDto.name !== undefined) {
+			updateData.name = updateUserDto.name;
+		}
+		if (updateUserDto.email !== undefined) {
+			updateData.email = updateUserDto.email;
+		}
+		if (updateUserDto.phone !== undefined) {
+			updateData.phone = updateUserDto.phone;
+		}
+		if (updateUserDto.address !== undefined) {
+			updateData.address = updateUserDto.address;
+		}
 
-  async delete(id: string): Promise<void> {
-    const user = await this.userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+		const updatedUser = await this.userRepository.update(id, updateData);
 
-    const deleted = await this.userRepository.delete(id);
-    if (!deleted) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+		if (!updatedUser) {
+			throw new NotFoundException(`User with ID ${id} not found`);
+		}
 
-    // Emitir evento de usuário deletado
-    this.userEvents?.onUserDeleted(id);
-  }
+		// Emitir evento de usuário atualizado
+		this.userEvents?.onUserUpdated(updatedUser);
+
+		return updatedUser;
+	}
+
+	async delete(id: string): Promise<void> {
+		const user = await this.userRepository.findById(id);
+		if (!user) {
+			throw new NotFoundException(`User with ID ${id} not found`);
+		}
+
+		const deleted = await this.userRepository.delete(id);
+		if (!deleted) {
+			throw new NotFoundException(`User with ID ${id} not found`);
+		}
+
+		// Emitir evento de usuário deletado
+		this.userEvents?.onUserDeleted(id);
+	}
 }
