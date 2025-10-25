@@ -17,7 +17,7 @@ scripts/
 ├── utils/                            # Scripts utilitários
 │   ├── README.md                     # Documentação dos utilitários
 │   ├── common-functions.sh           # Funções comuns reutilizáveis
-│   ├── detect-language-changes.sh   # Detecção de mudanças por linguagem
+│   ├── detect-changed-projects.sh   # Detecção de mudanças por linguagem e projetos
 │   ├── cache-coverage-results.sh     # Cache inteligente de coverage
 │   ├── validate-cache-integrity.sh   # Validação de integridade de cache
 │   ├── detect-changed-projects.sh    # Detecção de projetos alterados
@@ -113,30 +113,27 @@ Valida integridade de diferentes tipos de cache.
 
 ### Detecção de Mudanças
 
-#### `detect-language-changes.sh`
-**Uso:** `./scripts/utils/detect-language-changes.sh [base_ref] [output_format] [verbose]`
+#### `detect-changed-projects.sh`
+**Uso:** `./scripts/utils/detect-changed-projects.sh [all_projects] [base_ref] [output_format]`
 
-Detecta mudanças por linguagem com suporte a overrides.
+Detecta projetos com mudanças reais e por linguagem.
 
 **Parâmetros:**
+- `all_projects`: Lista de projetos (opcional)
 - `base_ref`: Referência base (padrão: `HEAD~1`)
 - `output_format`: `github`, `json`, `env` (padrão: `github`)
-- `verbose`: `true` ou `false` (padrão: `false`)
 
 **Outputs:**
-- `go-changed`: boolean
-- `node-changed`: boolean
-- `config-changed`: boolean
-- `skip-ci`: boolean
-- `affected-projects`: string
+- `go-changed`, `node-changed`, `config-changed`, `skip-ci`
+- `affected-projects`, `has_changes`, `publishable_changed`
 
 **Exemplo:**
 ```bash
 # Detectar mudanças com output para GitHub Actions
-./scripts/utils/detect-language-changes.sh origin/main github
+./scripts/utils/detect-changed-projects.sh "" origin/main github
 
 # Detectar mudanças com output JSON
-./scripts/utils/detect-language-changes.sh HEAD~1 json true
+./scripts/utils/detect-changed-projects.sh "" HEAD~1 json
 ```
 
 ## 🔧 Scripts Utilitários
@@ -234,7 +231,7 @@ node scripts/consolidate-coverage.js
 #### Habilitar verbose
 ```bash
 # Detecção de mudanças com verbose
-./scripts/utils/detect-language-changes.sh HEAD~1 github true
+./scripts/utils/detect-changed-projects.sh "" HEAD~1 github
 ```
 
 #### Verificar pré-requisitos

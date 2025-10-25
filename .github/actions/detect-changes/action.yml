@@ -1,5 +1,5 @@
 name: 'Detect Changes'
-description: 'Detect changes by language with support for manual overrides'
+description: 'Detect changes by language and affected projects with support for manual overrides'
 
 inputs:
   base-ref:
@@ -51,11 +51,11 @@ runs:
       run: |
         echo "🔍 Detecting changes by language..."
         
-        # Executar script UMA VEZ e capturar output completo
-        DETECTION_OUTPUT=$(./scripts/utils/detect-language-changes.sh \
+        # Executar script unificado UMA VEZ e capturar output completo
+        DETECTION_OUTPUT=$(./scripts/utils/detect-changed-projects.sh \
+          "" \
           "${{ inputs.base-ref }}" \
-          "${{ inputs.output-format }}" \
-          "${{ inputs.verbose }}")
+          "${{ inputs.output-format }}")
         
         # Parsear e exportar cada variável
         echo "$DETECTION_OUTPUT" | while IFS='=' read -r key value; do

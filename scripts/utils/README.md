@@ -76,47 +76,22 @@ check_pr_labels
 check_commit_messages "$GITHUB_HEAD_COMMIT_MESSAGE"
 ```
 
-### `detect-language-changes.sh`
-Detecta mudanças por linguagem com suporte a overrides manuais.
+### `detect-changed-projects.sh`
+Detecta projetos com mudanças reais e por linguagem.
 
 **Uso:**
 ```bash
-./scripts/utils/detect-language-changes.sh [base_ref] [output_format] [verbose]
+./scripts/utils/detect-changed-projects.sh [all_projects] [base_ref] [output_format]
 ```
 
 **Parâmetros:**
-- `base_ref`: Referência base para comparação (padrão: `HEAD~1`)
-- `output_format`: Formato de output (`github`, `json`, `env`)
-- `verbose`: Habilitar output detalhado (`true`/`false`)
+- `all_projects`: Lista de projetos (opcional)
+- `base_ref`: Referência base (padrão: HEAD~1)
+- `output_format`: github, json ou env
 
 **Outputs:**
-- `go-changed`: boolean - Mudanças em Go detectadas
-- `node-changed`: boolean - Mudanças em Node.js detectadas
-- `config-changed`: boolean - Mudanças em configurações detectadas
-- `skip-ci`: boolean - Pular CI completamente
-- `affected-projects`: string - Lista de projetos afetados
-
-**Exemplos:**
-```bash
-# Para GitHub Actions
-./scripts/utils/detect-language-changes.sh origin/main github
-
-# Para output JSON
-./scripts/utils/detect-language-changes.sh HEAD~1 json true
-
-# Para variáveis de ambiente
-source <(./scripts/utils/detect-language-changes.sh HEAD~1 env)
-```
-
-**Detecção Automática:**
-- **Go**: Arquivos `.go`, `.mod`, `.sum`
-- **Node.js**: Arquivos `.ts`, `.tsx`, `.js`, `.jsx`
-- **Config**: `nx.json`, `tsconfig.*`, `package.json`, `.github/**`
-- **Scripts**: Mudanças em `scripts/**`
-
-**Overrides Manuais:**
-- **Commit messages**: `[ci go]`, `[ci node]`, `[ci full]`, `[skip ci]`
-- **Labels de PR**: `ci:force-go`, `ci:force-node`, `ci:force-all`, `ci:skip`
+- `go-changed`, `node-changed`, `config-changed`, `skip-ci`
+- `affected-projects`, `has_changes`, `publishable_changed`
 
 ### `cache-coverage-results.sh`
 Gerencia cache inteligente de resultados de coverage.

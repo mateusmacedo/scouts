@@ -89,19 +89,12 @@ jobs:
           validate-integrity: 'true'
           auto-cleanup: 'true'
 
-  # FASE 2: Lint com Matrix Strategy
-  lint:
-    name: Lint ${{ matrix.language }}
+  # FASE 2: Lint Node.js
+  lint-node:
+    name: Lint Node.js
     runs-on: ubuntu-latest
     needs: detect-and-setup
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
-    strategy:
-      matrix:
-        include:
-          - language: node
-            condition: ${{ needs.detect-and-setup.outputs.node-changed == 'true' }}
-          - language: go
-            condition: ${{ needs.detect-and-setup.outputs.go-changed == 'true' }}
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && needs.detect-and-setup.outputs.node-changed == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -111,7 +104,7 @@ jobs:
       - name: Smart Setup
         uses: ./.github/actions/smart-setup
         with:
-          languages: ${{ matrix.language }}
+          languages: 'node'
           node-version: ${{ env.NODE_VERSION }}
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -123,32 +116,17 @@ jobs:
           cache-key: ${{ needs.detect-and-setup.outputs.cache-key-node }}
 
       - name: Lint Node.js
-        if: matrix.language == 'node'
         uses: ./.github/actions/node-validation
         with:
           strategy: 'affected'
           base-ref: ${{ github.base_ref || 'HEAD~1' }}
 
-      - name: Lint Go
-        if: matrix.language == 'go'
-        uses: ./.github/actions/go-validation
-        with:
-          strategy: 'affected'
-          base-ref: ${{ github.base_ref || 'HEAD~1' }}
-
-  # FASE 3: Test com Matrix Strategy
-  test:
-    name: Test ${{ matrix.language }}
+  # FASE 2: Lint Go
+  lint-go:
+    name: Lint Go
     runs-on: ubuntu-latest
-    needs: [detect-and-setup, lint]
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true') }}
-    strategy:
-      matrix:
-        include:
-          - language: node
-            condition: ${{ needs.detect-and-setup.outputs.node-changed == 'true' }}
-          - language: go
-            condition: ${{ needs.detect-and-setup.outputs.go-changed == 'true' }}
+    needs: detect-and-setup
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && needs.detect-and-setup.outputs.go-changed == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -158,7 +136,39 @@ jobs:
       - name: Smart Setup
         uses: ./.github/actions/smart-setup
         with:
-          languages: ${{ matrix.language }}
+          languages: 'go'
+          node-version: ${{ env.NODE_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore Cache
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'dependencies'
+          cache-key: ${{ needs.detect-and-setup.outputs.cache-key-go }}
+
+      - name: Lint Go
+        uses: ./.github/actions/go-validation
+        with:
+          strategy: 'affected'
+          base-ref: ${{ github.base_ref || 'HEAD~1' }}
+
+  # FASE 3: Test Node.js
+  test-node:
+    name: Test Node.js
+    runs-on: ubuntu-latest
+    needs: [detect-and-setup, lint-node]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && needs.detect-and-setup.outputs.node-changed == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
+        with:
+          languages: 'node'
           node-version: ${{ env.NODE_VERSION }}
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -170,7 +180,6 @@ jobs:
           cache-key: ${{ needs.detect-and-setup.outputs.cache-key-node }}
 
       - name: Test Node.js with Retry
-        if: matrix.language == 'node'
         run: |
           echo "🧪 Running Node.js tests with coverage and retry..."
           # Usar função de retry específica para testes
@@ -178,8 +187,33 @@ jobs:
           execute_task_with_retry "test" 3 5 "./scripts/coverage-strategy.sh affected ${{ github.base_ref || 'HEAD~1' }}"
         shell: bash
 
+  # FASE 3: Test Go
+  test-go:
+    name: Test Go
+    runs-on: ubuntu-latest
+    needs: [detect-and-setup, lint-go]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && needs.detect-and-setup.outputs.go-changed == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Smart Setup
+        uses: ./.github/actions/smart-setup
+        with:
+          languages: 'go'
+          node-version: ${{ env.NODE_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore Cache
+        uses: ./.github/actions/smart-cache
+        with:
+          cache-type: 'dependencies'
+          cache-key: ${{ needs.detect-and-setup.outputs.cache-key-go }}
+
       - name: Test Go with Retry
-        if: matrix.language == 'go'
         run: |
           echo "🧪 Running Go tests with coverage and retry..."
           # Usar função de retry específica para testes
@@ -187,51 +221,6 @@ jobs:
           execute_task_with_retry "test" 3 5 "./scripts/generate-go-coverage.sh"
         shell: bash
 
-      - name: Check Coverage Files
-        if: matrix.language == 'node'
-        run: |
-          echo "🔍 Verificando arquivos de coverage Node.js..."
-          if [ -d "coverage" ] && [ "$(find coverage -name "*.lcov" -o -name "lcov.info" | wc -l)" -gt 0 ]; then
-            echo "✅ Arquivos de coverage Node.js encontrados"
-            ls -la coverage/
-          else
-            echo "⚠️ Nenhum arquivo de coverage Node.js encontrado"
-            mkdir -p coverage
-            echo "mode: set" > coverage/empty-coverage.out
-          fi
-        shell: bash
-
-      - name: Upload Node.js Coverage
-        if: matrix.language == 'node'
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-coverage-node
-          path: coverage/
-          retention-days: 7
-        continue-on-error: true
-
-      - name: Check Go Coverage Files
-        if: matrix.language == 'go'
-        run: |
-          echo "🔍 Verificando arquivos de coverage Go..."
-          if [ -d "coverage/go" ] && [ "$(find coverage/go -name "*.out" | wc -l)" -gt 0 ]; then
-            echo "✅ Arquivos de coverage Go encontrados"
-            ls -la coverage/go/
-          else
-            echo "⚠️ Nenhum arquivo de coverage Go encontrado"
-            mkdir -p coverage/go
-            echo "mode: set" > coverage/go/empty-coverage.out
-          fi
-        shell: bash
-
-      - name: Upload Go Coverage
-        if: matrix.language == 'go'
-        uses: actions/upload-artifact@v4
-        with:
-          name: go-coverage-go
-          path: coverage/go/
-          retention-days: 7
-        continue-on-error: true
 
       - name: Detect Flaky Tasks
         if: always()
@@ -249,7 +238,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [detect-and-setup, lint, test]
+    needs: [detect-and-setup, lint-node, lint-go, test-node, test-go]
     if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && !contains(github.event.head_commit.message, '[skip ci]') && (needs.detect-and-setup.outputs.go-changed == 'true' || needs.detect-and-setup.outputs.node-changed == 'true' || needs.detect-and-setup.outputs.config-changed == 'true') }}
     steps:
       - name: Checkout
@@ -301,8 +290,8 @@ jobs:
   coverage-report:
     name: Coverage Report
     runs-on: ubuntu-latest
-    needs: [detect-and-setup, test]
-    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && always() && (needs.test.result == 'success' || needs.test.result == 'skipped') }}
+    needs: [detect-and-setup, test-node, test-go]
+    if: ${{ needs.detect-and-setup.outputs.skip-ci != 'true' && always() && (needs.test-node.result == 'success' || needs.test-node.result == 'skipped' || needs.test-go.result == 'success' || needs.test-go.result == 'skipped') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -341,7 +330,7 @@ jobs:
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [detect-and-setup, lint, test, build, coverage-report]
+    needs: [detect-and-setup, lint-node, lint-go, test-node, test-go, build, coverage-report]
     if: always()
     steps:
       - name: Generate Summary
@@ -353,8 +342,10 @@ jobs:
           echo "  Skip CI: ${{ needs.detect-and-setup.outputs.skip-ci }}"
           echo ""
           echo "Job Results:"
-          echo "  Lint: ${{ needs.lint.result }}"
-          echo "  Test: ${{ needs.test.result }}"
+          echo "  Lint Node.js: ${{ needs.lint-node.result }}"
+          echo "  Lint Go: ${{ needs.lint-go.result }}"
+          echo "  Test Node.js: ${{ needs.test-node.result }}"
+          echo "  Test Go: ${{ needs.test-go.result }}"
           echo "  Build: ${{ needs.build.result }}"
           echo "  Coverage: ${{ needs.coverage-report.result }}"
           echo ""
