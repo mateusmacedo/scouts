@@ -38,6 +38,13 @@
 			"options": {
 				"passWithNoTests": true
 			}
+		},
+		"biome-check": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome check --formatter-enabled=true .",
+				"cwd": "{workspaceRoot}"
+			}
 		}
 	}
 }
