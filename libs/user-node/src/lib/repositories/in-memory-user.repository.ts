@@ -1,67 +1,67 @@
 import { Injectable } from '@nestjs/common';
-import { User, CreateUserData, UpdateUserData, UserRepository } from '../domain/user.entity';
+import { CreateUserData, UpdateUserData, User, UserRepository } from '../domain/user.entity';
 
 @Injectable()
 export class InMemoryUserRepository implements UserRepository {
-  private users: User[] = [];
-  private nextId = 1;
+	private users: User[] = [];
+	private nextId = 1;
 
-  async create(data: CreateUserData): Promise<User> {
-    const user: User = {
-      id: this.nextId.toString(),
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+	async create(data: CreateUserData): Promise<User> {
+		const user: User = {
+			id: this.nextId.toString(),
+			name: data.name,
+			email: data.email,
+			phone: data.phone,
+			address: data.address,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
 
-    this.users.push(user);
-    this.nextId++;
+		this.users.push(user);
+		this.nextId++;
 
-    return user;
-  }
+		return user;
+	}
 
-  async findById(id: string): Promise<User | null> {
-    return this.users.find(user => user.id === id) || null;
-  }
+	async findById(id: string): Promise<User | null> {
+		return this.users.find((user) => user.id === id) || null;
+	}
 
-  async findAll(): Promise<User[]> {
-    return [...this.users];
-  }
+	async findAll(): Promise<User[]> {
+		return [...this.users];
+	}
 
-  async update(id: string, data: UpdateUserData): Promise<User | null> {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    
-    if (userIndex === -1) {
-      return null;
-    }
+	async update(id: string, data: UpdateUserData): Promise<User | null> {
+		const userIndex = this.users.findIndex((user) => user.id === id);
 
-    const updatedUser = {
-      ...this.users[userIndex],
-      ...data,
-      updatedAt: new Date(),
-    };
+		if (userIndex === -1) {
+			return null;
+		}
 
-    this.users[userIndex] = updatedUser;
-    return updatedUser;
-  }
+		const updatedUser = {
+			...this.users[userIndex],
+			...data,
+			updatedAt: new Date(),
+		};
 
-  async delete(id: string): Promise<boolean> {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    
-    if (userIndex === -1) {
-      return false;
-    }
+		this.users[userIndex] = updatedUser;
+		return updatedUser;
+	}
 
-    this.users.splice(userIndex, 1);
-    return true;
-  }
+	async delete(id: string): Promise<boolean> {
+		const userIndex = this.users.findIndex((user) => user.id === id);
 
-  // Método auxiliar para testes
-  clear(): void {
-    this.users = [];
-    this.nextId = 1;
-  }
+		if (userIndex === -1) {
+			return false;
+		}
+
+		this.users.splice(userIndex, 1);
+		return true;
+	}
+
+	// Método auxiliar para testes
+	clear(): void {
+		this.users = [];
+		this.nextId = 1;
+	}
 }
