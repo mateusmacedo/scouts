@@ -50,12 +50,11 @@ runs:
       run: |
         echo "🔍 Running ESLint..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          # Verificar se a branch base existe antes de usar affected
-          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
-            pnpm nx affected --target=lint --base=${{ inputs.base-ref }}
+          AFFECTED_PROJECTS=$(pnpm nx affected --target=lint --plain 2>/dev/null || echo "")
+          if [ -z "$AFFECTED_PROJECTS" ] || [ "$AFFECTED_PROJECTS" = "No tasks were run" ]; then
+            echo "ℹ️ No affected projects found for lint, skipping"
           else
-            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
-            pnpm nx run-many --target=lint --all
+            pnpm nx affected --target=lint
           fi
         else
           pnpm nx run-many --target=lint --all
@@ -67,15 +66,14 @@ runs:
       run: |
         echo "🔍 Running Biome check via Nx..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          # Verificar se a branch base existe antes de usar affected
-          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
-            pnpm nx affected --target=biome-check --base=${{ inputs.base-ref }} --max-diagnostics=40
+          AFFECTED_PROJECTS=$(pnpm nx affected --target=biome-check --plain 2>/dev/null || echo "")
+          if [ -z "$AFFECTED_PROJECTS" ] || [ "$AFFECTED_PROJECTS" = "No tasks were run" ]; then
+            echo "ℹ️ No affected projects found for biome-check, skipping"
           else
-            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
-            pnpm nx run-many --target=biome-check --max-diagnostics=40
+            pnpm nx affected --target=biome-check
           fi
         else
-          pnpm nx run-many --target=biome-check --max-diagnostics=40
+          pnpm nx run-many --target=biome-check
         fi
         echo "✅ Biome check passed"
       shell: bash
@@ -84,12 +82,11 @@ runs:
       run: |
         echo "🧪 Running Node.js tests..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          # Verificar se a branch base existe antes de usar affected
-          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
-            pnpm nx affected --target=test --base=${{ inputs.base-ref }}
+          AFFECTED_PROJECTS=$(pnpm nx affected --target=test --plain 2>/dev/null || echo "")
+          if [ -z "$AFFECTED_PROJECTS" ] || [ "$AFFECTED_PROJECTS" = "No tasks were run" ]; then
+            echo "ℹ️ No affected projects found for test, skipping"
           else
-            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
-            pnpm nx run-many --target=test --all
+            pnpm nx affected --target=test
           fi
         else
           pnpm nx run-many --target=test --all

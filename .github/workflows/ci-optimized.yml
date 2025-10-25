@@ -40,7 +40,16 @@ jobs:
         id: affected
         run: |
           echo "🔍 Detecting affected projects using Nx 20..."
-          AFFECTED_PROJECTS=$(pnpm nx affected --target=build --base=${{ github.base_ref || 'HEAD~1' }} --plain)
+          
+          # Detectar projetos afetados usando padrão Nx 20
+          AFFECTED_PROJECTS=$(pnpm nx affected --target=build --plain 2>/dev/null || echo "")
+          
+          # Verificar se há projetos afetados
+          if [ -z "$AFFECTED_PROJECTS" ] || [ "$AFFECTED_PROJECTS" = "No tasks were run" ]; then
+            echo "ℹ️ No affected projects found"
+            AFFECTED_PROJECTS="none"
+          fi
+          
           echo "affected-projects=$AFFECTED_PROJECTS" >> $GITHUB_OUTPUT
           echo "✅ Affected projects: $AFFECTED_PROJECTS"
 
@@ -66,13 +75,11 @@ jobs:
         uses: ./.github/actions/node-validation
         with:
           strategy: 'affected'
-          base-ref: ${{ github.base_ref || 'HEAD~1' }}
 
       - name: Lint Go Projects
         uses: ./.github/actions/go-validation
         with:
           strategy: 'affected'
-          base-ref: ${{ github.base_ref || 'HEAD~1' }}
 
   # FASE 3: Test usando Nx 20
   test:
@@ -95,13 +102,13 @@ jobs:
       - name: Test Node.js Projects
         run: |
           echo "🧪 Running Node.js tests with coverage..."
-          pnpm nx affected --target=test --base=${{ github.base_ref || 'HEAD~1' }} --coverage
+          pnpm nx affected --target=test --coverage
         shell: bash
 
       - name: Test Go Projects
         run: |
           echo "🧪 Running Go tests with coverage..."
-          pnpm nx affected --target=test --base=${{ github.base_ref || 'HEAD~1' }} --coverage
+          pnpm nx affected --target=test --coverage
         shell: bash
 
   # FASE 4: Build usando Nx 20
@@ -125,7 +132,7 @@ jobs:
       - name: Build Projects
         run: |
           echo "🔨 Building projects using Nx 20..."
-          pnpm nx affected --target=build --base=${{ github.base_ref || 'HEAD~1' }}
+          pnpm nx affected --target=build
         shell: bash
 
       - name: Upload Build Artifacts

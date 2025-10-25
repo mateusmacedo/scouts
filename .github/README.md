@@ -93,10 +93,10 @@ Configurado em `nx.json` com padrões oficiais:
 
 ```bash
 # Biome check em projetos afetados (recomendado)
-pnpm nx affected --target=biome-check --base=origin/main --max-diagnostics=40
+pnpm nx affected --target=biome-check
 
 # Biome check em todos os projetos TypeScript
-pnpm nx run-many --target=biome-check --max-diagnostics=40
+pnpm nx run-many --target=biome-check
 
 # Biome check em projeto específico
 pnpm nx run @scouts/logger-node:biome-check
@@ -111,13 +111,13 @@ pnpm nx run express-notifier:biome-check
 
 ```bash
 # Lint projetos afetados (recomendado)
-pnpm nx affected --target=lint --base=origin/main
+pnpm nx affected --target=lint
 
 # Testes com cobertura (projetos afetados)
-pnpm nx affected --target=test --base=origin/main --coverage
+pnpm nx affected --target=test --coverage
 
 # Build projetos afetados (recomendado)
-pnpm nx affected --target=build --base=origin/main
+pnpm nx affected --target=build
 
 # Todos os projetos (quando necessário)
 pnpm nx run-many --target=lint,test,build --all
@@ -140,20 +140,20 @@ cd apps/user-go-service && go mod tidy
 cd libs/user-go && go mod tidy
 
 # Lint via Nx (recomendado)
-pnpm nx affected --target=lint --base=origin/main
+pnpm nx affected --target=lint
 ```
 
 ### Validações Node.js (Nx 20 Compliant)
 
 ```bash
 # ESLint via Nx (recomendado)
-pnpm nx affected --target=lint --base=origin/main
+pnpm nx affected --target=lint
 
 # Biome check via Nx (recomendado)
-pnpm nx affected --target=biome-check --base=origin/main --max-diagnostics=40
+pnpm nx affected --target=biome-check
 
 # Testes via Nx (recomendado)
-pnpm nx affected --target=test --base=origin/main --coverage
+pnpm nx affected --target=test --coverage
 ```
 
 ## Troubleshooting (Nx 20)

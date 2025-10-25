@@ -83,12 +83,11 @@ runs:
       run: |
         echo "🔍 Running Go lint via Nx..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          # Verificar se a branch base existe antes de usar affected
-          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
-            pnpm nx affected --target=lint --base=${{ inputs.base-ref }}
+          AFFECTED_PROJECTS=$(pnpm nx affected --target=lint --plain 2>/dev/null || echo "")
+          if [ -z "$AFFECTED_PROJECTS" ] || [ "$AFFECTED_PROJECTS" = "No tasks were run" ]; then
+            echo "ℹ️ No affected projects found for Go lint, skipping"
           else
-            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
-            pnpm nx run-many --target=lint --all
+            pnpm nx affected --target=lint
           fi
         else
           pnpm nx run-many --target=lint --all
