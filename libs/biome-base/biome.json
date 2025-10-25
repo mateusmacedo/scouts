@@ -97,10 +97,15 @@
 					"suspicious": {
 						"noExplicitAny": "off",
 						"noEmptyBlockStatements": "off",
-						"noAssignInExpressions": "off"
+						"noAssignInExpressions": "off",
+						"useAwait": "off"
 					},
 					"complexity": {
-						"noBannedTypes": "off"
+						"noBannedTypes": "off",
+						"noForEach": "off"
+					},
+					"style": {
+						"noNonNullAssertion": "off"
 					}
 				}
 			}
