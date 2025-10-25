@@ -124,6 +124,12 @@ jobs:
         with:
           version: ${{ env.PNPM_VERSION }}
 
+      - name: Configure pnpm store
+        run: pnpm config set store-dir $HOME/.pnpm-store
+
+      - name: Verify pnpm installation
+        run: pnpm --version
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
