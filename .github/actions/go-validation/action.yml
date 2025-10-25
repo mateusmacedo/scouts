@@ -54,7 +54,13 @@ runs:
       run: |
         echo "🔍 Running Go lint via Nx..."
         if [ "${{ inputs.strategy }}" = "affected" ]; then
-          pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=scouts/user-go-service,scouts/user-go
+          # Verificar se a branch base existe antes de usar affected
+          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
+            pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=scouts/user-go-service,scouts/user-go
+          else
+            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
+            pnpm nx run-many --target=lint --all --projects=scouts/user-go-service,scouts/user-go
+          fi
         else
           pnpm nx run-many --target=lint --all --projects=scouts/user-go-service,scouts/user-go
         fi
