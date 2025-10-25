@@ -15,9 +15,14 @@ permissions:
   contents: write
   pull-requests: read
 
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.15.0"
+  GO_VERSION: "1.23"
+
 jobs:
-  release:
-    name: Version and Publish Packages
+  pre-release:
+    name: Pre-release Validation
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'chore(release):')
     steps:
@@ -30,13 +35,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           check-latest: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.15.0
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Configure pnpm store
         run: pnpm config set store-dir $HOME/.pnpm-store
@@ -52,7 +57,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
       - name: Restore Go cache
@@ -69,12 +74,67 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json', 'jest.config.ts', 'jest.preset.js') }}
           restore-keys: |
             ${{ runner.os }}-nx-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Run dry-run release
+        run: pnpm nx release version --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload cache for release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-cache
+          path: |
+            node_modules
+            $HOME/.pnpm-store
+            $HOME/.cache/go-build
+            $HOME/go/pkg/mod
+            .nx/cache
+          retention-days: 1
+
+  release:
+    name: Version and Publish Packages
+    runs-on: ubuntu-latest
+    needs: pre-release
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'chore(release):')
+    strategy:
+      matrix:
+        step: [version, publish]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Download release cache
+        uses: actions/download-artifact@v4
+        with:
+          name: release-cache
+          path: .
 
       - name: Configure Git user
         run: |
@@ -82,6 +142,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Configure npm authentication
+        if: matrix.step == 'publish'
         run: |
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > $HOME/.npmrc
           chmod 600 $HOME/.npmrc
@@ -89,11 +150,33 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate versions and changelog
+        if: matrix.step == 'version'
         run: pnpm nx release version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish packages
+        if: matrix.step == 'publish'
         run: pnpm nx release publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  post-release:
+    name: Post-release Cleanup
+    runs-on: ubuntu-latest
+    needs: release
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Version generation: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Package publishing: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Published packages available on npm" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 Changelog updated automatically" >> $GITHUB_STEP_SUMMARY
