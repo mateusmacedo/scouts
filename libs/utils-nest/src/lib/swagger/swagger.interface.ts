@@ -124,4 +124,3 @@ export interface SwaggerModuleAsyncOptions<T extends SwaggerModuleOptions = Swag
 	useFactory: (...args: unknown[]) => Promise<T> | T;
 	inject?: (string | symbol | Type)[];
 }
-

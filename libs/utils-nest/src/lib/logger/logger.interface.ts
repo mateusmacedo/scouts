@@ -49,4 +49,3 @@ export interface NestLoggerModuleAsyncOptions {
 	useFactory: (...args: unknown[]) => Promise<NestLoggerModuleOptions> | NestLoggerModuleOptions;
 	inject?: (string | symbol | Type)[];
 }
-
