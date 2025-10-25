@@ -1,7 +1,7 @@
-import { Log, LogDebug, LogError, LogInfo, LogWarn } from './log.decorator';
 import type { LogEntry } from '../logger/logger';
-import type { Sink } from '../sink/sink';
 import type { Redactor } from '../redactor/redactor';
+import type { Sink } from '../sink/sink';
+import { Log, LogDebug, LogError, LogInfo, LogWarn } from './log.decorator';
 
 // Mock reflect-metadata
 jest.mock('reflect-metadata', () => ({}));

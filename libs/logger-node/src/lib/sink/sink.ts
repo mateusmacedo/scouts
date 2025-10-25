@@ -1,4 +1,4 @@
-import type { LogEntry, Logger } from '../logger/logger';
+import type { LogEntry } from '../logger/logger';
 import type { BaseEnrichmentOptions } from '../options/options';
 
 /**
@@ -30,10 +30,6 @@ export function createSinkForEnvironment(
 				);
 				return new (require('./console/console-sink.adapter').ConsoleSinkAdapter)();
 			}
-
-		case 'development':
-		case 'dev':
-		case 'test':
 		default:
 			return new (require('./console/console-sink.adapter').ConsoleSinkAdapter)();
 	}

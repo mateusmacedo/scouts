@@ -1,5 +1,5 @@
-import { LogBuffer } from './log-buffer';
 import type { LogEntry } from '../../logger/logger';
+import { LogBuffer } from './log-buffer';
 
 describe('LogBuffer', () => {
 	let buffer: LogBuffer;

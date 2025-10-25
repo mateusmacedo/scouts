@@ -6,7 +6,6 @@ import { DefaultRedactor } from '../redactor/default.redactor';
 import type { Redactor } from '../redactor/redactor';
 import { PinoSinkAdapter } from '../sink/pino/pino-sink.adapter';
 import type { Sink } from '../sink/sink';
-import { preserveMethodMetadata } from './log.metadata';
 
 /**
  * Interface para opções do decorator Log
@@ -123,7 +122,7 @@ export function Log(opts: LogOptions = {}) {
 
 	// Universal decorator que funciona com aplicações gerais e NestJS
 	return (
-		target: object,
+		_target: object,
 		propertyKey: string | symbol,
 		descriptor: PropertyDescriptor
 	): PropertyDescriptor | undefined => {

@@ -53,4 +53,3 @@ export interface LogOptions {
 	getCorrelationId?: () => string | undefined;
 	includeStackTrace?: boolean;
 }
-

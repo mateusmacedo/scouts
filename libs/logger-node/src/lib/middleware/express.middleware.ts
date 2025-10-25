@@ -14,6 +14,7 @@ interface Response {
 }
 
 type NextFunction = (error?: any) => void;
+
 import type { Logger } from '../logger/logger';
 
 /**
@@ -135,7 +136,7 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 		// Interceptar erros para log automático
 		if (logErrors) {
 			const originalNext = next;
-			next = function (error?: any) {
+			next = (error?: any) => {
 				if (error) {
 					logger.error('HTTP Error', {
 						method: req.method,
@@ -161,7 +162,7 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 export function createCorrelationIdMiddleware(logger: Logger, options: ExpressLoggerOptions = {}) {
 	const { correlationIdHeader = 'x-correlation-id' } = options;
 
-	return (req: Request, res: Response, next: NextFunction): void => {
+	return (req: Request, _res: Response, next: NextFunction): void => {
 		const correlationId = req.get(correlationIdHeader) || (req as any).correlationId;
 
 		if (correlationId) {

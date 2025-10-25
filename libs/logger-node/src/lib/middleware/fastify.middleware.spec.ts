@@ -1,5 +1,5 @@
-import { createFastifyLoggerPlugin, createCorrelationIdPlugin } from './fastify.middleware';
 import { createTestLogger } from '../test-utils/test-helpers';
+import { createCorrelationIdPlugin, createFastifyLoggerPlugin } from './fastify.middleware';
 
 // Mock Fastify types
 interface FastifyRequest {

@@ -1,12 +1,12 @@
 import {
-	createTestLogger,
 	createMockLogEntry,
+	createTestLogger,
+	logsContain,
+	logsContainLevel,
+	logsContainMessage,
+	setupTestEnvironment,
 	waitForLog,
 	waitForLogs,
-	logsContain,
-	logsContainMessage,
-	logsContainLevel,
-	setupTestEnvironment,
 } from './test-helpers';
 
 describe('Test Helpers', () => {

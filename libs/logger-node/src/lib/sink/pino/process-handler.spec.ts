@@ -1,5 +1,5 @@
-import { ProcessHandlerManager } from './process-handler';
 import { LogBuffer } from './log-buffer';
+import { ProcessHandlerManager } from './process-handler';
 
 describe('ProcessHandlerManager', () => {
 	let manager: ProcessHandlerManager;

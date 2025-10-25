@@ -1,5 +1,6 @@
 import type { LogEntry, Logger } from '../logger/logger';
 import type { Sink, SinkOptions } from './sink';
+
 // attachSink foi removido na refatoração
 
 // Fake Sink implementation para testar contratos

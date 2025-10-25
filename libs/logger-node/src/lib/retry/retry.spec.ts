@@ -1,4 +1,4 @@
-import { withRetry, createRetryWrapper, withRetryAndFallback, RetryPresets } from './retry';
+import { createRetryWrapper, RetryPresets, withRetry, withRetryAndFallback } from './retry';
 
 describe('Retry Utils', () => {
 	describe('withRetry', () => {

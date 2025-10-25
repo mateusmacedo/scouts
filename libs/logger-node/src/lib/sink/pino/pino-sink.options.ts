@@ -1,5 +1,5 @@
-import type { SinkOptions } from '../sink';
 import type { LogEntry } from '../../logger/logger';
+import type { SinkOptions } from '../sink';
 
 /**
  * Interface para configuração do PinoSink

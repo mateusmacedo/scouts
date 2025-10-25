@@ -14,6 +14,7 @@ interface FastifyReply {
 interface FastifyInstance {
 	addHook: (event: string, handler: Function) => void;
 }
+
 import type { Logger } from '../logger/logger';
 
 /**
@@ -77,9 +78,9 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 		additionalFields = {},
 	} = options;
 
-	return async function (fastify: FastifyInstance) {
+	return async (fastify: FastifyInstance) => {
 		// Hook para adicionar correlation ID
-		fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+		fastify.addHook('onRequest', async (request: FastifyRequest, _reply: FastifyReply) => {
 			const startTime = Date.now();
 			(request as any).startTime = startTime;
 
@@ -145,7 +146,7 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 		if (logErrors) {
 			fastify.addHook(
 				'onError',
-				async (request: FastifyRequest, reply: FastifyReply, error: Error) => {
+				async (request: FastifyRequest, _reply: FastifyReply, error: Error) => {
 					const correlationId = (request as any).correlationId;
 					const requestId = (request as any).requestId;
 
@@ -170,8 +171,8 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 export function createCorrelationIdPlugin(logger: Logger, options: FastifyLoggerOptions = {}) {
 	const { correlationIdHeader = 'x-correlation-id' } = options;
 
-	return async function (fastify: FastifyInstance) {
-		fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+	return async (fastify: FastifyInstance) => {
+		fastify.addHook('onRequest', async (request: FastifyRequest, _reply: FastifyReply) => {
 			const correlationId =
 				(request.headers[correlationIdHeader] as string) || (request as any).correlationId;
 

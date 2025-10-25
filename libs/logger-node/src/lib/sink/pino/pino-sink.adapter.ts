@@ -1,7 +1,7 @@
 import type { LogEntry } from '../../logger/logger';
 import type { Sink } from '../sink';
-import type { PinoLike, PinoSinkOptions } from './pino-sink.options';
 import { LogBuffer } from './log-buffer';
+import type { PinoLike, PinoSinkOptions } from './pino-sink.options';
 import { ProcessHandlerManager } from './process-handler';
 
 /**

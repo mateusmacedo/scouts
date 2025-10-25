@@ -1,6 +1,6 @@
 import type { LogEntry } from '../logger/logger';
-import type { Sink } from './sink';
 import type { BaseEnrichmentOptions } from '../options/options';
+import type { Sink } from './sink';
 
 /**
  * Decorator explícito para enriquecimento de sinks

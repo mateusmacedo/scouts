@@ -1,5 +1,5 @@
-import { createExpressLoggerMiddleware, createCorrelationIdMiddleware } from './express.middleware';
 import { createTestLogger } from '../test-utils/test-helpers';
+import { createCorrelationIdMiddleware, createExpressLoggerMiddleware } from './express.middleware';
 
 // Mock Express types
 interface Request {

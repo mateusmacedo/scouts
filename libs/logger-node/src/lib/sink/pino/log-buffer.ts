@@ -1,5 +1,5 @@
-import type { LogEntry } from '../../logger/logger';
 import { Mutex } from 'async-mutex';
+import type { LogEntry } from '../../logger/logger';
 
 /**
  * Buffer circular para logs com flush automático
@@ -148,4 +148,3 @@ export class LogBuffer {
 		}, this.flushInterval);
 	}
 }
-
