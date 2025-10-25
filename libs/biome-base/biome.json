@@ -71,9 +71,6 @@
 			"**",
 			"!**/dist/**/*",
 			"!**/node_modules/**/*",
-			"!**/*.spec.ts",
-			"!**/*.test.ts",
-			"!**/*.e2e-spec.ts",
 			"!**/support/**/*",
 			"!**/coverage/**/*",
 			"!**/*.config.{js,ts}",
@@ -82,6 +79,33 @@
 			"!**/jest.setup.{js,ts}"
 		]
 	},
+	"overrides": [
+		{
+			"includes": [
+				"**/*.spec.ts",
+				"**/*.test.ts",
+				"**/*.e2e-spec.ts",
+				"**/__test__/**/*",
+				"**/__mocks__/**/*",
+				"**/test-utils/**/*",
+				"**/helpers.ts",
+				"**/mock*.ts",
+				"**/*.mock.ts"
+			],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off",
+						"noEmptyBlockStatements": "off",
+						"noAssignInExpressions": "off"
+					},
+					"complexity": {
+						"noBannedTypes": "off"
+					}
+				}
+			}
+		}
+	],
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
