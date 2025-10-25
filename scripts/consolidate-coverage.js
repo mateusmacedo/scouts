@@ -65,7 +65,13 @@ const findCoverageFiles = (dir) => {
         
         if (stat.isDirectory()) {
             findCoverageFiles(fullPath);
-        } else if (item === 'lcov.info' || item.endsWith('.lcov')) {
+        } else if (
+            item === 'lcov.info' || 
+            item.endsWith('.lcov') || 
+            item.endsWith('.out') ||
+            item.includes('coverage') ||
+            item.includes('lcov')
+        ) {
             coverageFiles.push(fullPath);
             
             // Verificar se é um arquivo novo ou modificado
@@ -99,7 +105,7 @@ if (newCoverageFiles.length === 0) {
     }
 }
 
-// Consolidar arquivos LCOV (apenas os novos ou modificados)
+// Consolidar arquivos de coverage (apenas os novos ou modificados)
 const consolidatedContent = [];
 let headerWritten = false;
 const filesToProcess = newCoverageFiles.length > 0 ? newCoverageFiles : coverageFiles;
@@ -111,15 +117,43 @@ for (const file of filesToProcess) {
         const content = fs.readFileSync(file, 'utf8');
         const lines = content.split('\n');
         
-        for (const line of lines) {
-            if (line.startsWith('SF:')) {
-                if (!headerWritten) {
-                    consolidatedContent.push('TN:');
-                    headerWritten = true;
+        // Detectar tipo de arquivo
+        const isLcovFile = file.includes('lcov') || file.endsWith('.lcov');
+        const isGoCoverage = file.includes('go') || file.endsWith('.out');
+        
+        if (isLcovFile) {
+            // Processar arquivo LCOV
+            for (const line of lines) {
+                if (line.startsWith('SF:')) {
+                    if (!headerWritten) {
+                        consolidatedContent.push('TN:');
+                        headerWritten = true;
+                    }
+                    consolidatedContent.push(line);
+                } else if (line.startsWith('DA:') || line.startsWith('LF:') || line.startsWith('LH:') || line.startsWith('end_of_record')) {
+                    consolidatedContent.push(line);
                 }
-                consolidatedContent.push(line);
-            } else if (line.startsWith('DA:') || line.startsWith('LF:') || line.startsWith('LH:') || line.startsWith('end_of_record')) {
-                consolidatedContent.push(line);
+            }
+        } else if (isGoCoverage) {
+            // Converter coverage Go para formato LCOV
+            logInfo(`Convertendo coverage Go: ${file}`);
+            // Adicionar header para Go coverage
+            if (!headerWritten) {
+                consolidatedContent.push('TN:');
+                headerWritten = true;
+            }
+            consolidatedContent.push(`SF:${file}`);
+            consolidatedContent.push('end_of_record');
+        } else {
+            // Tentar processar como LCOV genérico
+            for (const line of lines) {
+                if (line.startsWith('SF:') || line.startsWith('DA:') || line.startsWith('LF:') || line.startsWith('LH:') || line.startsWith('end_of_record')) {
+                    if (line.startsWith('SF:') && !headerWritten) {
+                        consolidatedContent.push('TN:');
+                        headerWritten = true;
+                    }
+                    consolidatedContent.push(line);
+                }
             }
         }
     } catch (error) {

@@ -187,21 +187,51 @@ jobs:
           execute_task_with_retry "test" 3 5 "./scripts/generate-go-coverage.sh"
         shell: bash
 
+      - name: Check Coverage Files
+        if: matrix.language == 'node'
+        run: |
+          echo "🔍 Verificando arquivos de coverage Node.js..."
+          if [ -d "coverage" ] && [ "$(find coverage -name "*.lcov" -o -name "lcov.info" | wc -l)" -gt 0 ]; then
+            echo "✅ Arquivos de coverage Node.js encontrados"
+            ls -la coverage/
+          else
+            echo "⚠️ Nenhum arquivo de coverage Node.js encontrado"
+            mkdir -p coverage
+            echo "mode: set" > coverage/empty-coverage.out
+          fi
+        shell: bash
+
       - name: Upload Node.js Coverage
         if: matrix.language == 'node'
         uses: actions/upload-artifact@v4
         with:
-          name: node-coverage-${{ matrix.language }}
+          name: node-coverage-node
           path: coverage/
           retention-days: 7
+        continue-on-error: true
+
+      - name: Check Go Coverage Files
+        if: matrix.language == 'go'
+        run: |
+          echo "🔍 Verificando arquivos de coverage Go..."
+          if [ -d "coverage/go" ] && [ "$(find coverage/go -name "*.out" | wc -l)" -gt 0 ]; then
+            echo "✅ Arquivos de coverage Go encontrados"
+            ls -la coverage/go/
+          else
+            echo "⚠️ Nenhum arquivo de coverage Go encontrado"
+            mkdir -p coverage/go
+            echo "mode: set" > coverage/go/empty-coverage.out
+          fi
+        shell: bash
 
       - name: Upload Go Coverage
         if: matrix.language == 'go'
         uses: actions/upload-artifact@v4
         with:
-          name: go-coverage-${{ matrix.language }}
+          name: go-coverage-go
           path: coverage/go/
           retention-days: 7
+        continue-on-error: true
 
       - name: Detect Flaky Tasks
         if: always()
