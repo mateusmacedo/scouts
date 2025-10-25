@@ -70,6 +70,15 @@
     "@nx-go/nx-go",
     "@nx/eslint/plugin"
   ],
+  "generators": {
+    "@nx/eslint:lint": {
+      "options": {
+        "lintFilePatterns": [
+          "{projectRoot}/**/*.{ts,tsx,js,jsx}"
+        ]
+      }
+    }
+  },
   "targetDefaults": {
     "@nx/js:tsc": {
       "cache": true,
@@ -193,6 +202,7 @@
   "cacheDirectory": ".nx/cache",
   "neverConnectToCloud": true,
   "parallel": 5,
+  "defaultBase": "main",
   "release": {
     "projectsRelationship": "independent",
     "releaseTagPattern": "{projectName}@v{version}",

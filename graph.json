@@ -1,0 +1,1573 @@
+{
+  "graph": {
+    "nodes": {
+      "express-notifier": {
+        "name": "express-notifier",
+        "type": "app",
+        "data": {
+          "root": "apps/express-notifier",
+          "projectType": "application",
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "start",
+                "dev"
+              ]
+            },
+            "js": {
+              "packageName": "express-notifier",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "executor": "@nx/webpack:webpack",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/apps/express-notifier",
+                "main": "apps/express-notifier/src/main.ts",
+                "tsConfig": "apps/express-notifier/tsconfig.app.json",
+                "target": "node",
+                "compiler": "tsc",
+                "generatePackageJson": true,
+                "webpackConfig": "apps/express-notifier/webpack.config.js",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production",
+                "sharedGlobals"
+              ],
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 2000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Build timeout",
+                  "Compilation timeout"
+                ]
+              }
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "options": {
+                "buildTarget": "express-notifier:build",
+                "port": 3001
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "preview": {
+              "options": {
+                "cwd": "apps/express-notifier",
+                "args": [
+                  "--node-env=production"
+                ],
+                "command": "webpack-cli serve"
+              },
+              "metadata": {
+                "technologies": [
+                  "webpack"
+                ],
+                "description": "Starts Webpack dev server in production mode",
+                "help": {
+                  "command": "pnpm exec webpack-cli serve --help",
+                  "example": {
+                    "options": {
+                      "args": [
+                        "--client-progress",
+                        "--history-api-fallback "
+                      ]
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "dependsOn": [
+                "build"
+              ],
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "pnpm exec nx watch --projects express-notifier --includeDependentProjects -- pnpm exec nx build-deps express-notifier"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "apps/express-notifier/jest.config.ts",
+                "passWithNoTests": true,
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "apps/express-notifier/**/*.ts"
+                ],
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "start"
+              },
+              "metadata": {
+                "scriptContent": "node dist/apps/express-notifier/main.js",
+                "runCommand": "pnpm run start"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "dev": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "dev"
+              },
+              "metadata": {
+                "scriptContent": "nx serve express-notifier",
+                "runCommand": "pnpm run dev"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "name": "express-notifier",
+          "tags": [
+            "npm:public",
+            "type:app",
+            "platform:express",
+            "scope:notifier"
+          ],
+          "sourceRoot": "apps/express-notifier/src",
+          "implicitDependencies": []
+        }
+      },
+      "scouts/user-go-service": {
+        "name": "scouts/user-go-service",
+        "type": "app",
+        "data": {
+          "root": "apps/user-go-service",
+          "name": "scouts/user-go-service",
+          "targets": {
+            "build": {
+              "executor": "@nx-go/nx-go:build",
+              "options": {
+                "main": "apps/user-go-service/main.go",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/{projectRoot}",
+                "{projectRoot}/dist"
+              ],
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 2000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Build timeout",
+                  "Compilation timeout"
+                ]
+              }
+            },
+            "serve": {
+              "executor": "@nx-go/nx-go:serve",
+              "options": {
+                "main": "apps/user-go-service/main.go"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx-go/nx-go:test",
+              "configurations": {},
+              "options": {
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "executor": "@nx-go/nx-go:lint",
+              "configurations": {},
+              "options": {
+                "parallel": true
+              },
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "tidy": {
+              "executor": "@nx-go/nx-go:tidy",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "sync-go-deps": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "./scripts/sync-go-versions.sh",
+                "cwd": ""
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "nx-release-publish": {
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            }
+          },
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "scouts/user-go-service",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "application",
+          "sourceRoot": "apps/user-go-service",
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/logger-node": {
+        "name": "@scouts/logger-node",
+        "type": "lib",
+        "data": {
+          "root": "libs/logger-node",
+          "targets": {
+            "test": {
+              "options": {
+                "cwd": "libs/logger-node",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest",
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "metadata": {
+                "technologies": [
+                  "jest"
+                ],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "pnpm exec jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/logger-node",
+                "command": "eslint .",
+                "parallel": true
+              },
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {
+                "packageRoot": "dist/libs/logger-node"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/logger-node",
+                "tsConfig": "libs/logger-node/tsconfig.lib.json",
+                "packageJson": "libs/logger-node/package.json",
+                "main": "libs/logger-node/src/index.ts",
+                "assets": [
+                  "libs/logger-node/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "name": "@scouts/logger-node",
+          "tags": [
+            "npm:public",
+            "type:lib",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/logger-node",
+              "packageExports": {
+                ".": {
+                  "types": "./src/index.d.ts",
+                  "default": "./src/index.js"
+                },
+                "./pino": {
+                  "types": "./src/lib/sink/pino/index.d.ts",
+                  "default": "./src/lib/sink/pino/index.js"
+                }
+              },
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/logger-node/src",
+          "projectType": "library",
+          "release": {
+            "version": {
+              "generatorOptions": {
+                "packageRoot": "dist/{projectRoot}",
+                "currentVersionResolver": "git-tag",
+                "fallbackCurrentVersionResolver": "disk"
+              }
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/base-biome": {
+        "name": "@scouts/base-biome",
+        "type": "lib",
+        "data": {
+          "root": "libs/biome-base",
+          "name": "@scouts/base-biome",
+          "tags": [
+            "npm:public",
+            "type:lib",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/base-biome",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/base-biome",
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/utils-nest": {
+        "name": "@scouts/utils-nest",
+        "type": "lib",
+        "data": {
+          "root": "libs/utils-nest",
+          "targets": {
+            "test": {
+              "options": {
+                "cwd": "libs/utils-nest",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest",
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "metadata": {
+                "technologies": [
+                  "jest"
+                ],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "pnpm exec jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/utils-nest",
+                "command": "eslint .",
+                "parallel": true
+              },
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {
+                "packageRoot": "dist/libs/utils-nest"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/utils-nest",
+                "tsConfig": "libs/utils-nest/tsconfig.lib.json",
+                "packageJson": "libs/utils-nest/package.json",
+                "main": "libs/utils-nest/src/index.ts",
+                "assets": [
+                  "libs/utils-nest/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "name": "@scouts/utils-nest",
+          "tags": [
+            "npm:public",
+            "type:lib",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/utils-nest",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/utils-nest/src",
+          "projectType": "library",
+          "release": {
+            "version": {
+              "generatorOptions": {
+                "packageRoot": "dist/{projectRoot}",
+                "currentVersionResolver": "git-tag",
+                "fallbackCurrentVersionResolver": "disk"
+              }
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/user-node": {
+        "name": "@scouts/user-node",
+        "type": "lib",
+        "data": {
+          "root": "libs/user-node",
+          "targets": {
+            "test": {
+              "options": {
+                "cwd": "libs/user-node",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest",
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "metadata": {
+                "technologies": [
+                  "jest"
+                ],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "pnpm exec jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "libs/user-node",
+                "command": "eslint .",
+                "parallel": true
+              },
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "nx-release-publish": {
+              "executor": "@nx/js:release-publish",
+              "dependsOn": [
+                "^nx-release-publish"
+              ],
+              "options": {
+                "packageRoot": "dist/libs/user-node"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/user-node",
+                "tsConfig": "libs/user-node/tsconfig.lib.json",
+                "packageJson": "libs/user-node/package.json",
+                "main": "libs/user-node/src/index.ts",
+                "assets": [
+                  "libs/user-node/*.md"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ]
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "name": "@scouts/user-node",
+          "tags": [
+            "npm:public",
+            "type:lib",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/user-node",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/user-node/src",
+          "projectType": "library",
+          "release": {
+            "version": {
+              "generatorOptions": {
+                "packageRoot": "dist/{projectRoot}",
+                "currentVersionResolver": "git-tag",
+                "fallbackCurrentVersionResolver": "disk"
+              }
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/bff-nest": {
+        "name": "@scouts/bff-nest",
+        "type": "app",
+        "data": {
+          "root": "apps/bff-nest",
+          "projectType": "application",
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/bff-nest",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "build": {
+              "cache": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/{projectRoot}",
+                "{projectRoot}/dist"
+              ],
+              "metadata": {
+                "technologies": [
+                  "webpack"
+                ],
+                "description": "Runs Webpack build",
+                "help": {
+                  "command": "pnpm exec webpack-cli build --help",
+                  "example": {
+                    "options": {
+                      "json": "stats.json"
+                    },
+                    "args": [
+                      "--profile"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/bff-nest",
+                "args": [
+                  "node-env=production"
+                ],
+                "command": "webpack-cli build",
+                "parallel": true
+              },
+              "configurations": {
+                "development": {
+                  "args": [
+                    "node-env=development"
+                  ]
+                }
+              },
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 2000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Build timeout",
+                  "Compilation timeout"
+                ]
+              }
+            },
+            "serve": {
+              "executor": "@nx/js:node",
+              "defaultConfiguration": "development",
+              "dependsOn": [
+                "build"
+              ],
+              "options": {
+                "buildTarget": "@scouts/bff-nest:build",
+                "runBuildTargetDependencies": false
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "@scouts/bff-nest:build:development"
+                },
+                "production": {
+                  "buildTarget": "@scouts/bff-nest:build:production"
+                }
+              },
+              "parallelism": true
+            },
+            "preview": {
+              "options": {
+                "cwd": "apps/bff-nest",
+                "args": [
+                  "--node-env=production"
+                ],
+                "command": "webpack-cli serve"
+              },
+              "metadata": {
+                "technologies": [
+                  "webpack"
+                ],
+                "description": "Starts Webpack dev server in production mode",
+                "help": {
+                  "command": "pnpm exec webpack-cli serve --help",
+                  "example": {
+                    "options": {
+                      "args": [
+                        "--client-progress",
+                        "--history-api-fallback "
+                      ]
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "dependsOn": [
+                "build"
+              ],
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "pnpm exec nx watch --projects @scouts/bff-nest --includeDependentProjects -- pnpm exec nx build-deps @scouts/bff-nest"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "metadata": {
+                "technologies": [
+                  "jest"
+                ],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "pnpm exec jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/bff-nest",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
+                },
+                "command": "jest",
+                "passWithNoTests": true,
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "cache": true,
+              "options": {
+                "cwd": "apps/bff-nest",
+                "command": "eslint .",
+                "parallel": true
+              },
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "pnpm exec eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true,
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "biome-check": {
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "biome check --formatter-enabled=true .",
+                "cwd": "",
+                "parallel": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "sharedGlobals"
+              ]
+            }
+          },
+          "name": "@scouts/bff-nest",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:internal"
+          ],
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/bff-nest/src",
+          "implicitDependencies": []
+        }
+      },
+      "scouts/user-go": {
+        "name": "scouts/user-go",
+        "type": "lib",
+        "data": {
+          "root": "libs/user-go",
+          "name": "scouts/user-go",
+          "targets": {
+            "nx-release-publish": {
+              "executor": "nx:noop",
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx-go/nx-go:test",
+              "configurations": {},
+              "options": {
+                "coverage": true,
+                "coverageReporters": [
+                  "text",
+                  "lcov",
+                  "html"
+                ],
+                "coverageThreshold": {
+                  "global": {
+                    "branches": 70,
+                    "functions": 70,
+                    "lines": 70,
+                    "statements": 70
+                  }
+                },
+                "parallel": true
+              },
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "testing",
+                "sharedGlobals"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "retry": {
+                "maxRetries": 3,
+                "retryDelay": 3000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Test timeout",
+                  "Jest timeout",
+                  "Connection refused"
+                ]
+              }
+            },
+            "lint": {
+              "executor": "@nx-go/nx-go:lint",
+              "configurations": {},
+              "options": {
+                "parallel": true
+              },
+              "parallelism": true,
+              "cache": true,
+              "inputs": [
+                "linting",
+                "sharedGlobals"
+              ],
+              "retry": {
+                "maxRetries": 2,
+                "retryDelay": 1000,
+                "retryableErrorPatterns": [
+                  "ECONNRESET",
+                  "ETIMEDOUT",
+                  "ENOTFOUND",
+                  "Network error",
+                  "Timeout",
+                  "Lint timeout"
+                ]
+              }
+            },
+            "tidy": {
+              "executor": "@nx-go/nx-go:tidy",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            }
+          },
+          "tags": [
+            "npm:public",
+            "type:lib",
+            "scope:internal"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "scouts/user-go",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "projectType": "library",
+          "sourceRoot": "libs/user-go",
+          "release": {
+            "version": {
+              "generator": "@nx/js:release-version",
+              "generatorOptions": {
+                "currentVersionResolver": "git-tag",
+                "specifierSource": "prompt"
+              }
+            }
+          },
+          "implicitDependencies": []
+        }
+      },
+      "@scouts/source": {
+        "name": "@scouts/source",
+        "type": "lib",
+        "data": {
+          "root": ".",
+          "name": "@scouts/source",
+          "includedScripts": [],
+          "tags": [
+            "npm:private"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@scouts/source",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "targets": {
+            "local-registry": {
+              "executor": "@nx/js:verdaccio",
+              "options": {
+                "port": 4873,
+                "config": ".verdaccio/config.yml",
+                "storage": "tmp/local-registry/storage"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "$schema": "node_modules/nx/schemas/project-schema.json",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "express-notifier": [
+        {
+          "source": "express-notifier",
+          "target": "@scouts/logger-node",
+          "type": "static"
+        }
+      ],
+      "scouts/user-go-service": [
+        {
+          "source": "scouts/user-go-service",
+          "target": "scouts/user-go",
+          "type": "static"
+        }
+      ],
+      "@scouts/logger-node": [],
+      "@scouts/base-biome": [],
+      "@scouts/utils-nest": [
+        {
+          "source": "@scouts/utils-nest",
+          "target": "@scouts/logger-node",
+          "type": "static"
+        }
+      ],
+      "@scouts/user-node": [],
+      "@scouts/bff-nest": [
+        {
+          "source": "@scouts/bff-nest",
+          "target": "@scouts/logger-node",
+          "type": "static"
+        },
+        {
+          "source": "@scouts/bff-nest",
+          "target": "@scouts/utils-nest",
+          "type": "static"
+        },
+        {
+          "source": "@scouts/bff-nest",
+          "target": "@scouts/user-node",
+          "type": "static"
+        }
+      ],
+      "scouts/user-go": [],
+      "@scouts/source": []
+    }
+  }
+}

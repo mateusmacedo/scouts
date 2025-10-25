@@ -24,9 +24,21 @@ export default [
           allow: [String.raw`^.*/eslint(\.base)?\.config\.[cm]?js$`],
           depConstraints: [
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: ['type:lib', 'scope:internal']
             },
+            {
+              sourceTag: 'type:lib',
+              onlyDependOnLibsWithTags: ['type:lib', 'scope:internal']
+            },
+            {
+              sourceTag: 'scope:internal',
+              onlyDependOnLibsWithTags: ['scope:internal']
+            },
+            {
+              sourceTag: 'platform:express',
+              onlyDependOnLibsWithTags: ['type:lib', 'scope:internal', 'scope:notifier']
+            }
           ],
         },
       ],
