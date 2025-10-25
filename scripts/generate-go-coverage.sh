@@ -1,42 +1,59 @@
 #!/bin/bash
 
-# Script para gerar coverage de Go
+# Script para gerar coverage de Go - Otimizado
 set -e
 
-echo "🔧 Gerando coverage de Go..."
+# Carregar funções comuns
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/utils/common-functions.sh"
+
+log_info "Gerando coverage de Go..."
 
 # Verificar se há projetos Go
 if [ ! -d "apps/user-go-service" ] && [ ! -d "libs/user-go" ]; then
-    echo "ℹ️ Nenhum projeto Go encontrado - pulando coverage de Go"
+    log_info "Nenhum projeto Go encontrado - pulando coverage de Go"
     exit 0
 fi
+
+# Validar pré-requisitos
+validate_prerequisites
 
 # Criar diretório de coverage
 mkdir -p coverage/go
 
 # Executar testes Go com coverage
-echo "🧪 Executando testes Go com coverage..."
+log_step "Executando testes Go com coverage..."
 
 # Projeto user-go-service
 if [ -d "apps/user-go-service" ]; then
-    echo "📦 Testando user-go-service..."
+    log_step "Testando user-go-service..."
     cd apps/user-go-service
-    go test -coverprofile=coverage.out ./...
-    if [ -f coverage.out ]; then
-        cp coverage.out ../../coverage/go/user-go-service-coverage.out
-        echo "✅ Coverage de user-go-service gerado"
+    
+    # Executar com retry
+    if execute_with_retry 2 3 "go test -coverprofile=coverage.out ./..."; then
+        if [ -f coverage.out ]; then
+            cp coverage.out ../../coverage/go/user-go-service-coverage.out
+            log_success "Coverage de user-go-service gerado"
+        fi
+    else
+        log_error "Falha ao gerar coverage de user-go-service"
     fi
     cd ../..
 fi
 
 # Projeto user-go (lib)
 if [ -d "libs/user-go" ]; then
-    echo "📦 Testando user-go..."
+    log_step "Testando user-go..."
     cd libs/user-go
-    go test -coverprofile=coverage.out ./...
-    if [ -f coverage.out ]; then
-        cp coverage.out ../../coverage/go/user-go-coverage.out
-        echo "✅ Coverage de user-go gerado"
+    
+    # Executar com retry
+    if execute_with_retry 2 3 "go test -coverprofile=coverage.out ./..."; then
+        if [ -f coverage.out ]; then
+            cp coverage.out ../../coverage/go/user-go-coverage.out
+            log_success "Coverage de user-go gerado"
+        fi
+    else
+        log_error "Falha ao gerar coverage de user-go"
     fi
     cd ../..
 fi

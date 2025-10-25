@@ -1,10 +1,29 @@
 #!/usr/bin/env node
 
-// Script para consolidar coverage JS/TS
+// Script para consolidar coverage JS/TS - Otimizado com processamento incremental
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
-console.log('📊 Consolidando coverage JS/TS...');
+// Cores para output
+const colors = {
+    reset: '\x1b[0m',
+    blue: '\x1b[34m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    red: '\x1b[31m'
+};
+
+function log(message, color = colors.blue) {
+    console.log(`${color}${message}${colors.reset}`);
+}
+
+function logInfo(message) { log(`ℹ️  ${message}`, colors.blue); }
+function logSuccess(message) { log(`✅ ${message}`, colors.green); }
+function logWarning(message) { log(`⚠️  ${message}`, colors.yellow); }
+function logError(message) { log(`❌ ${message}`, colors.red); }
+
+logInfo('Consolidando coverage JS/TS (otimizado)...');
 
 // Criar diretório de coverage consolidado
 const consolidatedDir = 'coverage/consolidated';
@@ -12,8 +31,30 @@ if (!fs.existsSync(consolidatedDir)) {
     fs.mkdirSync(consolidatedDir, { recursive: true });
 }
 
+// Arquivo de hash para tracking incremental
+const hashFile = path.join(consolidatedDir, '.coverage-hash');
+let processedHashes = new Set();
+
+// Carregar hashes processados anteriormente
+if (fs.existsSync(hashFile)) {
+    try {
+        const hashData = fs.readFileSync(hashFile, 'utf8');
+        processedHashes = new Set(hashData.split('\n').filter(Boolean));
+        logInfo(`Carregados ${processedHashes.size} hashes de processamento anterior`);
+    } catch (error) {
+        logWarning('Não foi possível carregar hashes anteriores, processando tudo');
+    }
+}
+
+// Função para calcular hash de arquivo
+function calculateFileHash(filePath) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return crypto.createHash('md5').update(content).digest('hex');
+}
+
 // Encontrar arquivos de coverage
 const coverageFiles = [];
+const newCoverageFiles = [];
 const findCoverageFiles = (dir) => {
     if (!fs.existsSync(dir)) return;
     
@@ -26,6 +67,13 @@ const findCoverageFiles = (dir) => {
             findCoverageFiles(fullPath);
         } else if (item === 'lcov.info' || item.endsWith('.lcov')) {
             coverageFiles.push(fullPath);
+            
+            // Verificar se é um arquivo novo ou modificado
+            const fileHash = calculateFileHash(fullPath);
+            if (!processedHashes.has(fileHash)) {
+                newCoverageFiles.push(fullPath);
+                processedHashes.add(fileHash);
+            }
         }
     }
 };
@@ -34,19 +82,31 @@ const findCoverageFiles = (dir) => {
 findCoverageFiles('coverage');
 findCoverageFiles('.');
 
-console.log(`🔍 Encontrados ${coverageFiles.length} arquivos de coverage:`);
-coverageFiles.forEach(file => console.log(`  - ${file}`));
+logInfo(`Encontrados ${coverageFiles.length} arquivos de coverage total`);
+logInfo(`${newCoverageFiles.length} arquivos novos ou modificados`);
 
 if (coverageFiles.length === 0) {
-    console.log('⚠️ Nenhum arquivo de coverage encontrado');
+    logWarning('Nenhum arquivo de coverage encontrado');
     process.exit(0);
 }
 
-// Consolidar arquivos LCOV
+// Se não há arquivos novos, verificar se já existe consolidação
+if (newCoverageFiles.length === 0) {
+    const existingConsolidated = path.join(consolidatedDir, 'consolidated.info');
+    if (fs.existsSync(existingConsolidated)) {
+        logSuccess('Nenhum arquivo novo, usando consolidação existente');
+        process.exit(0);
+    }
+}
+
+// Consolidar arquivos LCOV (apenas os novos ou modificados)
 const consolidatedContent = [];
 let headerWritten = false;
+const filesToProcess = newCoverageFiles.length > 0 ? newCoverageFiles : coverageFiles;
 
-for (const file of coverageFiles) {
+logInfo(`Processando ${filesToProcess.length} arquivos de coverage`);
+
+for (const file of filesToProcess) {
     try {
         const content = fs.readFileSync(file, 'utf8');
         const lines = content.split('\n');
@@ -63,7 +123,7 @@ for (const file of coverageFiles) {
             }
         }
     } catch (error) {
-        console.log(`⚠️ Erro ao processar ${file}: ${error.message}`);
+        logError(`Erro ao processar ${file}: ${error.message}`);
     }
 }
 
@@ -71,5 +131,10 @@ for (const file of coverageFiles) {
 const outputFile = path.join(consolidatedDir, 'consolidated.info');
 fs.writeFileSync(outputFile, consolidatedContent.join('\n'));
 
-console.log(`✅ Coverage consolidado salvo em: ${outputFile}`);
-console.log(`📏 Total de linhas: ${consolidatedContent.length}`);
+// Salvar hashes processados
+fs.writeFileSync(hashFile, Array.from(processedHashes).join('\n'));
+
+logSuccess(`Coverage consolidado salvo em: ${outputFile}`);
+logInfo(`Total de linhas: ${consolidatedContent.length}`);
+logInfo(`Arquivos processados: ${filesToProcess.length}`);
+

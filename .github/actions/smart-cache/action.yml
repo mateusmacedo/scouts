@@ -1,0 +1,240 @@
+name: 'Smart Cache'
+description: 'Hierarchical cache strategy with validation and fallback'
+
+inputs:
+  cache-type:
+    description: 'Type of cache (dependencies, build, test, coverage)'
+    required: true
+  cache-key:
+    description: 'Custom cache key'
+    required: false
+  validate-integrity:
+    description: 'Whether to validate cache integrity'
+    required: false
+    default: 'true'
+  auto-cleanup:
+    description: 'Whether to cleanup corrupted cache'
+    required: false
+    default: 'true'
+
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+  cache-valid:
+    description: 'Whether cache is valid'
+    value: ${{ steps.validate.outputs.cache-valid }}
+  cache-size:
+    description: 'Cache size in MB'
+    value: ${{ steps.cache.outputs.cache-size }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Make Scripts Executable
+      run: |
+        find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
+        echo "✅ Script permissions fixed"
+      shell: bash
+
+    - name: Generate Cache Key
+      id: cache-key
+      run: |
+        if [ -n "${{ inputs.cache-key }}" ]; then
+          echo "key=${{ inputs.cache-key }}" >> $GITHUB_OUTPUT
+        else
+          # Gerar chave baseada no tipo de cache e arquivos relevantes
+          case "${{ inputs.cache-type }}" in
+            "dependencies")
+              KEY="${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}"
+              ;;
+            "build")
+              KEY="${{ runner.os }}-build-${{ hashFiles('**/nx.json', '**/tsconfig.base.json', '**/package.json') }}"
+              ;;
+            "test")
+              KEY="${{ runner.os }}-test-${{ hashFiles('**/jest.config.*', '**/*.spec.*', '**/*.test.*') }}"
+              ;;
+            "coverage")
+              KEY="${{ runner.os }}-coverage-${{ hashFiles('**/coverage/**') }}"
+              ;;
+            *)
+              KEY="${{ runner.os }}-${{ inputs.cache-type }}-${{ github.sha }}"
+              ;;
+          esac
+          echo "key=$KEY" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Restore Cache
+      id: cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ steps.cache-paths.outputs.paths }}
+        key: ${{ steps.cache-key.outputs.key }}
+        restore-keys: ${{ steps.cache-keys.outputs.restore-keys }}
+
+    - name: Get Cache Paths
+      id: cache-paths
+      run: |
+        case "${{ inputs.cache-type }}" in
+          "dependencies")
+            PATHS="node_modules
+~/.pnpm-store
+~/.pnpm-cache"
+            ;;
+          "build")
+            PATHS=".nx/cache
+dist"
+            ;;
+          "test")
+            PATHS="coverage
+.nx/cache"
+            ;;
+          "coverage")
+            PATHS="coverage
+~/.cache/coverage"
+            ;;
+          *)
+            PATHS=".nx/cache"
+            ;;
+        esac
+        echo "paths<<EOF" >> $GITHUB_OUTPUT
+        echo "$PATHS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Get Restore Keys
+      id: cache-keys
+      run: |
+        case "${{ inputs.cache-type }}" in
+          "dependencies")
+            KEYS="${{ runner.os }}-deps-
+${{ runner.os }}-"
+            ;;
+          "build")
+            KEYS="${{ runner.os }}-build-
+${{ runner.os }}-deps-
+${{ runner.os }}-"
+            ;;
+          "test")
+            KEYS="${{ runner.os }}-test-
+${{ runner.os }}-build-
+${{ runner.os }}-deps-
+${{ runner.os }}-"
+            ;;
+          "coverage")
+            KEYS="${{ runner.os }}-coverage-
+${{ runner.os }}-test-
+${{ runner.os }}-build-
+${{ runner.os }}-deps-
+${{ runner.os }}-"
+            ;;
+          *)
+            KEYS="${{ runner.os }}-${{ inputs.cache-type }}-
+${{ runner.os }}-"
+            ;;
+        esac
+        echo "restore-keys<<EOF" >> $GITHUB_OUTPUT
+        echo "$KEYS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Validate Cache Integrity
+      id: validate
+      if: ${{ inputs.validate-integrity == 'true' && steps.cache.outputs.cache-hit == 'true' }}
+      run: |
+        echo "🔍 Validating cache integrity..."
+        
+        # Validar integridade baseada no tipo
+        case "${{ inputs.cache-type }}" in
+          "dependencies")
+            ./scripts/utils/validate-cache-integrity.sh pnpm
+            ./scripts/utils/validate-cache-integrity.sh nx
+            ;;
+          "build")
+            ./scripts/utils/validate-cache-integrity.sh nx
+            ;;
+          "test")
+            ./scripts/utils/validate-cache-integrity.sh nx
+            ;;
+          "coverage")
+            ./scripts/utils/validate-cache-integrity.sh coverage
+            ;;
+        esac
+        
+        # Capturar resultado da validação
+        if [ $? -eq 0 ]; then
+          echo "cache-valid=true" >> $GITHUB_OUTPUT
+          echo "✅ Cache integrity validated"
+        else
+          echo "cache-valid=false" >> $GITHUB_OUTPUT
+          echo "⚠️ Cache integrity validation failed"
+        fi
+      shell: bash
+
+    - name: Cleanup Corrupted Cache
+      if: ${{ inputs.auto-cleanup == 'true' && steps.validate.outputs.cache-valid == 'false' }}
+      run: |
+        echo "🧹 Cleaning up corrupted cache..."
+        
+        case "${{ inputs.cache-type }}" in
+          "dependencies")
+            ./scripts/utils/validate-cache-integrity.sh pnpm "" true
+            ./scripts/utils/validate-cache-integrity.sh nx "" true
+            ;;
+          "build")
+            ./scripts/utils/validate-cache-integrity.sh nx "" true
+            ;;
+          "test")
+            ./scripts/utils/validate-cache-integrity.sh nx "" true
+            ;;
+          "coverage")
+            ./scripts/utils/validate-cache-integrity.sh coverage "" true
+            ;;
+        esac
+        
+        echo "✅ Corrupted cache cleaned up"
+      shell: bash
+
+    - name: Calculate Cache Size
+      id: cache-size
+      if: ${{ steps.cache.outputs.cache-hit == 'true' }}
+      run: |
+        echo "📊 Calculating cache size..."
+        
+        # Calcular tamanho do cache baseado no tipo
+        case "${{ inputs.cache-type }}" in
+          "dependencies")
+            SIZE=$(du -sm node_modules ~/.pnpm-store ~/.pnpm-cache 2>/dev/null | awk '{sum += $1} END {print sum+0}')
+            ;;
+          "build")
+            SIZE=$(du -sm .nx/cache dist 2>/dev/null | awk '{sum += $1} END {print sum+0}')
+            ;;
+          "test")
+            SIZE=$(du -sm coverage .nx/cache 2>/dev/null | awk '{sum += $1} END {print sum+0}')
+            ;;
+          "coverage")
+            SIZE=$(du -sm coverage ~/.cache/coverage 2>/dev/null | awk '{sum += $1} END {print sum+0}')
+            ;;
+          *)
+            SIZE=$(du -sm .nx/cache 2>/dev/null | awk '{sum += $1} END {print sum+0}')
+            ;;
+        esac
+        
+        echo "cache-size=$SIZE" >> $GITHUB_OUTPUT
+        echo "📏 Cache size: ${SIZE}MB"
+      shell: bash
+
+    - name: Log Cache Status
+      run: |
+        echo "📊 Cache Status:"
+        echo "  Type: ${{ inputs.cache-type }}"
+        echo "  Hit: ${{ steps.cache.outputs.cache-hit }}"
+        echo "  Valid: ${{ steps.validate.outputs.cache-valid }}"
+        echo "  Size: ${{ steps.cache-size.outputs.cache-size }}MB"
+      shell: bash

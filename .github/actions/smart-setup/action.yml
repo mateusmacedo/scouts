@@ -1,0 +1,148 @@
+name: 'Smart Setup'
+description: 'Conditional setup of Node.js and Go based on requirements'
+
+inputs:
+  languages:
+    description: 'Languages to setup (node, go, both)'
+    required: true
+    default: 'both'
+  node-version:
+    description: 'Node.js version'
+    required: false
+    default: '18'
+  go-version:
+    description: 'Go version'
+    required: false
+    default: '1.23'
+  pnpm-version:
+    description: 'pnpm version'
+    required: false
+    default: '9.15.0'
+  cache-dependencies:
+    description: 'Whether to cache dependencies'
+    required: false
+    default: 'true'
+
+outputs:
+  node-version:
+    description: 'Node.js version installed'
+    value: ${{ steps.setup-node.outputs.node-version }}
+  go-version:
+    description: 'Go version installed'
+    value: ${{ steps.setup-go.outputs.go-version }}
+  pnpm-version:
+    description: 'pnpm version installed'
+    value: ${{ steps.install-pnpm.outputs.pnpm-version }}
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Make Scripts Executable
+      run: |
+        find ./scripts -name "*.sh" -type f -exec chmod +x {} \;
+        echo "✅ Script permissions fixed"
+      shell: bash
+
+    - name: Cache Dependencies
+      id: cache
+      if: ${{ inputs.cache-dependencies == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          node_modules
+          ~/.pnpm-store
+          ~/.pnpm-cache
+          .nx/cache
+        key: ${{ runner.os }}-smart-setup-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-smart-setup-
+
+    - name: Setup Node.js
+      id: setup-node
+      if: ${{ contains(inputs.languages, 'node') || contains(inputs.languages, 'both') }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+
+    - name: Setup Go
+      id: setup-go
+      if: ${{ contains(inputs.languages, 'go') || contains(inputs.languages, 'both') }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Install pnpm
+      id: install-pnpm
+      if: ${{ contains(inputs.languages, 'node') || contains(inputs.languages, 'both') }}
+      run: |
+        echo "📦 Installing pnpm ${{ inputs.pnpm-version }}..."
+        npm install -g pnpm@${{ inputs.pnpm-version }}
+        echo "pnpm-version=$(pnpm --version)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Configure pnpm
+      if: ${{ contains(inputs.languages, 'node') || contains(inputs.languages, 'both') }}
+      run: |
+        echo "⚙️ Configuring pnpm..."
+        pnpm config set store-dir ~/.pnpm-store
+        pnpm config set cache-dir ~/.pnpm-cache
+        echo "✅ pnpm configured"
+      shell: bash
+
+    - name: Configure Go
+      if: ${{ contains(inputs.languages, 'go') || contains(inputs.languages, 'both') }}
+      run: |
+        echo "⚙️ Configuring Go..."
+        go env -w GOPROXY=direct
+        go env -w GOSUMDB=off
+        echo "✅ Go configured"
+      shell: bash
+
+    - name: Install Dependencies
+      if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      run: |
+        echo "📦 Installing dependencies..."
+        pnpm install --frozen-lockfile
+        echo "✅ Dependencies installed"
+      shell: bash
+
+    - name: Fix Go Cache
+      if: ${{ contains(inputs.languages, 'go') || contains(inputs.languages, 'both') }}
+      run: |
+        echo "🔧 Fixing Go cache..."
+        ./scripts/fix-go-cache.sh
+        echo "✅ Go cache fixed"
+      shell: bash
+
+    - name: Health Check
+      run: |
+        echo "🏥 Running health check..."
+        ./scripts/utils/health-check-ci.sh
+        echo "✅ Health check completed"
+      shell: bash
+
+    - name: Verify Installations
+      run: |
+        echo "🔍 Verifying installations..."
+        
+        if [ "${{ inputs.languages }}" = "node" ] || [ "${{ inputs.languages }}" = "both" ]; then
+          echo "Node.js version: $(node --version)"
+          echo "pnpm version: $(pnpm --version)"
+          echo "Nx version: $(pnpm nx --version)"
+        fi
+        
+        if [ "${{ inputs.languages }}" = "go" ] || [ "${{ inputs.languages }}" = "both" ]; then
+          echo "Go version: $(go version)"
+        fi
+        
+        echo "✅ All installations verified"
+      shell: bash
