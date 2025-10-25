@@ -161,14 +161,14 @@ jobs:
             # Verificar se a branch base existe antes de usar affected
             if git rev-parse --verify origin/${{ github.base_ref }} >/dev/null 2>&1; then
               echo "✅ Usando estratégia affected com base origin/${{ github.base_ref }}"
-              pnpm nx affected --target=test --base=origin/${{ github.base_ref }} --projects=@scouts/*,express-notifier
+              pnpm nx affected --target=test --base=origin/${{ github.base_ref }}
             else
               echo "⚠️ Base branch origin/${{ github.base_ref }} not found, running all projects instead"
-              pnpm nx run-many --target=test --all --projects=@scouts/*,express-notifier
+              pnpm nx run-many --target=test --all
             fi
           else
             echo "✅ Usando estratégia run-many para push"
-            pnpm nx run-many --target=test --all --projects=@scouts/*,express-notifier
+            pnpm nx run-many --target=test --all
           fi
 
       - name: Upload Node.js Coverage
@@ -214,13 +214,13 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             # Verificar se a branch base existe antes de usar affected
             if git rev-parse --verify origin/${{ github.base_ref }} >/dev/null 2>&1; then
-              pnpm nx affected --target=test --base=origin/${{ github.base_ref }} --projects=scouts/user-go-service,scouts/user-go
+              pnpm nx affected --target=test --base=origin/${{ github.base_ref }}
             else
               echo "⚠️ Base branch origin/${{ github.base_ref }} not found, running all projects instead"
-              pnpm nx run-many --target=test --all --projects=scouts/user-go-service,scouts/user-go
+              pnpm nx run-many --target=test --all
             fi
           else
-            pnpm nx run-many --target=test --all --projects=scouts/user-go-service,scouts/user-go
+            pnpm nx run-many --target=test --all
           fi
 
       - name: Generate Go Coverage

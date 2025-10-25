@@ -56,13 +56,13 @@ runs:
         if [ "${{ inputs.strategy }}" = "affected" ]; then
           # Verificar se a branch base existe antes de usar affected
           if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
-            pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=scouts/user-go-service,scouts/user-go
+            pnpm nx affected --target=lint --base=${{ inputs.base-ref }}
           else
             echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
-            pnpm nx run-many --target=lint --all --projects=scouts/user-go-service,scouts/user-go
+            pnpm nx run-many --target=lint --all
           fi
         else
-          pnpm nx run-many --target=lint --all --projects=scouts/user-go-service,scouts/user-go
+          pnpm nx run-many --target=lint --all
         fi
         echo "✅ Go lint passed"
       shell: bash
