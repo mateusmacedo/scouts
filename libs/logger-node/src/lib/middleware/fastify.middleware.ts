@@ -80,9 +80,10 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 
 	return (fastify: FastifyInstance) => {
 		// Hook para adicionar correlation ID
-		fastify.addHook('onRequest', (request: FastifyRequest, _reply: FastifyReply) => {
-			const startTime = Date.now();
-			(request as { startTime: number }).startTime = startTime;
+  fastify.addHook('onRequest', (...args: unknown[]) => {
+    const [request] = args as [FastifyRequest, FastifyReply];
+    const startTime = Date.now();
+    (request as any).startTime = startTime;
 
 			// Obter ou gerar correlation ID
 			let correlationId = request.headers[correlationIdHeader] as string;
@@ -99,8 +100,8 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 			}
 
 			// Adicionar IDs ao request
-			(request as { correlationId: string; requestId: string }).correlationId = correlationId;
-			(request as { correlationId: string; requestId: string }).requestId = requestId;
+    (request as any).correlationId = correlationId;
+    (request as any).requestId = requestId;
 
 			// Log do request se habilitado
 			if (logRequests) {
@@ -117,12 +118,13 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 		});
 
 		// Hook para log de response
-		fastify.addHook('onSend', (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
+  fastify.addHook('onSend', (...args: unknown[]) => {
+    const [request, reply, payload] = args as [FastifyRequest, FastifyReply, unknown];
 			if (logRequests) {
-				const startTime = (request as { startTime: number }).startTime;
+				const startTime = (request as any).startTime;
 				const duration = Date.now() - startTime;
-				const correlationId = (request as { correlationId: string }).correlationId;
-				const requestId = (request as { requestId: string }).requestId;
+				const correlationId = (request as any).correlationId;
+				const requestId = (request as any).requestId;
 
 				const level = reply.statusCode >= 400 ? 'warn' : 'info';
 				logger[level]('HTTP Response', {
@@ -141,9 +143,10 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 
 		// Hook para log de erros
 		if (logErrors) {
-			fastify.addHook('onError', (request: FastifyRequest, _reply: FastifyReply, error: Error) => {
-				const correlationId = (request as { correlationId?: string }).correlationId;
-				const requestId = (request as { requestId?: string }).requestId;
+    fastify.addHook('onError', (...args: unknown[]) => {
+      const [request, _reply, error] = args as [FastifyRequest, FastifyReply, Error];
+				const correlationId = (request as any).correlationId;
+				const requestId = (request as any).requestId;
 
 				logger.error('HTTP Error', {
 					method: request.method,
@@ -166,22 +169,22 @@ export function createCorrelationIdPlugin(logger: Logger, options: FastifyLogger
 	const { correlationIdHeader = 'x-correlation-id' } = options;
 
 	return (fastify: FastifyInstance) => {
-		fastify.addHook('onRequest', (request: FastifyRequest, _reply: FastifyReply) => {
+  fastify.addHook('onRequest', (...args: unknown[]) => {
+    const [request] = args as [FastifyRequest, FastifyReply];
 			const correlationId =
 				(request.headers[correlationIdHeader] as string) ||
-				(request as { correlationId?: string }).correlationId;
+				(request as any).correlationId;
 
 			if (correlationId) {
 				// Criar child logger com correlation ID
-				const childLogger = (logger as { child?: (fields: Record<string, unknown>) => Logger })
-					.child
-					? (logger as { child: (fields: Record<string, unknown>) => Logger }).child({
+				const childLogger = (logger as any).child
+					? (logger as any).child({
 							correlationId,
 						})
 					: logger;
-				(request as { logger: Logger }).logger = childLogger;
+				(request as any).logger = childLogger;
 			} else {
-				(request as { logger: Logger }).logger = logger;
+				(request as any).logger = logger;
 			}
 		});
 	};

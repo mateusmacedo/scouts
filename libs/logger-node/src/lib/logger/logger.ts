@@ -201,9 +201,9 @@ export class ComposedLogger implements Logger {
 
 		try {
 			// 1. Aplicar metrics se habilitado
-			if (this.metrics && typeof (this.metrics as LoggerWithMetrics)[level] === 'function') {
-				(this.metrics as LoggerWithMetrics)[level](message, allFields);
-			}
+    if (this.metrics && typeof (this.metrics as LoggerWithMetrics)[level as keyof LoggerWithMetrics] === 'function') {
+      (this.metrics as LoggerWithMetrics)[level as keyof LoggerWithMetrics]?.(message as any, allFields);
+    }
 
 			// 2. Aplicar redactor se fornecido
 			let processedFields = allFields;
@@ -215,7 +215,7 @@ export class ComposedLogger implements Logger {
 			// 3. Criar entrada de log final
 			const logEntry: LogEntry = {
 				timestamp: new Date().toISOString(),
-				level: level as string,
+    level: level as LogLevel,
 				scope: { methodName: level },
 				outcome: 'success',
 				durationMs: Date.now() - startTime,
@@ -231,7 +231,7 @@ export class ComposedLogger implements Logger {
 			// Em caso de erro, criar entrada de log de erro
 			const logEntry: LogEntry = {
 				timestamp: new Date().toISOString(),
-				level: level as string,
+    level: level as LogLevel,
 				scope: { methodName: level },
 				outcome: 'failure',
 				durationMs: Date.now() - startTime,

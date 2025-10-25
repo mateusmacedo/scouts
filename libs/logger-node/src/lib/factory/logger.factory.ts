@@ -183,5 +183,5 @@ export function createComposedLogger<C extends ComposedLoggerOptions = Record<st
 		options?.fields || {}
 	);
 
-	return logger as ComposedLogger<C>;
+  return logger as unknown as ComposedLogger<C>;
 }

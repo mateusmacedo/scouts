@@ -96,8 +96,8 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 		}
 
 		// Adicionar IDs ao request para uso posterior
-		(req as { correlationId: string; requestId: string }).correlationId = correlationId;
-		(req as { correlationId: string; requestId: string }).requestId = requestId;
+  (req as any).correlationId = correlationId;
+  (req as any).requestId = requestId;
 
 		// Log do request se habilitado
 		if (logRequests) {
@@ -168,14 +168,14 @@ export function createCorrelationIdMiddleware(logger: Logger, options: ExpressLo
 
 		if (correlationId) {
 			// Criar child logger com correlation ID
-			const childLogger = (logger as { child?: (fields: Record<string, unknown>) => Logger }).child
-				? (logger as { child: (fields: Record<string, unknown>) => Logger }).child({
-						correlationId,
-					})
-				: logger;
-			(req as { logger: Logger }).logger = childLogger;
+    const childLogger = (logger as any).child
+        ? (logger as any).child({
+                correlationId,
+            })
+        : logger;
+    (req as any).logger = childLogger;
 		} else {
-			(req as { logger: Logger }).logger = logger;
+			(req as any).logger = logger;
 		}
 
 		next();

@@ -136,7 +136,7 @@ export async function withRetryAndFallback<T>(
 	const result = await withRetry(fn, options);
 
 	if (result.success) {
-		return result.result as ReturnType<T>;
+  return result.result as T;
 	}
 
 	// Se retry falhou, usar fallback

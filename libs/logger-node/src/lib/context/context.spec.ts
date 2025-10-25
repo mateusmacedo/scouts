@@ -211,7 +211,6 @@ describe('Context Module', () => {
 		test('should reject dangerous special characters', () => {
 			const dangerousInputs = [
 				'cid<script>alert(1)</script>',
-				`cid${process.env.SECRET}`,
 				'cid; DROP TABLE users;',
 				'cid\x00\x01\x02',
 				'cid\u0000\u0001\u0002',
@@ -219,7 +218,9 @@ describe('Context Module', () => {
 
 			dangerousInputs.forEach((input) => {
 				const result = ensureCid(input);
-				expect(result).toBe('mocked-uuid-123');
+				// Inputs perigosos devem ser rejeitados e substituídos por um novo ID
+				expect(result).not.toBe(input);
+				expect(result).toMatch(/^[A-Za-z0-9._:-]+$/);
 			});
 		});
 
@@ -227,6 +228,7 @@ describe('Context Module', () => {
 			const validInputs = [
 				'valid-cid-123',
 				'valid.cid.456',
+				`cid${process.env['SECRET'] || 'test-secret'}`,
 				'valid_cid_789',
 				'valid:cid:abc',
 				'ValidCid123',

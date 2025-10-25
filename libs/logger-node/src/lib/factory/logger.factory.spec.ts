@@ -59,9 +59,9 @@ describe('createComposedLogger', () => {
 
 			// Assert
 			const metrics = logger.getMetrics();
-			expect(metrics.logsWritten).toBe(3);
-			expect(metrics.errorCount).toBe(0);
-			expect(metrics.logsDropped).toBe(0);
+    expect(metrics?.['logsWritten']).toBe(3);
+    expect(metrics?.['errorCount']).toBe(0);
+    expect(metrics?.['logsDropped']).toBe(0);
 		});
 
 		it('should_increment_error_count_on_logging_errors', async () => {
@@ -74,10 +74,10 @@ describe('createComposedLogger', () => {
 
 			// Assert
 			const metrics = logger.getMetrics();
-			expect(metrics.logsWritten).toBe(2);
-			// Note: errorCount só incrementa se houver exceção durante o logging, não pelo nível do log
-			expect(metrics.errorCount).toBe(0);
-			expect(metrics.logsDropped).toBe(0);
+		expect(metrics?.['logsWritten']).toBe(2);
+		// Note: errorCount só incrementa se houver exceção durante o logging, não pelo nível do log
+		expect(metrics?.['errorCount']).toBe(0);
+		expect(metrics?.['logsDropped']).toBe(0);
 		});
 
 		it('should_not_have_metrics_when_disabled', () => {
@@ -98,8 +98,8 @@ describe('createComposedLogger', () => {
 
 			// Assert
 			// Note: Métricas não são readonly por padrão, mas podem ser implementadas
-			expect(metrics.logsWritten).toBe(1);
-			expect(metrics.errorCount).toBe(0);
+		expect(metrics?.['logsWritten']).toBe(1);
+		expect(metrics?.['errorCount']).toBe(0);
 		});
 	});
 
@@ -218,8 +218,8 @@ describe('createComposedLogger', () => {
 
 			// Verificar que métricas foram incrementadas
 			const metrics = logger.getMetrics();
-			expect(metrics.logsWritten).toBe(1);
-			expect(metrics.errorCount).toBe(0);
+		expect(metrics?.['logsWritten']).toBe(1);
+		expect(metrics?.['errorCount']).toBe(0);
 		});
 
 		it('should_apply_all_features_simultaneously', () => {
@@ -315,8 +315,8 @@ describe('createComposedLogger', () => {
 			const childMetrics = childLogger.getMetrics?.();
 
 			// Child logger compartilha métricas com parent após implementação de propagação
-			expect(parentMetrics.logsWritten).toBe(1);
-			expect(childMetrics.logsWritten).toBe(1);
+		expect(parentMetrics?.['logsWritten']).toBe(1);
+		expect(childMetrics?.['logsWritten']).toBe(1);
 			expect(parentMetrics).toStrictEqual(childMetrics); // Mesmo conteúdo
 		});
 	});

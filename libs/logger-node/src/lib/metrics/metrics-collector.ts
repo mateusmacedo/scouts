@@ -103,23 +103,23 @@ export class MetricsCollector extends BaseMetricsCollector {
 	 * Métodos auxiliares para acessar métricas específicas
 	 */
 	private getRedactCount(): number {
-		return (this.metrics as { redactCount?: number }).redactCount || 0;
+		return (this as any).metrics?.redactCount || 0;
 	}
 
 	private getFlushCount(): number {
-		return (this.metrics as { flushCount?: number }).flushCount || 0;
+		return (this as any).metrics?.flushCount || 0;
 	}
 
 	private getBufferUtilization(): number {
-		return (this.metrics as { bufferUtilization?: number }).bufferUtilization || 0;
+		return (this as any).metrics?.bufferUtilization || 0;
 	}
 
 	private updateRedactLatency(): void {
-		(this.metrics as { redactLatencyMs?: number }).redactLatencyMs = this.calculateAverageLatency();
+		(this as any).metrics.redactLatencyMs = this.calculateAverageLatency();
 	}
 
 	private updateBufferMetric(): void {
-		(this.metrics as { bufferUtilization?: number }).bufferUtilization = Math.min(
+		(this as any).metrics.bufferUtilization = Math.min(
 			this.bufferSize / this.bufferCapacity,
 			1
 		);
