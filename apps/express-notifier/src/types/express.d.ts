@@ -1,7 +1,9 @@
+import { Request } from 'express';
+
 /**
  * Interface para estender o Request do Express com propriedades customizadas
  */
-export interface CustomRequest extends Express.Request {
+export interface CustomRequest extends Request {
 	correlationId?: string;
 	logger?: {
 		info: (message: string, fields?: Record<string, unknown>) => void;

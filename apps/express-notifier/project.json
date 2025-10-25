@@ -37,6 +37,13 @@
 			"options": {
 				"lintFilePatterns": ["apps/express-notifier/**/*.ts"]
 			}
+		},
+		"biome-check": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome check --formatter-enabled=true .",
+				"cwd": "{workspaceRoot}"
+			}
 		}
 	},
 	"tags": ["type:app", "platform:express", "scope:notifier"]
