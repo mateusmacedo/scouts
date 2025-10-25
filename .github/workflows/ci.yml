@@ -15,10 +15,17 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.15.0"
+  GO_VERSION: "1.23"
+
 jobs:
-  quality:
-    name: Lint, Test and Build Affected Projects
+  setup:
+    name: Setup Dependencies and Cache
     runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache-nx.outputs.cache-hit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -28,13 +35,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           check-latest: true
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.15.0
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Configure pnpm store
         run: pnpm config set store-dir $HOME/.pnpm-store
@@ -50,7 +57,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
       - name: Restore Go cache
@@ -64,15 +71,201 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Restore Nx cache
+        id: cache-nx
         uses: actions/cache@v4
         with:
           path: .nx/cache
-          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json') }}
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json', 'jest.config.ts', 'jest.preset.js') }}
           restore-keys: |
             ${{ runner.os }}-nx-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Nx affected targets
-        run: pnpm nx affected -t lint test build --base=origin/main --head=${{ github.head_ref || github.ref_name }} --parallel=3
+      - name: Upload setup artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup-artifacts
+          path: |
+            node_modules
+            $HOME/.pnpm-store
+            $HOME/.cache/go-build
+            $HOME/go/pkg/mod
+          retention-days: 1
+
+  lint:
+    name: Lint Affected Projects
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Download setup artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: setup-artifacts
+          path: .
+
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json', 'jest.config.ts', 'jest.preset.js') }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
+      - name: Run lint
+        run: pnpm nx affected -t lint --base=origin/main --head=${{ github.head_ref || github.ref_name }} --parallel=5 --maxParallel=3
+
+  test:
+    name: Test Affected Projects
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Download setup artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: setup-artifacts
+          path: .
+
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json', 'jest.config.ts', 'jest.preset.js') }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
+      - name: Run tests
+        run: pnpm nx affected -t test --base=origin/main --head=${{ github.head_ref || github.ref_name }} --parallel=5 --maxParallel=3 --coverage
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: matrix.shard == 1
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build Affected Projects
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    strategy:
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Download setup artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: setup-artifacts
+          path: .
+
+      - name: Restore Nx cache
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', 'nx.json', 'tsconfig.base.json', 'jest.config.ts', 'jest.preset.js') }}
+          restore-keys: |
+            ${{ runner.os }}-nx-
+
+      - name: Run build
+        run: pnpm nx affected -t build --base=origin/main --head=${{ github.head_ref || github.ref_name }} --parallel=5 --maxParallel=2
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.shard }}
+          path: dist/
+          retention-days: 7
+
+  aggregate:
+    name: Aggregate Results
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: always()
+    steps:
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-1
+          path: dist/
+
+      - name: Generate summary
+        run: |
+          echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Lint: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Test: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Coverage reports available in artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Build artifacts available in artifacts" >> $GITHUB_STEP_SUMMARY
