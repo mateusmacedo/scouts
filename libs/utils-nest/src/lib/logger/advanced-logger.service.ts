@@ -55,8 +55,8 @@ export class AdvancedLoggerService {
 			method: req.method,
 			url: req.url,
 			userAgent: req.headers?.['user-agent'],
-			ip: req.ip || req.connection?.remoteAddress,
-			correlationId: req.correlationId,
+    ip: req.ip || (req as any).connection?.remoteAddress,
+    correlationId: (req as any).correlationId,
 		});
 	}
 
@@ -70,7 +70,7 @@ export class AdvancedLoggerService {
 		this.logger.info('HTTP Response', {
 			statusCode: res.statusCode,
 			duration: `${duration}ms`,
-			correlationId: res.correlationId,
+    correlationId: (res as any).correlationId,
 		});
 	}
 
@@ -150,23 +150,23 @@ export class AdvancedLoggerService {
 	}
 
 	// Delegate all standard logger methods
-	info(message: string, fields?: Record<string, unknown>): Promise<void> {
-		return this.logger.info(message, fields);
-	}
+  async info(message: string, fields?: Record<string, unknown>): Promise<void> {
+    return await this.logger.info(message, fields);
+  }
 
-	debug(message: string, fields?: Record<string, unknown>): Promise<void> {
-		return this.logger.debug(message, fields);
-	}
+  async debug(message: string, fields?: Record<string, unknown>): Promise<void> {
+    return await this.logger.debug(message, fields);
+  }
 
-	warn(message: string, fields?: Record<string, unknown>): Promise<void> {
-		return this.logger.warn(message, fields);
-	}
+  async warn(message: string, fields?: Record<string, unknown>): Promise<void> {
+    return await this.logger.warn(message, fields);
+  }
 
-	error(message: string, fields?: Record<string, unknown>): Promise<void> {
-		return this.logger.error(message, fields);
-	}
+  async error(message: string, fields?: Record<string, unknown>): Promise<void> {
+    return await this.logger.error(message, fields);
+  }
 
-	fatal(message: string, fields?: Record<string, unknown>): Promise<void> {
-		return this.logger.fatal(message, fields);
-	}
+  async fatal(message: string, fields?: Record<string, unknown>): Promise<void> {
+    return await this.logger.fatal(message, fields);
+  }
 }

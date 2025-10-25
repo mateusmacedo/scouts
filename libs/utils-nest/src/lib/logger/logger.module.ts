@@ -10,12 +10,11 @@ import { NestLoggerService } from './nest-logger.service';
  * Provides configurable logging with metrics, redaction, and correlation ID support
  */
 @Module({})
-export class LoggerModule {}
-
-/**
- * Configure the logger module with synchronous options
- */
-export function forRoot(options: NestLoggerModuleOptions = {}): DynamicModule {
+export class LoggerModule {
+	/**
+	 * Configure the logger module with synchronous options
+	 */
+	static forRoot(options: NestLoggerModuleOptions = {}): DynamicModule {
 	return {
 		module: LoggerModule,
 		providers: [
@@ -48,12 +47,12 @@ export function forRoot(options: NestLoggerModuleOptions = {}): DynamicModule {
 		],
 		exports: [NestLoggerService, AdvancedLoggerService, LOGGER_TOKEN],
 	};
-}
+	}
 
-/**
- * Configure the logger module with asynchronous options
- */
-export function forRootAsync(options: NestLoggerModuleAsyncOptions): DynamicModule {
+	/**
+	 * Configure the logger module with asynchronous options
+	 */
+	static forRootAsync(options: NestLoggerModuleAsyncOptions): DynamicModule {
 	return {
 		module: LoggerModule,
 		imports: [...(options.imports || [])],
@@ -88,4 +87,5 @@ export function forRootAsync(options: NestLoggerModuleAsyncOptions): DynamicModu
 		],
 		exports: [NestLoggerService, AdvancedLoggerService, LOGGER_TOKEN],
 	};
+	}
 }
