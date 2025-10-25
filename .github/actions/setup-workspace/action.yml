@@ -22,7 +22,6 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
 
     - name: Setup Go
       uses: actions/setup-go@v5
@@ -32,6 +31,12 @@ runs:
     - name: Install pnpm
       run: |
         npm install -g pnpm@${{ inputs.pnpm-version }}
+      shell: bash
+
+    - name: Configure pnpm
+      run: |
+        pnpm config set store-dir ~/.pnpm-store
+        pnpm config set cache-dir ~/.pnpm-cache
       shell: bash
 
     - name: Configure Go

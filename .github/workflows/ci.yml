@@ -23,13 +23,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Workspace
-        uses: ./.github/actions/setup-workspace
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          go-version: ${{ env.GO_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
-
       - name: Cache Nx
         id: cache
         uses: actions/cache@v4
@@ -38,9 +31,17 @@ jobs:
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
+
+      - name: Setup Workspace
+        uses: ./.github/actions/setup-workspace
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          go-version: ${{ env.GO_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
 
   lint-node:
     name: Lint Node.js
@@ -60,13 +61,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Restore Nx Cache
+      - name: Cache Nx
         uses: actions/cache@v4
         with:
           path: |
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
@@ -95,13 +97,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Restore Nx Cache
+      - name: Cache Nx
         uses: actions/cache@v4
         with:
           path: |
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
@@ -130,13 +133,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Restore Nx Cache
+      - name: Cache Nx
         uses: actions/cache@v4
         with:
           path: |
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
@@ -175,13 +179,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Restore Nx Cache
+      - name: Cache Nx
         uses: actions/cache@v4
         with:
           path: |
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
@@ -223,13 +228,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      - name: Restore Nx Cache
+      - name: Cache Nx
         uses: actions/cache@v4
         with:
           path: |
             .nx/cache
             node_modules
             ~/.pnpm-store
+            ~/.pnpm-cache
           key: ${{ runner.os }}-nx-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-nx-
