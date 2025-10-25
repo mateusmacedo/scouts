@@ -1,6 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { UserEvents, UserRepository } from '../domain/user.entity';
+import { UserEvents } from '../domain/user.entity';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { InMemoryUserRepository } from '../repositories/in-memory-user.repository';
@@ -157,7 +156,7 @@ describe('UserService', () => {
 				email: 'john@example.com',
 			});
 
-			const user2 = await service.create({
+			const _user2 = await service.create({
 				name: 'Jane Doe',
 				email: 'jane@example.com',
 			});

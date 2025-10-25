@@ -89,7 +89,7 @@ describe('InMemoryUserRepository', () => {
 		});
 
 		it('should return a copy of the array', async () => {
-			const user = await repository.create({
+			const _user = await repository.create({
 				name: 'John Doe',
 				email: 'john@example.com',
 			});
