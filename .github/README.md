@@ -35,18 +35,6 @@ Este diretório contém os workflows de CI/CD para o monorepo Nx com projetos Go
 - Controle de tamanho do PR
 - Comentários automáticos no PR
 
-### 3. Security Audit (`.github/workflows/security-audit.yml`)
-
-**Triggers:**
-- Agendado (diário, 3h UTC)
-- Manual (`workflow_dispatch`)
-- Push em main/develop
-
-**Validações:**
-- Auditoria de dependências Node.js
-- Verificação de segredos hardcoded
-- Verificação de licenças
-- Validação de secrets obrigatórios
 
 ## Actions Reutilizáveis
 
@@ -82,8 +70,7 @@ Validações para projetos Node.js:
 Configurar em **Settings > Secrets and variables > Actions**:
 
 - `GH_TOKEN`: Token GitHub (para releases/comentários)
-- `NPM_TOKEN`: Token npm (para publicação futura)
-- `SONAR_TOKEN`: Token SonarCloud (análise de qualidade - opcional)
+- `NPM_TOKEN`: Token npm (para publicação futura - opcional)
 
 ### Cache
 
@@ -91,6 +78,10 @@ O workflow utiliza cache agressivo para:
 - Dependências pnpm (`~/.pnpm-store`, `~/.pnpm-cache`)
 - Cache do Nx (`.nx/cache`)
 - Módulos Go (via `go.work`)
+
+### Permissões de Scripts
+
+O workflow corrige automaticamente as permissões de execução de todos os scripts `.sh` no diretório `scripts/` para evitar erros de "Permission denied".
 
 ### Threshold de Cobertura
 
@@ -173,7 +164,6 @@ Se os testes falharem:
 
 ## Próximos Passos
 
-- [ ] Integração com SonarCloud
 - [ ] Deploy automático em staging
 - [ ] Notificações Slack/Discord
 - [ ] Análise de performance de build
