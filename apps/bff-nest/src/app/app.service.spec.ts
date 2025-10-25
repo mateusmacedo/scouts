@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
+import { LoggerModule } from '@scouts/utils-nest';
 import { AppService } from './app.service';
 
 describe('AppService', () => {

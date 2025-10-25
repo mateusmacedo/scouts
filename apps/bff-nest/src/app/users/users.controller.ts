@@ -16,7 +16,7 @@ export class UsersController {
 
 	@Post()
 	@Log({ level: 'info', includeArgs: true, includeResult: true })
-	async create(@Body() createUserDto: CreateUserDto) {
+	create(@Body() createUserDto: CreateUserDto) {
 		// password field will be automatically redacted in logs
 		this.logger.log('Creating user via POST /users', 'UsersController');
 		return this.usersService.create(createUserDto);
@@ -24,28 +24,28 @@ export class UsersController {
 
 	@Get()
 	@LogInfo({ includeResult: true })
-	async findAll() {
+	findAll() {
 		this.logger.debug('Finding all users via GET /users', 'UsersController');
 		return this.usersService.findAll();
 	}
 
 	@Get(':id')
 	@LogDebug({ includeArgs: true, includeResult: true })
-	async findOne(@Param('id') id: string) {
+	findOne(@Param('id') id: string) {
 		this.logger.debug(`Finding user with id: ${id}`, 'UsersController');
 		return this.usersService.findOne(id);
 	}
 
 	@Patch(':id')
 	@Log({ level: 'info', includeArgs: true, includeResult: true })
-	async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+	update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
 		this.logger.log(`Updating user with id: ${id}`, 'UsersController');
 		return this.usersService.update(id, updateUserDto);
 	}
 
 	@Delete(':id')
 	@LogWarn({ includeArgs: true, includeResult: true })
-	async remove(@Param('id') id: string) {
+	remove(@Param('id') id: string) {
 		this.logger.log(`Removing user with id: ${id}`, 'UsersController');
 		return this.usersService.remove(id);
 	}

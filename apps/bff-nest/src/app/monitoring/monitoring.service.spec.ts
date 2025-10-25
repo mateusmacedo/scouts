@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LOGGER_TOKEN, LoggerModule } from '@scouts/utils-nest';
-import { LoggerMetrics, MonitoringService, RedactionTestData } from './monitoring.service';
+import { LoggerMetrics, MonitoringService } from './monitoring.service';
 
 describe('MonitoringService', () => {
 	let service: MonitoringService;
@@ -60,7 +60,7 @@ describe('MonitoringService', () => {
 
 		it('should return default values when logger has no getMetrics method', async () => {
 			// Remove getMetrics method to simulate logger without metrics
-			delete logger.getMetrics;
+			logger.getMetrics = undefined;
 
 			const result = await service.getLoggerMetrics();
 
@@ -173,7 +173,7 @@ describe('MonitoringService', () => {
 
 	describe('getHealthStatus', () => {
 		it('should return healthy status with logger metrics', async () => {
-			const mockMetrics: LoggerMetrics = {
+			const _mockMetrics: LoggerMetrics = {
 				logsWritten: 100,
 				errorCount: 0,
 				uptimeMs: 1800000,

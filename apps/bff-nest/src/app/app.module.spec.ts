@@ -1,6 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CorrelationIdMiddleware, HealthModule } from '@scouts/utils-nest';
 import { AppController } from './app.controller';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
@@ -131,13 +130,13 @@ describe('AppModule', () => {
 			if (originalEnv) {
 				process.env.EXPRESS_NOTIFIER_URL = originalEnv;
 			} else {
-				delete process.env.EXPRESS_NOTIFIER_URL;
+				process.env.EXPRESS_NOTIFIER_URL = undefined;
 			}
 		});
 
 		it('should use default URL when EXPRESS_NOTIFIER_URL is not set', () => {
 			const originalEnv = process.env.EXPRESS_NOTIFIER_URL;
-			delete process.env.EXPRESS_NOTIFIER_URL;
+			process.env.EXPRESS_NOTIFIER_URL = undefined;
 
 			expect(() =>
 				Test.createTestingModule({
