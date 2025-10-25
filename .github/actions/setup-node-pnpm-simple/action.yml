@@ -1,5 +1,5 @@
-name: 'Setup Node.js and pnpm with optimized caching'
-description: 'Setup Node.js and pnpm with intelligent caching strategy'
+name: 'Setup Node.js and pnpm (Simple)'
+description: 'Setup Node.js and pnpm with basic caching - no external scripts'
 inputs:
   node-version:
     description: 'Node.js version to use'
@@ -13,9 +13,6 @@ outputs:
   cache-hit:
     description: 'Whether cache was hit'
     value: ${{ steps.pnpm-cache.outputs.cache-hit }}
-  store-path:
-    description: 'pnpm store directory path'
-    value: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
 
 runs:
   using: 'composite'
@@ -35,22 +32,27 @@ runs:
       shell: bash
       run: |
         echo "🔍 Verificando instalação do pnpm..."
-        which pnpm
-        pnpm --version
-        echo "✅ pnpm instalado com sucesso"
+        which pnpm || echo "pnpm não encontrado no PATH"
+        pnpm --version || echo "Erro ao executar pnpm --version"
+        echo "✅ Verificação do pnpm concluída"
 
     - name: Get pnpm store directory
       id: pnpm-cache-dir
       shell: bash
-      run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+      run: |
+        echo "🔍 Obtendo diretório de store do pnpm..."
+        STORE_PATH=$(pnpm store path --silent 2>/dev/null || echo "$HOME/.pnpm-store")
+        echo "STORE_PATH=$STORE_PATH" >> $GITHUB_OUTPUT
+        echo "📁 Store path: $STORE_PATH"
 
     - name: Cache pnpm dependencies
       id: pnpm-cache
-      uses: ./.github/actions/cache-manager
+      uses: actions/cache@v4
       with:
         path: ${{ steps.pnpm-cache-dir.outputs.STORE_PATH }}
-        prefix: pnpm
-        key: ${{ hashFiles('**/pnpm-lock.yaml') }}
+        key: ${{ runner.os }}-pnpm-v3-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-v3-
 
     - name: Configure NPM Registry
       shell: bash

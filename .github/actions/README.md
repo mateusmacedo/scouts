@@ -22,7 +22,7 @@ Este diretório contém as composite actions reutilizáveis para os workflows CI
   uses: ./.github/actions/setup-node-pnpm
   id: node-pnpm-setup
   env:
-    NODE_AUTH_TOKEN: ${{ secrets.GL_TOKEN }}
+    NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 ```
 
 ### setup-go
@@ -117,7 +117,7 @@ Cada action fornece métricas de cache que podem ser usadas para monitoramento:
 
 ### Secrets Necessários
 
-- `GL_TOKEN`: Token de autenticação geral
+- `GH_TOKEN`: Token de autenticação geral
 - `NPM_TOKEN`: Token para publicação no npmjs.org
 - `SONAR_TOKEN`: Token para SonarCloud
 

@@ -35,7 +35,7 @@ jobs:
       - name: Validate CI/CD Secrets
         id: validate-secrets
         env:
-          GL_TOKEN: ${{ secrets.GL_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: bash scripts/security/validate-secrets.sh
@@ -60,10 +60,10 @@ jobs:
           fi
 
       - name: Setup Node.js and pnpm
-        uses: ./.github/actions/setup-node-pnpm
+        uses: ./.github/actions/setup-node-pnpm-simple
         id: node-pnpm-setup
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GL_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Go
         uses: ./.github/actions/setup-go
@@ -349,10 +349,10 @@ jobs:
           fetch-tags: true
 
       - name: Setup Node.js and pnpm
-        uses: ./.github/actions/setup-node-pnpm
+        uses: ./.github/actions/setup-node-pnpm-simple
         id: node-pnpm-setup
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GL_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Download Coverage Reports
         uses: actions/download-artifact@v4
@@ -606,7 +606,7 @@ jobs:
       - name: SonarCloud Analysis
         timeout-minutes: 10
         env:
-          GL_TOKEN: ${{ secrets.GL_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
@@ -745,10 +745,10 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js and pnpm
-        uses: ./.github/actions/setup-node-pnpm
+        uses: ./.github/actions/setup-node-pnpm-simple
         id: node-pnpm-setup
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GL_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: List Available Stress Test Projects
         run: |
