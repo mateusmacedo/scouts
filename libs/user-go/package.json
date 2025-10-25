@@ -1,10 +1,10 @@
 {
-  "name": "scouts/user-go",
-  "version": "0.2.0",
-  "author": "Mateus Macedo Dos Anjos",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mateusmacedo/scouts.git",
-    "directory": "libs/user-go"
-  }
+	"name": "scouts/user-go",
+	"version": "0.2.0",
+	"author": "Mateus Macedo Dos Anjos",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/user-go"
+	}
 }
