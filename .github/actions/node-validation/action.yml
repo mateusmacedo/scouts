@@ -63,11 +63,21 @@ runs:
         echo "✅ ESLint passed"
       shell: bash
 
-    - name: Biome Format Check
+    - name: Biome Check
       run: |
-        echo "🔍 Checking Biome formatting..."
-        pnpm biome check --formatter-enabled=true .
-        echo "✅ Biome format check passed"
+        echo "🔍 Running Biome check via Nx..."
+        if [ "${{ inputs.strategy }}" = "affected" ]; then
+          # Verificar se a branch base existe antes de usar affected
+          if git rev-parse --verify ${{ inputs.base-ref }} >/dev/null 2>&1; then
+            pnpm nx affected --target=biome-check --base=${{ inputs.base-ref }} --max-diagnostics=40
+          else
+            echo "⚠️ Base branch ${{ inputs.base-ref }} not found, running all projects instead"
+            pnpm nx run-many --target=biome-check --max-diagnostics=40
+          fi
+        else
+          pnpm nx run-many --target=biome-check --max-diagnostics=40
+        fi
+        echo "✅ Biome check passed"
       shell: bash
 
     - name: Node.js Tests

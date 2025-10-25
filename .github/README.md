@@ -59,7 +59,7 @@ Validações específicas para Go (não duplicam Nx):
 
 Validações específicas para Node.js (não duplicam Nx):
 - ESLint via Nx (`nx affected`)
-- Biome format check
+- Biome check via Nx (`nx affected --target=biome-check`)
 - Testes com cobertura via Nx (`nx affected`)
 
 ## Configuração
@@ -88,6 +88,24 @@ Configurado em `nx.json` com padrões oficiais:
 - **coverage**: Thresholds de cobertura
 
 ## Comandos Úteis
+
+### Biome Check (Nx 20 Compliant)
+
+```bash
+# Biome check em projetos afetados (recomendado)
+pnpm nx affected --target=biome-check --base=origin/main --max-diagnostics=40
+
+# Biome check em todos os projetos TypeScript
+pnpm nx run-many --target=biome-check --max-diagnostics=40
+
+# Biome check em projeto específico
+pnpm nx run @scouts/logger-node:biome-check
+pnpm nx run @scouts/utils-nest:biome-check
+pnpm nx run @scouts/user-node:biome-check
+pnpm nx run @scouts/bff-nest:biome-check
+pnpm nx run @scouts/base-biome:biome-check
+pnpm nx run express-notifier:biome-check
+```
 
 ### Executar Localmente (Nx 20 Patterns)
 
@@ -131,8 +149,8 @@ pnpm nx affected --target=lint --base=origin/main
 # ESLint via Nx (recomendado)
 pnpm nx affected --target=lint --base=origin/main
 
-# Biome format
-pnpm biome format --check .
+# Biome check via Nx (recomendado)
+pnpm nx affected --target=biome-check --base=origin/main --max-diagnostics=40
 
 # Testes via Nx (recomendado)
 pnpm nx affected --target=test --base=origin/main --coverage
