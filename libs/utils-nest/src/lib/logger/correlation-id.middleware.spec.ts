@@ -4,7 +4,7 @@ import { CorrelationIdMiddleware } from './correlation-id.middleware';
 
 // Mock the logger-node functions
 jest.mock('@scouts/logger-node', () => ({
-	runWithCidAsync: jest.fn((fn, cid) => fn()),
+	runWithCidAsync: jest.fn((fn, _cid) => fn()),
 	ensureCid: jest.fn((cid) => cid || 'generated-cid'),
 }));
 

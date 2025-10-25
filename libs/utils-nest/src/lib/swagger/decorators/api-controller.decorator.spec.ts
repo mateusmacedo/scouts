@@ -26,7 +26,7 @@ describe('ApiController', () => {
 		const tags = ['User Management', 'Admin'];
 
 		const { ApiController } = require('./api-controller.decorator');
-		const result = ApiController(path, ...tags);
+		const _result = ApiController(path, ...tags);
 
 		expect(applyDecorators).toHaveBeenCalledTimes(1);
 		const calls = (applyDecorators as jest.Mock).mock.calls[0];

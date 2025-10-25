@@ -5,7 +5,7 @@ import { SwaggerModuleOptions } from './swagger.interface';
 import { SwaggerService } from './swagger.service';
 
 // Mock @nestjs/swagger - using manual mock since it's a peerDependency
-const DocumentBuilder = jest.fn().mockImplementation(() => ({
+const _DocumentBuilder = jest.fn().mockImplementation(() => ({
 	setTitle: jest.fn().mockReturnThis(),
 	setDescription: jest.fn().mockReturnThis(),
 	setVersion: jest.fn().mockReturnThis(),
@@ -20,7 +20,7 @@ const DocumentBuilder = jest.fn().mockImplementation(() => ({
 	build: jest.fn().mockReturnValue({}),
 }));
 
-const SwaggerModule = {
+const _SwaggerModule = {
 	createDocument: jest.fn().mockReturnValue({}),
 	setup: jest.fn(),
 };

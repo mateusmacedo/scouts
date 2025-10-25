@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AdvancedLoggerService } from './advanced-logger.service';
 import { LOGGER_TOKEN } from './constants';
 import { LoggerModule } from './logger.module';
 import { NestLoggerService } from './nest-logger.service';

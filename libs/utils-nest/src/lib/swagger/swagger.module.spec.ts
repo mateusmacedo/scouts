@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SWAGGER_OPTIONS_TOKEN } from './constants';
 import { SwaggerModuleAsyncOptions, SwaggerModuleOptions } from './swagger.interface';
-import { SwaggerModule } from './swagger.module';
+import { createSwaggerModule, createSwaggerModuleAsync } from './swagger.module';
 import { SwaggerService } from './swagger.service';
 
 // Mock SwaggerService since it depends on @nestjs/swagger
@@ -22,11 +22,11 @@ describe('SwaggerModule', () => {
 		version: '1.0.0',
 	};
 
-	describe('forRoot', () => {
+	describe('createSwaggerModule', () => {
 		it('should create module with synchronous options', () => {
-			const dynamicModule = SwaggerModule.forRoot(mockOptions);
+			const dynamicModule = createSwaggerModule(mockOptions);
 
-			expect(dynamicModule.module).toBe(SwaggerModule);
+			expect(dynamicModule.module).toBeDefined();
 			expect(dynamicModule.providers).toHaveLength(2);
 			expect(dynamicModule.providers).toContainEqual({
 				provide: SWAGGER_OPTIONS_TOKEN,
@@ -37,23 +37,23 @@ describe('SwaggerModule', () => {
 		});
 
 		it('should create module with default options', () => {
-			const dynamicModule = SwaggerModule.forRoot({} as SwaggerModuleOptions);
+			const dynamicModule = createSwaggerModule({} as SwaggerModuleOptions);
 
-			expect(dynamicModule.module).toBe(SwaggerModule);
+			expect(dynamicModule.module).toBeDefined();
 			expect(dynamicModule.providers).toHaveLength(2);
 		});
 	});
 
-	describe('forRootAsync', () => {
+	describe('createSwaggerModuleAsync', () => {
 		it('should create module with asynchronous options', () => {
 			const asyncOptions: SwaggerModuleAsyncOptions = {
 				useFactory: () => Promise.resolve(mockOptions),
 				inject: [],
 			};
 
-			const dynamicModule = SwaggerModule.forRootAsync(asyncOptions);
+			const dynamicModule = createSwaggerModuleAsync(asyncOptions);
 
-			expect(dynamicModule.module).toBe(SwaggerModule);
+			expect(dynamicModule.module).toBeDefined();
 			expect(dynamicModule.providers).toHaveLength(2);
 			expect(dynamicModule.providers).toContainEqual({
 				provide: SWAGGER_OPTIONS_TOKEN,
@@ -71,7 +71,7 @@ describe('SwaggerModule', () => {
 				inject: [],
 			};
 
-			const dynamicModule = SwaggerModule.forRootAsync(asyncOptions);
+			const dynamicModule = createSwaggerModuleAsync(asyncOptions);
 
 			expect(dynamicModule.imports).toContain(Test);
 			expect(dynamicModule.providers).toHaveLength(2);
@@ -82,16 +82,16 @@ describe('SwaggerModule', () => {
 				useFactory: () => mockOptions,
 			};
 
-			const dynamicModule = SwaggerModule.forRootAsync(asyncOptions);
+			const dynamicModule = createSwaggerModuleAsync(asyncOptions);
 
 			expect(dynamicModule.imports).toEqual([]);
 		});
 	});
 
 	describe('module integration', () => {
-		it('should create working module with forRoot', async () => {
+		it('should create working module with createSwaggerModule', async () => {
 			const module: TestingModule = await Test.createTestingModule({
-				imports: [SwaggerModule.forRoot(mockOptions)],
+				imports: [createSwaggerModule(mockOptions)],
 			}).compile();
 
 			const swaggerService = module.get<SwaggerService>(SwaggerService);
@@ -99,13 +99,13 @@ describe('SwaggerModule', () => {
 			expect(swaggerService.getConfiguration()).toBeDefined();
 		});
 
-		it('should create working module with forRootAsync', async () => {
+		it('should create working module with createSwaggerModuleAsync', async () => {
 			const asyncOptions: SwaggerModuleAsyncOptions = {
 				useFactory: () => mockOptions,
 			};
 
 			const module: TestingModule = await Test.createTestingModule({
-				imports: [SwaggerModule.forRootAsync(asyncOptions)],
+				imports: [createSwaggerModuleAsync(asyncOptions)],
 			}).compile();
 
 			const swaggerService = module.get<SwaggerService>(SwaggerService);
