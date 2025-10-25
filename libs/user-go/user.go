@@ -180,3 +180,5 @@ func (s *UserService) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
+
+// Test commit for workflow validation - lib shared change
