@@ -1,0 +1,69 @@
+name: 'Go Validation'
+description: 'Validate Go code with fmt, vet, mod tidy, lint and tests'
+
+inputs:
+  strategy:
+    description: 'Execution strategy (affected or all)'
+    required: true
+    default: 'affected'
+  base-ref:
+    description: 'Base reference for affected strategy'
+    required: false
+    default: 'origin/main'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check Go projects exist
+      run: |
+        if [ ! -d "apps/user-go-service" ] && [ ! -d "libs/user-go" ]; then
+          echo "No Go projects found, skipping Go validation"
+          exit 0
+        fi
+      shell: bash
+
+    - name: Go Format Check
+      run: |
+        echo "🔍 Checking Go formatting..."
+        UNFORMATTED=$(go fmt -l ./apps/user-go-service ./libs/user-go 2>/dev/null || true)
+        if [ -n "$UNFORMATTED" ]; then
+          echo "❌ Unformatted Go files found:"
+          echo "$UNFORMATTED"
+          echo "Run 'go fmt ./apps/user-go-service ./libs/user-go' to fix"
+          exit 1
+        fi
+        echo "✅ Go formatting is correct"
+      shell: bash
+
+    - name: Go Vet
+      run: |
+        echo "🔍 Running go vet..."
+        go vet ./apps/user-go-service/... ./libs/user-go/...
+        echo "✅ Go vet passed"
+      shell: bash
+
+    - name: Go Mod Tidy
+      run: |
+        echo "🔍 Checking go.mod files..."
+        cd apps/user-go-service && go mod tidy
+        cd ../../libs/user-go && go mod tidy
+        echo "✅ Go mod tidy completed"
+      shell: bash
+
+    - name: Go Lint
+      run: |
+        echo "🔍 Running Go lint via Nx..."
+        if [ "${{ inputs.strategy }}" = "affected" ]; then
+          pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --projects=scouts/user-go-service,scouts/user-go
+        else
+          pnpm nx run-many --target=lint --all --projects=scouts/user-go-service,scouts/user-go
+        fi
+        echo "✅ Go lint passed"
+      shell: bash
+
+    - name: Sync Go Dependencies
+      run: |
+        echo "🔍 Syncing Go dependencies..."
+        ./scripts/sync-go-versions.sh
+        echo "✅ Go dependencies synced"
+      shell: bash
