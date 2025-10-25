@@ -11,37 +11,37 @@ import { HealthService } from './health.service';
  * Provides configurable health check functionality using @nestjs/terminus
  */
 @Module({})
-export class HealthModule {
-	/**
-	 * Configure the health module with synchronous options
-	 */
-	static forRoot(options?: HealthCheckOptions): DynamicModule {
-		return {
-			module: HealthModule,
-			imports: [TerminusModule, HttpModule],
-			controllers: [HealthController],
-			providers: [{ provide: HEALTH_OPTIONS_TOKEN, useValue: options || {} }, HealthService],
-			exports: [HealthService],
-		};
-	}
+export class HealthModule {}
 
-	/**
-	 * Configure the health module with asynchronous options
-	 */
-	static forRootAsync(options: HealthCheckAsyncOptions): DynamicModule {
-		return {
-			module: HealthModule,
-			imports: [TerminusModule, HttpModule, ...(options.imports || [])],
-			controllers: [HealthController],
-			providers: [
-				{
-					provide: HEALTH_OPTIONS_TOKEN,
-					useFactory: options.useFactory,
-					inject: options.inject || [],
-				},
-				HealthService,
-			],
-			exports: [HealthService],
-		};
-	}
+/**
+ * Configure the health module with synchronous options
+ */
+export function forRoot(options?: HealthCheckOptions): DynamicModule {
+	return {
+		module: HealthModule,
+		imports: [TerminusModule, HttpModule],
+		controllers: [HealthController],
+		providers: [{ provide: HEALTH_OPTIONS_TOKEN, useValue: options || {} }, HealthService],
+		exports: [HealthService],
+	};
+}
+
+/**
+ * Configure the health module with asynchronous options
+ */
+export function forRootAsync(options: HealthCheckAsyncOptions): DynamicModule {
+	return {
+		module: HealthModule,
+		imports: [TerminusModule, HttpModule, ...(options.imports || [])],
+		controllers: [HealthController],
+		providers: [
+			{
+				provide: HEALTH_OPTIONS_TOKEN,
+				useFactory: options.useFactory,
+				inject: options.inject || [],
+			},
+			HealthService,
+		],
+		exports: [HealthService],
+	};
 }

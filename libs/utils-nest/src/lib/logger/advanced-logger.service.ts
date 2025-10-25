@@ -45,7 +45,12 @@ export class AdvancedLoggerService {
 	/**
 	 * Log HTTP request details
 	 */
-	logRequest(req: any): void {
+	logRequest(req: {
+		method: string;
+		url: string;
+		headers: Record<string, unknown>;
+		ip: string;
+	}): void {
 		this.logger.info('HTTP Request', {
 			method: req.method,
 			url: req.url,
@@ -58,7 +63,10 @@ export class AdvancedLoggerService {
 	/**
 	 * Log HTTP response details
 	 */
-	logResponse(res: any, duration: number): void {
+	logResponse(
+		res: { statusCode: number; headers: Record<string, unknown> },
+		duration: number
+	): void {
 		this.logger.info('HTTP Response', {
 			statusCode: res.statusCode,
 			duration: `${duration}ms`,
@@ -142,23 +150,23 @@ export class AdvancedLoggerService {
 	}
 
 	// Delegate all standard logger methods
-	async info(message: string, fields?: Record<string, unknown>): Promise<void> {
+	info(message: string, fields?: Record<string, unknown>): Promise<void> {
 		return this.logger.info(message, fields);
 	}
 
-	async debug(message: string, fields?: Record<string, unknown>): Promise<void> {
+	debug(message: string, fields?: Record<string, unknown>): Promise<void> {
 		return this.logger.debug(message, fields);
 	}
 
-	async warn(message: string, fields?: Record<string, unknown>): Promise<void> {
+	warn(message: string, fields?: Record<string, unknown>): Promise<void> {
 		return this.logger.warn(message, fields);
 	}
 
-	async error(message: string, fields?: Record<string, unknown>): Promise<void> {
+	error(message: string, fields?: Record<string, unknown>): Promise<void> {
 		return this.logger.error(message, fields);
 	}
 
-	async fatal(message: string, fields?: Record<string, unknown>): Promise<void> {
+	fatal(message: string, fields?: Record<string, unknown>): Promise<void> {
 		return this.logger.fatal(message, fields);
 	}
 }

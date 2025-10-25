@@ -25,7 +25,7 @@ export class CorrelationIdMiddleware implements NestMiddleware {
 		const correlationId = this.extractCorrelationId(req);
 
 		// Run the request handler with correlation ID context
-		runWithCidAsync(async () => {
+		runWithCidAsync(() => {
 			// Add correlation ID to response headers for client tracking
 			res.setHeader('x-correlation-id', correlationId);
 
