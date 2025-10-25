@@ -42,42 +42,6 @@ runs:
         echo "✅ Script permissions fixed"
       shell: bash
 
-    - name: Generate Cache Key
-      id: cache-key
-      run: |
-        if [ -n "${{ inputs.cache-key }}" ]; then
-          echo "key=${{ inputs.cache-key }}" >> $GITHUB_OUTPUT
-        else
-          # Gerar chave baseada no tipo de cache e arquivos relevantes
-          case "${{ inputs.cache-type }}" in
-            "dependencies")
-              KEY="${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}"
-              ;;
-            "build")
-              KEY="${{ runner.os }}-build-${{ hashFiles('**/nx.json', '**/tsconfig.base.json', '**/package.json') }}"
-              ;;
-            "test")
-              KEY="${{ runner.os }}-test-${{ hashFiles('**/jest.config.*', '**/*.spec.*', '**/*.test.*') }}"
-              ;;
-            "coverage")
-              KEY="${{ runner.os }}-coverage-${{ hashFiles('**/coverage/**') }}"
-              ;;
-            *)
-              KEY="${{ runner.os }}-${{ inputs.cache-type }}-${{ github.sha }}"
-              ;;
-          esac
-          echo "key=$KEY" >> $GITHUB_OUTPUT
-        fi
-      shell: bash
-
-    - name: Restore Cache
-      id: cache
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ steps.cache-paths.outputs.paths }}
-        key: ${{ steps.cache-key.outputs.key }}
-        restore-keys: ${{ steps.cache-keys.outputs.restore-keys }}
-
     - name: Get Cache Paths
       id: cache-paths
       run: |
@@ -143,6 +107,42 @@ runs:
         echo "$KEYS" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
       shell: bash
+
+    - name: Generate Cache Key
+      id: cache-key
+      run: |
+        if [ -n "${{ inputs.cache-key }}" ]; then
+          echo "key=${{ inputs.cache-key }}" >> $GITHUB_OUTPUT
+        else
+          # Gerar chave baseada no tipo de cache e arquivos relevantes
+          case "${{ inputs.cache-type }}" in
+            "dependencies")
+              KEY="${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml', '**/go.work', '**/go.sum') }}"
+              ;;
+            "build")
+              KEY="${{ runner.os }}-build-${{ hashFiles('**/nx.json', '**/tsconfig.base.json', '**/package.json') }}"
+              ;;
+            "test")
+              KEY="${{ runner.os }}-test-${{ hashFiles('**/jest.config.*', '**/*.spec.*', '**/*.test.*') }}"
+              ;;
+            "coverage")
+              KEY="${{ runner.os }}-coverage-${{ hashFiles('**/coverage/**') }}"
+              ;;
+            *)
+              KEY="${{ runner.os }}-${{ inputs.cache-type }}-${{ github.sha }}"
+              ;;
+          esac
+          echo "key=$KEY" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Restore Cache
+      id: cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ steps.cache-paths.outputs.paths }}
+        key: ${{ steps.cache-key.outputs.key }}
+        restore-keys: ${{ steps.cache-keys.outputs.restore-keys }}
 
     - name: Validate Cache Integrity
       id: validate
