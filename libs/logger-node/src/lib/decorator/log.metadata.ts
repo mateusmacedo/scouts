@@ -58,7 +58,7 @@ export function copyOwnMetadata(from: object, to: object): void {
  * @param wrapper - Função wrapper
  * @returns Função wrapper com metadados preservados
  */
-export function preserveMethodMetadata<T extends Function>(
+export function preserveMethodMetadata<T extends (...args: unknown[]) => unknown>(
 	targetProto: object,
 	methodName: string | symbol,
 	original: T,

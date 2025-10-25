@@ -53,7 +53,7 @@ export class PinoSinkAdapter implements Sink {
 		// Validar métodos obrigatórios do PinoLike
 		const requiredMethods = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 		for (const method of requiredMethods) {
-			if (typeof (logger as any)[method] !== 'function') {
+			if (typeof (logger as Record<string, unknown>)[method] !== 'function') {
 				throw new Error(`PinoSinkAdapter: logger deve implementar método '${method}'`);
 			}
 		}
@@ -111,7 +111,7 @@ export class PinoSinkAdapter implements Sink {
 	/**
 	 * Escreve diretamente no logger (sem buffer)
 	 */
-	private async writeDirect(entry: LogEntry): Promise<void> {
+	private writeDirect(entry: LogEntry): void {
 		const level = entry.level;
 		const message = this.messageFormat(entry);
 		const fields = this.formatFields(entry);

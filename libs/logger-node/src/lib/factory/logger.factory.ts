@@ -99,7 +99,7 @@ export type ComposedLogger<C extends ComposedLoggerOptions> = Logger &
  * await logger.info('User created', { userId: '123' });
  * ```
  */
-export function createComposedLogger<C extends ComposedLoggerOptions = {}>(
+export function createComposedLogger<C extends ComposedLoggerOptions = Record<string, never>>(
 	options?: C
 ): ComposedLogger<C> {
 	// Validação fail-fast
@@ -142,16 +142,32 @@ export function createComposedLogger<C extends ComposedLoggerOptions = {}>(
 	if (options?.enableMetrics) {
 		// Criar um logger temporário que será substituído pelo ComposedLogger
 		const tempLogger = {
-			info: async () => {},
-			error: async () => {},
-			warn: async () => {},
-			debug: async () => {},
-			trace: async () => {},
-			fatal: async () => {},
+			info: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			error: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			warn: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			debug: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			trace: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			fatal: async () => {
+				/* Temporary logger - will be replaced */
+			},
 			withFields: () => tempLogger,
 			withCorrelationId: () => tempLogger,
-			flush: async () => {},
-			close: async () => {},
+			flush: async () => {
+				/* Temporary logger - will be replaced */
+			},
+			close: async () => {
+				/* Temporary logger - will be replaced */
+			},
 		} as Logger;
 
 		// Usar MetricsCollector avançado
@@ -167,5 +183,5 @@ export function createComposedLogger<C extends ComposedLoggerOptions = {}>(
 		options?.fields || {}
 	);
 
-	return logger as any;
+	return logger as ComposedLogger<C>;
 }

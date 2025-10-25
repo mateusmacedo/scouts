@@ -37,8 +37,8 @@ export interface Logger {
 	withCorrelationId(cid: string): Logger;
 	flush(): void | Promise<void>;
 	close(): void | Promise<void>;
-	getMetrics?(): any;
-	getRedactor?(): any;
+	getMetrics?(): Record<string, unknown> | undefined;
+	getRedactor?(): unknown;
 }
 
 /**
@@ -157,8 +157,8 @@ export class ComposedLogger implements Logger {
 	 * Expõe métricas se disponível
 	 */
 	getMetrics() {
-		if (this.metrics && typeof (this.metrics as any).getMetrics === 'function') {
-			return (this.metrics as any).getMetrics();
+		if (this.metrics && typeof (this.metrics as LoggerWithMetrics).getMetrics === 'function') {
+			return (this.metrics as LoggerWithMetrics).getMetrics();
 		}
 		return undefined;
 	}
@@ -171,15 +171,15 @@ export class ComposedLogger implements Logger {
 	public getRedactor() {
 		// Se redactor é um LoggerWithRedactor (Proxy), acessar a propriedade redactor
 		if (this.redactor && typeof this.redactor === 'object' && 'redactor' in this.redactor) {
-			return (this.redactor as any).redactor;
+			return (this.redactor as { redactor: unknown }).redactor;
 		}
 		// Se redactor é um Proxy que expõe redactor diretamente
 		if (
 			this.redactor &&
 			typeof this.redactor === 'object' &&
-			typeof (this.redactor as any).redactor !== 'undefined'
+			typeof (this.redactor as { redactor: unknown }).redactor !== 'undefined'
 		) {
-			return (this.redactor as any).redactor;
+			return (this.redactor as { redactor: unknown }).redactor;
 		}
 		return this.redactor;
 	}
@@ -201,8 +201,8 @@ export class ComposedLogger implements Logger {
 
 		try {
 			// 1. Aplicar metrics se habilitado
-			if (this.metrics && typeof (this.metrics as any)[level] === 'function') {
-				(this.metrics as any)[level](message, allFields);
+			if (this.metrics && typeof (this.metrics as LoggerWithMetrics)[level] === 'function') {
+				(this.metrics as LoggerWithMetrics)[level](message, allFields);
 			}
 
 			// 2. Aplicar redactor se fornecido
@@ -215,7 +215,7 @@ export class ComposedLogger implements Logger {
 			// 3. Criar entrada de log final
 			const logEntry: LogEntry = {
 				timestamp: new Date().toISOString(),
-				level: level as any,
+				level: level as string,
 				scope: { methodName: level },
 				outcome: 'success',
 				durationMs: Date.now() - startTime,
@@ -231,7 +231,7 @@ export class ComposedLogger implements Logger {
 			// Em caso de erro, criar entrada de log de erro
 			const logEntry: LogEntry = {
 				timestamp: new Date().toISOString(),
-				level: level as any,
+				level: level as string,
 				scope: { methodName: level },
 				outcome: 'failure',
 				durationMs: Date.now() - startTime,

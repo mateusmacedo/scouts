@@ -47,7 +47,7 @@ export function createPinoSink(options?: PinoSinkOptions): Sink {
 	}
 
 	// Fail-fast: tentar criar instância Pino nativa
-	let pino: any;
+	let pino: unknown;
 	try {
 		pino = require('pino');
 	} catch (error) {
@@ -100,7 +100,7 @@ function validatePinoLike(logger: unknown): asserts logger is PinoLike {
 
 	const requiredMethods = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
 	for (const method of requiredMethods) {
-		if (typeof (logger as any)[method] !== 'function') {
+		if (typeof (logger as Record<string, unknown>)[method] !== 'function') {
 			throw new Error(`createPinoSink: logger deve implementar método '${method}'`);
 		}
 	}

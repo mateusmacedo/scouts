@@ -9,11 +9,11 @@ interface Request {
 
 interface Response {
 	statusCode: number;
-	send: (body: any) => Response;
-	status: (code: number) => { send: (body: any) => Response };
+	send: (body: unknown) => Response;
+	status: (code: number) => { send: (body: unknown) => Response };
 }
 
-type NextFunction = (error?: any) => void;
+type NextFunction = (error?: Error) => void;
 
 import type { Logger } from '../logger/logger';
 
@@ -96,8 +96,8 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 		}
 
 		// Adicionar IDs ao request para uso posterior
-		(req as any).correlationId = correlationId;
-		(req as any).requestId = requestId;
+		(req as { correlationId: string; requestId: string }).correlationId = correlationId;
+		(req as { correlationId: string; requestId: string }).requestId = requestId;
 
 		// Log do request se habilitado
 		if (logRequests) {
@@ -114,7 +114,7 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 
 		// Interceptar response para log de status e tempo
 		const originalSend = res.send;
-		res.send = function (body: any) {
+		res.send = function (body: unknown) {
 			const duration = Date.now() - startTime;
 
 			if (logRequests) {
@@ -136,7 +136,7 @@ export function createExpressLoggerMiddleware(logger: Logger, options: ExpressLo
 		// Interceptar erros para log automático
 		if (logErrors) {
 			const originalNext = next;
-			next = (error?: any) => {
+			next = (error?: Error) => {
 				if (error) {
 					logger.error('HTTP Error', {
 						method: req.method,
@@ -163,14 +163,19 @@ export function createCorrelationIdMiddleware(logger: Logger, options: ExpressLo
 	const { correlationIdHeader = 'x-correlation-id' } = options;
 
 	return (req: Request, _res: Response, next: NextFunction): void => {
-		const correlationId = req.get(correlationIdHeader) || (req as any).correlationId;
+		const correlationId =
+			req.get(correlationIdHeader) || (req as { correlationId?: string }).correlationId;
 
 		if (correlationId) {
 			// Criar child logger com correlation ID
-			const childLogger = (logger as any).child ? (logger as any).child({ correlationId }) : logger;
-			(req as any).logger = childLogger;
+			const childLogger = (logger as { child?: (fields: Record<string, unknown>) => Logger }).child
+				? (logger as { child: (fields: Record<string, unknown>) => Logger }).child({
+						correlationId,
+					})
+				: logger;
+			(req as { logger: Logger }).logger = childLogger;
 		} else {
-			(req as any).logger = logger;
+			(req as { logger: Logger }).logger = logger;
 		}
 
 		next();

@@ -211,7 +211,7 @@ describe('Context Module', () => {
 		test('should reject dangerous special characters', () => {
 			const dangerousInputs = [
 				'cid<script>alert(1)</script>',
-				'cid${process.env.SECRET}',
+				`cid${process.env.SECRET}`,
 				'cid; DROP TABLE users;',
 				'cid\x00\x01\x02',
 				'cid\u0000\u0001\u0002',

@@ -261,7 +261,7 @@ describe('Fastify Middleware', () => {
 		});
 
 		it('should not log errors when disabled', async () => {
-			const { logger, capturedLogs } = createTestLogger();
+			const { logger } = createTestLogger();
 			const plugin = createFastifyLoggerPlugin(logger, {
 				logErrors: false,
 			});

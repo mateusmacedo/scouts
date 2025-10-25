@@ -110,7 +110,7 @@ export async function withRetry<T>(
 /**
  * Cria uma função wrapper que aplica retry automaticamente
  */
-export function createRetryWrapper<T extends (...args: any[]) => Promise<any>>(
+export function createRetryWrapper<T extends (...args: unknown[]) => Promise<unknown>>(
 	fn: T,
 	options: RetryOptions = {}
 ): T {
@@ -136,7 +136,7 @@ export async function withRetryAndFallback<T>(
 	const result = await withRetry(fn, options);
 
 	if (result.success) {
-		return result.result!;
+		return result.result as ReturnType<T>;
 	}
 
 	// Se retry falhou, usar fallback

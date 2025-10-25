@@ -8,11 +8,11 @@ interface FastifyRequest {
 
 interface FastifyReply {
 	statusCode: number;
-	status: (code: number) => { send: (body: any) => FastifyReply };
+	status: (code: number) => { send: (body: unknown) => FastifyReply };
 }
 
 interface FastifyInstance {
-	addHook: (event: string, handler: Function) => void;
+	addHook: (event: string, handler: (...args: unknown[]) => void) => void;
 }
 
 import type { Logger } from '../logger/logger';
@@ -78,11 +78,11 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 		additionalFields = {},
 	} = options;
 
-	return async (fastify: FastifyInstance) => {
+	return (fastify: FastifyInstance) => {
 		// Hook para adicionar correlation ID
-		fastify.addHook('onRequest', async (request: FastifyRequest, _reply: FastifyReply) => {
+		fastify.addHook('onRequest', (request: FastifyRequest, _reply: FastifyReply) => {
 			const startTime = Date.now();
-			(request as any).startTime = startTime;
+			(request as { startTime: number }).startTime = startTime;
 
 			// Obter ou gerar correlation ID
 			let correlationId = request.headers[correlationIdHeader] as string;
@@ -99,8 +99,8 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 			}
 
 			// Adicionar IDs ao request
-			(request as any).correlationId = correlationId;
-			(request as any).requestId = requestId;
+			(request as { correlationId: string; requestId: string }).correlationId = correlationId;
+			(request as { correlationId: string; requestId: string }).requestId = requestId;
 
 			// Log do request se habilitado
 			if (logRequests) {
@@ -117,50 +117,44 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 		});
 
 		// Hook para log de response
-		fastify.addHook(
-			'onSend',
-			async (request: FastifyRequest, reply: FastifyReply, payload: any) => {
-				if (logRequests) {
-					const startTime = (request as any).startTime;
-					const duration = Date.now() - startTime;
-					const correlationId = (request as any).correlationId;
-					const requestId = (request as any).requestId;
+		fastify.addHook('onSend', (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
+			if (logRequests) {
+				const startTime = (request as { startTime: number }).startTime;
+				const duration = Date.now() - startTime;
+				const correlationId = (request as { correlationId: string }).correlationId;
+				const requestId = (request as { requestId: string }).requestId;
 
-					const level = reply.statusCode >= 400 ? 'warn' : 'info';
-					logger[level]('HTTP Response', {
-						method: request.method,
-						url: request.url,
-						statusCode: reply.statusCode,
-						duration,
-						correlationId,
-						requestId,
-						...additionalFields,
-					});
-				}
-
-				return payload;
+				const level = reply.statusCode >= 400 ? 'warn' : 'info';
+				logger[level]('HTTP Response', {
+					method: request.method,
+					url: request.url,
+					statusCode: reply.statusCode,
+					duration,
+					correlationId,
+					requestId,
+					...additionalFields,
+				});
 			}
-		);
+
+			return payload;
+		});
 
 		// Hook para log de erros
 		if (logErrors) {
-			fastify.addHook(
-				'onError',
-				async (request: FastifyRequest, _reply: FastifyReply, error: Error) => {
-					const correlationId = (request as any).correlationId;
-					const requestId = (request as any).requestId;
+			fastify.addHook('onError', (request: FastifyRequest, _reply: FastifyReply, error: Error) => {
+				const correlationId = (request as { correlationId?: string }).correlationId;
+				const requestId = (request as { requestId?: string }).requestId;
 
-					logger.error('HTTP Error', {
-						method: request.method,
-						url: request.url,
-						error: error.message,
-						stack: error.stack,
-						correlationId,
-						requestId,
-						...additionalFields,
-					});
-				}
-			);
+				logger.error('HTTP Error', {
+					method: request.method,
+					url: request.url,
+					error: error.message,
+					stack: error.stack,
+					correlationId,
+					requestId,
+					...additionalFields,
+				});
+			});
 		}
 	};
 }
@@ -171,19 +165,23 @@ export function createFastifyLoggerPlugin(logger: Logger, options: FastifyLogger
 export function createCorrelationIdPlugin(logger: Logger, options: FastifyLoggerOptions = {}) {
 	const { correlationIdHeader = 'x-correlation-id' } = options;
 
-	return async (fastify: FastifyInstance) => {
-		fastify.addHook('onRequest', async (request: FastifyRequest, _reply: FastifyReply) => {
+	return (fastify: FastifyInstance) => {
+		fastify.addHook('onRequest', (request: FastifyRequest, _reply: FastifyReply) => {
 			const correlationId =
-				(request.headers[correlationIdHeader] as string) || (request as any).correlationId;
+				(request.headers[correlationIdHeader] as string) ||
+				(request as { correlationId?: string }).correlationId;
 
 			if (correlationId) {
 				// Criar child logger com correlation ID
-				const childLogger = (logger as any).child
-					? (logger as any).child({ correlationId })
+				const childLogger = (logger as { child?: (fields: Record<string, unknown>) => Logger })
+					.child
+					? (logger as { child: (fields: Record<string, unknown>) => Logger }).child({
+							correlationId,
+						})
 					: logger;
-				(request as any).logger = childLogger;
+				(request as { logger: Logger }).logger = childLogger;
 			} else {
-				(request as any).logger = logger;
+				(request as { logger: Logger }).logger = logger;
 			}
 		});
 	};

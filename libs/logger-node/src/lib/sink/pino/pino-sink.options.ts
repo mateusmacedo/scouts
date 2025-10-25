@@ -30,7 +30,7 @@ export interface PinoSinkOptions extends SinkOptions {
 		/**
 		 * Stream de destino do Pino (buffering nativo)
 		 */
-		destination?: any; // pino.DestinationStream
+		destination?: NodeJS.WritableStream; // pino.DestinationStream
 
 		/**
 		 * Modo síncrono (true) ou assíncrono com buffer (false)

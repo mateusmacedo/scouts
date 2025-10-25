@@ -32,8 +32,8 @@ export class LogBuffer {
 	 * Adiciona uma entrada ao buffer
 	 * Retorna true se adicionado com sucesso, false se buffer cheio
 	 */
-	async add(entry: LogEntry): Promise<boolean> {
-		return this.mutex.runExclusive(async () => {
+	add(entry: LogEntry): Promise<boolean> {
+		return this.mutex.runExclusive(() => {
 			if (this.count >= this.capacity) {
 				return false; // Buffer cheio
 			}
@@ -60,7 +60,7 @@ export class LogBuffer {
 	/**
 	 * Força flush do buffer
 	 */
-	async flush(): Promise<void> {
+	flush(): Promise<void> {
 		return this.mutex.runExclusive(async () => {
 			await this.flushInternal();
 		});
