@@ -178,6 +178,16 @@
         "command": "biome format --write .",
         "parallel": true
       }
+    },
+    "biome-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "sharedGlobals"],
+      "options": {
+        "command": "biome check --formatter-enabled=true .",
+        "cwd": "{workspaceRoot}",
+        "parallel": true
+      }
     }
   },
   "cacheDirectory": ".nx/cache",
