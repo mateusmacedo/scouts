@@ -26,8 +26,8 @@ log_info "Detectando mudanças por linguagem desde $BASE_REF"
 log_debug "Formato de output: $OUTPUT_FORMAT"
 log_debug "Verbose: $VERBOSE"
 
-# Validar pré-requisitos
-validate_prerequisites
+# Validar pré-requisitos (modo soft para não falhar se ferramentas ausentes)
+validate_prerequisites "soft"
 
 # Verificar se há override via commit message
 if [ -n "$GITHUB_HEAD_COMMIT_MESSAGE" ]; then
@@ -135,8 +135,8 @@ fi
 if [ "$GO_CHANGED" = "true" ] || [ "$NODE_CHANGED" = "true" ]; then
     log_step "Obtendo projetos afetados..."
     
-    # Usar nx affected para obter projetos
-    if command -v pnpm >/dev/null 2>&1; then
+    # Verificar se pnpm e node estão disponíveis antes de usar nx
+    if command -v pnpm >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
         AFFECTED_PROJECTS=$(pnpm nx show projects --affected --base="$BASE_REF" 2>/dev/null || echo "")
         
         if [ -n "$AFFECTED_PROJECTS" ]; then
@@ -145,7 +145,8 @@ if [ "$GO_CHANGED" = "true" ] || [ "$NODE_CHANGED" = "true" ]; then
             log_warning "Nenhum projeto afetado encontrado via Nx"
         fi
     else
-        log_warning "pnpm não encontrado, não é possível obter projetos afetados"
+        log_warning "pnpm/node não disponível, pulando detecção de projetos afetados"
+        AFFECTED_PROJECTS=""
     fi
 fi
 

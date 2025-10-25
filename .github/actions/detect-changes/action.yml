@@ -51,18 +51,19 @@ runs:
       run: |
         echo "🔍 Detecting changes by language..."
         
-        # Executar script de detecção
-        ./scripts/utils/detect-language-changes.sh \
+        # Executar script UMA VEZ e capturar output completo
+        DETECTION_OUTPUT=$(./scripts/utils/detect-language-changes.sh \
           "${{ inputs.base-ref }}" \
           "${{ inputs.output-format }}" \
-          "${{ inputs.verbose }}"
+          "${{ inputs.verbose }}")
         
-        # Capturar outputs para uso posterior
-        echo "go-changed=$(./scripts/utils/detect-language-changes.sh "${{ inputs.base-ref }}" github | grep "go-changed=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
-        echo "node-changed=$(./scripts/utils/detect-language-changes.sh "${{ inputs.base-ref }}" github | grep "node-changed=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
-        echo "config-changed=$(./scripts/utils/detect-language-changes.sh "${{ inputs.base-ref }}" github | grep "config-changed=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
-        echo "skip-ci=$(./scripts/utils/detect-language-changes.sh "${{ inputs.base-ref }}" github | grep "skip-ci=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
-        echo "affected-projects=$(./scripts/utils/detect-language-changes.sh "${{ inputs.base-ref }}" github | grep "affected-projects=" | cut -d'=' -f2)" >> $GITHUB_OUTPUT
+        # Parsear e exportar cada variável
+        echo "$DETECTION_OUTPUT" | while IFS='=' read -r key value; do
+          echo "$key=$value" >> $GITHUB_OUTPUT
+        done
+        
+        # Log do output completo para debug
+        echo "$DETECTION_OUTPUT"
       shell: bash
 
     - name: Log Detection Results

@@ -22,6 +22,7 @@ log_step() { echo -e "${CYAN}🔄 $*${NC}"; }
 
 # Função para validar pré-requisitos
 validate_prerequisites() {
+    local mode="${1:-strict}"  # strict ou soft
     local missing_tools=()
     
     # Verificar ferramentas essenciais
@@ -30,9 +31,14 @@ validate_prerequisites() {
     command -v jq >/dev/null 2>&1 || missing_tools+=("jq")
     
     if [ ${#missing_tools[@]} -gt 0 ]; then
-        log_error "Ferramentas obrigatórias não encontradas: ${missing_tools[*]}"
-        log_info "Instale as ferramentas necessárias e tente novamente"
-        exit 1
+        if [ "$mode" = "strict" ]; then
+            log_error "Ferramentas obrigatórias não encontradas: ${missing_tools[*]}"
+            log_info "Instale as ferramentas necessárias e tente novamente"
+            exit 1
+        else
+            log_warning "Ferramentas não encontradas: ${missing_tools[*]}"
+            log_info "Funcionalidade limitada disponível"
+        fi
     fi
     
     # Verificar se estamos no diretório raiz do workspace
@@ -41,7 +47,11 @@ validate_prerequisites() {
         exit 1
     fi
     
-    log_success "Pré-requisitos validados"
+    if [ "$mode" = "strict" ]; then
+        log_success "Pré-requisitos validados"
+    else
+        log_info "Validação de pré-requisitos concluída (modo soft)"
+    fi
 }
 
 # Função para executar comando com retry inteligente
