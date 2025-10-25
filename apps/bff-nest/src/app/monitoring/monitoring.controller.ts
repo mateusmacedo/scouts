@@ -1,15 +1,13 @@
-import { Controller, Get, Inject, Post } from '@nestjs/common';
-import type { Logger } from '@scouts/logger-node';
+import { Controller, Get, Post } from '@nestjs/common';
 import { Log, LogDebug, LogInfo } from '@scouts/logger-node';
-import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
+import { NestLoggerService } from '@scouts/utils-nest';
 import { MonitoringService } from './monitoring.service';
 
 @Controller('monitoring')
 export class MonitoringController {
 	constructor(
 		private readonly monitoringService: MonitoringService,
-		private readonly logger: NestLoggerService,
-		@Inject(LOGGER_TOKEN) private readonly nodeLogger: Logger
+		private readonly logger: NestLoggerService
 	) {}
 
 	@Get('metrics')
@@ -33,7 +31,6 @@ export class MonitoringController {
 		return this.monitoringService.getHealthStatus();
 	}
 
-
 	@Get('logger-stats')
 	@LogInfo({ includeResult: true })
 	getLoggerStats() {
@@ -56,4 +53,3 @@ export class MonitoringController {
 		};
 	}
 }
-

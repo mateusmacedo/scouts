@@ -38,6 +38,6 @@
 			"options": {
 				"passWithNoTests": true
 			}
-		},
+		}
 	}
 }
