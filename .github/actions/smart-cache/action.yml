@@ -84,20 +84,20 @@ runs:
         case "${{ inputs.cache-type }}" in
           "dependencies")
             PATHS="node_modules
-~/.pnpm-store
-~/.pnpm-cache"
+        ~/.pnpm-store
+        ~/.pnpm-cache"
             ;;
           "build")
             PATHS=".nx/cache
-dist"
+        dist"
             ;;
           "test")
             PATHS="coverage
-.nx/cache"
+        .nx/cache"
             ;;
           "coverage")
             PATHS="coverage
-~/.cache/coverage"
+        ~/.cache/coverage"
             ;;
           *)
             PATHS=".nx/cache"
@@ -114,29 +114,29 @@ dist"
         case "${{ inputs.cache-type }}" in
           "dependencies")
             KEYS="${{ runner.os }}-deps-
-${{ runner.os }}-"
+        ${{ runner.os }}-"
             ;;
           "build")
             KEYS="${{ runner.os }}-build-
-${{ runner.os }}-deps-
-${{ runner.os }}-"
+        ${{ runner.os }}-deps-
+        ${{ runner.os }}-"
             ;;
           "test")
             KEYS="${{ runner.os }}-test-
-${{ runner.os }}-build-
-${{ runner.os }}-deps-
-${{ runner.os }}-"
+        ${{ runner.os }}-build-
+        ${{ runner.os }}-deps-
+        ${{ runner.os }}-"
             ;;
           "coverage")
             KEYS="${{ runner.os }}-coverage-
-${{ runner.os }}-test-
-${{ runner.os }}-build-
-${{ runner.os }}-deps-
-${{ runner.os }}-"
+        ${{ runner.os }}-test-
+        ${{ runner.os }}-build-
+        ${{ runner.os }}-deps-
+        ${{ runner.os }}-"
             ;;
           *)
             KEYS="${{ runner.os }}-${{ inputs.cache-type }}-
-${{ runner.os }}-"
+        ${{ runner.os }}-"
             ;;
         esac
         echo "restore-keys<<EOF" >> $GITHUB_OUTPUT
