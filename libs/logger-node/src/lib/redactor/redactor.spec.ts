@@ -84,7 +84,7 @@ class FakeRedactor implements Redactor {
 		return str;
 	}
 
-	private shouldRedactKey(key: string, path: string[]): boolean {
+	private shouldRedactKey(key: string, _path: string[]): boolean {
 		return this.keys.some((k) => {
 			if (typeof k === 'string') {
 				return key === k;
@@ -218,7 +218,7 @@ describe('Redactor Module', () => {
 		});
 
 		test('mask should accept function', () => {
-			const maskFunction = (value: unknown, path: string[]) => `[REDACTED_${path.join('.')}]`;
+			const maskFunction = (_value: unknown, path: string[]) => `[REDACTED_${path.join('.')}]`;
 			const options: RedactorOptions = {
 				mask: maskFunction,
 			};
@@ -359,35 +359,35 @@ describe('Redactor Module', () => {
 	describe('attachRedactor function', () => {
 		// Fake Logger implementation para testes
 		class FakeLogger implements Logger {
-			async info(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async info(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			async error(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async error(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			async warn(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async warn(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			async debug(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async debug(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			async trace(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async trace(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			async fatal(message: string, fields?: Record<string, unknown>): Promise<void> {
+			async fatal(_message: string, _fields?: Record<string, unknown>): Promise<void> {
 				// Simula logging
 			}
 
-			withFields(fields: Record<string, unknown>): Logger {
+			withFields(_fields: Record<string, unknown>): Logger {
 				return this;
 			}
 
-			withCorrelationId(cid: string): Logger {
+			withCorrelationId(_cid: string): Logger {
 				return this;
 			}
 
@@ -488,7 +488,7 @@ describe('Redactor Module', () => {
 
 		test('should work with logger that does not have all methods', () => {
 			class MinimalLogger {
-				async info(message: string): Promise<void> {
+				async info(_message: string): Promise<void> {
 					// noop
 				}
 			}

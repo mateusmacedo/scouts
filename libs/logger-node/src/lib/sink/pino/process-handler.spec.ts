@@ -3,7 +3,7 @@ import { ProcessHandlerManager } from './process-handler';
 
 // Declaração global para flag de desabilitação de handlers
 declare global {
-  var __DISABLE_GLOBAL_HANDLERS__: boolean;
+	var __DISABLE_GLOBAL_HANDLERS__: boolean;
 }
 
 describe('ProcessHandlerManager', () => {
@@ -38,7 +38,7 @@ describe('ProcessHandlerManager', () => {
 		if (mockBuffer) {
 			await mockBuffer.close();
 		}
-		
+
 		// Reset singleton and cleanup
 		ProcessHandlerManager.resetForTesting();
 		jest.restoreAllMocks();
@@ -190,7 +190,7 @@ describe('ProcessHandlerManager', () => {
 			process.removeAllListeners('SIGINT');
 			process.removeAllListeners('uncaughtException');
 			process.removeAllListeners('unhandledRejection');
-			
+
 			// Recriar manager com handlers limpos
 			ProcessHandlerManager.resetForTesting();
 			manager = ProcessHandlerManager.getInstance();
@@ -207,47 +207,51 @@ describe('ProcessHandlerManager', () => {
 			// Aguardar processamento
 			await new Promise((resolve) => setTimeout(resolve, 10));
 
-			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGTERM recebido, iniciando graceful shutdown'));
+			expect(consoleSpy).toHaveBeenCalledWith(
+				expect.stringContaining('SIGTERM recebido, iniciando graceful shutdown')
+			);
 
 			consoleSpy.mockRestore();
 		});
 
-	test('should handle SIGINT gracefully', async () => {
-		const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+		test('should handle SIGINT gracefully', async () => {
+			const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
 
-		manager.registerSink(mockSink);
+			manager.registerSink(mockSink);
 
-		// Simular SIGINT
-		process.emit('SIGINT' as any);
+			// Simular SIGINT
+			process.emit('SIGINT' as any);
 
-		// Aguardar processamento
-		await new Promise((resolve) => setTimeout(resolve, 10));
+			// Aguardar processamento
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
-		expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('SIGINT recebido, iniciando graceful shutdown'));
+			expect(consoleSpy).toHaveBeenCalledWith(
+				expect.stringContaining('SIGINT recebido, iniciando graceful shutdown')
+			);
 
-		consoleSpy.mockRestore();
-	});
+			consoleSpy.mockRestore();
+		});
 
-	test('should handle uncaughtException', async () => {
-		const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-		const exitSpy = jest.spyOn(process, 'exit').mockImplementation();
+		test('should handle uncaughtException', async () => {
+			const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+			const exitSpy = jest.spyOn(process, 'exit').mockImplementation();
 
-		manager.registerSink(mockSink);
+			manager.registerSink(mockSink);
 
-		// Simular uncaughtException
-		process.emit('uncaughtException' as any, new Error('Test error'));
+			// Simular uncaughtException
+			process.emit('uncaughtException' as any, new Error('Test error'));
 
-		// Aguardar processamento
-		await new Promise((resolve) => setTimeout(resolve, 10));
+			// Aguardar processamento
+			await new Promise((resolve) => setTimeout(resolve, 10));
 
-		expect(consoleSpy).toHaveBeenCalledWith(
-			expect.stringContaining('uncaughtException'),
-			expect.any(Error)
-		);
+			expect(consoleSpy).toHaveBeenCalledWith(
+				expect.stringContaining('uncaughtException'),
+				expect.any(Error)
+			);
 
-		consoleSpy.mockRestore();
-		exitSpy.mockRestore();
-	});
+			consoleSpy.mockRestore();
+			exitSpy.mockRestore();
+		});
 	});
 
 	describe('Multiple Instances', () => {

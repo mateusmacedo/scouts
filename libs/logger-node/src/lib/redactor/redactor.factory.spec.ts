@@ -143,7 +143,7 @@ describe('createRedactor', () => {
 	describe('Custom Mask Functions', () => {
 		it('should_work_with_custom_mask_function', async () => {
 			// Arrange
-			const customMask = (value: unknown, path: string[]) => `[MASKED_${path.join('_')}]`;
+			const customMask = (_value: unknown, path: string[]) => `[MASKED_${path.join('_')}]`;
 			const redactor = createRedactor({ mask: customMask });
 			const input = { password: 'secret123' };
 

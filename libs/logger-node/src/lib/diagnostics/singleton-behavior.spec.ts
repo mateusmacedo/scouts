@@ -31,9 +31,9 @@ describe('Singleton Behavior Diagnostics', () => {
 			console.log('[DIAGNOSTIC] Initial stats:', JSON.stringify(initialStats, null, 2));
 
 			// Criar múltiplos loggers
-			const logger1 = createComposedLogger({ enableMetrics: true });
-			const logger2 = createComposedLogger({ enableMetrics: true });
-			const logger3 = createComposedLogger({ enableMetrics: true });
+			const _logger1 = createComposedLogger({ enableMetrics: true });
+			const _logger2 = createComposedLogger({ enableMetrics: true });
+			const _logger3 = createComposedLogger({ enableMetrics: true });
 
 			const afterStats = instance.getStats();
 			console.log('[DIAGNOSTIC] After creating 3 loggers:', JSON.stringify(afterStats, null, 2));
@@ -48,9 +48,9 @@ describe('Singleton Behavior Diagnostics', () => {
 			console.log('[DIAGNOSTIC] Initial SIGTERM listeners:', initialListenerCount);
 
 			// Criar múltiplos loggers (cada um registra listeners)
-			const logger1 = createComposedLogger();
-			const logger2 = createComposedLogger();
-			const logger3 = createComposedLogger();
+			const _logger1 = createComposedLogger();
+			const _logger2 = createComposedLogger();
+			const _logger3 = createComposedLogger();
 
 			const afterListenerCount = process.listenerCount('SIGTERM');
 			console.log('[DIAGNOSTIC] After creating 3 loggers, SIGTERM listeners:', afterListenerCount);

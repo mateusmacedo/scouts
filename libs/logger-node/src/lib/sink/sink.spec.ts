@@ -1,4 +1,4 @@
-import type { LogEntry, Logger } from '../logger/logger';
+import type { LogEntry } from '../logger/logger';
 import type { Sink, SinkOptions } from './sink';
 
 // attachSink foi removido na refatoração

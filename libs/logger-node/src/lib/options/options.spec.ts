@@ -13,7 +13,7 @@ describe('Options Module', () => {
 			expect(options.level).toBe('info');
 			expect(options.fields).toEqual({ service: 'test' });
 			expect(typeof options.getCorrelationId).toBe('function');
-			expect(options.getCorrelationId!()).toBe('test-cid');
+			expect(options.getCorrelationId?.()).toBe('test-cid');
 		});
 
 		test('should accept empty LoggerOptions', () => {
@@ -37,7 +37,7 @@ describe('Options Module', () => {
 				getCorrelationId: () => undefined,
 			};
 
-			expect(options.getCorrelationId!()).toBeUndefined();
+			expect(options.getCorrelationId?.()).toBeUndefined();
 		});
 
 		test('fields should accept Record<string, unknown>', () => {
@@ -74,7 +74,7 @@ describe('Options Module', () => {
 			expect(options.includeResult).toBe(false);
 			expect(options.sampleRate).toBe(0.5);
 			expect(typeof options.getCorrelationId).toBe('function');
-			expect(options.getCorrelationId!()).toBe('log-cid');
+			expect(options.getCorrelationId?.()).toBe('log-cid');
 			expect(options.includeStackTrace).toBe(true);
 		});
 
@@ -116,7 +116,7 @@ describe('Options Module', () => {
 				getCorrelationId: () => undefined,
 			};
 
-			expect(options.getCorrelationId!()).toBeUndefined();
+			expect(options.getCorrelationId?.()).toBeUndefined();
 		});
 	});
 
@@ -142,8 +142,8 @@ describe('Options Module', () => {
 
 			expect(typeof loggerOptions.getCorrelationId).toBe('function');
 			expect(typeof logOptions.getCorrelationId).toBe('function');
-			expect(loggerOptions.getCorrelationId!()).toBe('test');
-			expect(logOptions.getCorrelationId!()).toBeUndefined();
+			expect(loggerOptions.getCorrelationId?.()).toBe('test');
+			expect(logOptions.getCorrelationId?.()).toBeUndefined();
 		});
 	});
 
@@ -169,7 +169,7 @@ describe('Options Module', () => {
 				getCorrelationId: () => 'always-string',
 			};
 
-			expect(options.getCorrelationId!()).toBe('always-string');
+			expect(options.getCorrelationId?.()).toBe('always-string');
 		});
 
 		test('should allow getCorrelationId to be function that always returns undefined', () => {
@@ -177,7 +177,7 @@ describe('Options Module', () => {
 				getCorrelationId: () => undefined,
 			};
 
-			expect(options.getCorrelationId!()).toBeUndefined();
+			expect(options.getCorrelationId?.()).toBeUndefined();
 		});
 	});
 });

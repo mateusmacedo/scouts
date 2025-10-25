@@ -22,7 +22,7 @@ describe('PinoSinkAdapter', () => {
 	describe('Constructor', () => {
 		it('should_use_provided_logger_when_available', () => {
 			// Arrange
-			const options = { logger: mockLogger };
+			const _options = { logger: mockLogger };
 
 			// Act
 			sink = new PinoSinkAdapter(mockLogger);
@@ -46,7 +46,7 @@ describe('PinoSinkAdapter', () => {
 
 		it('should_use_default_message_format_when_not_provided', () => {
 			// Arrange
-			const options = { logger: mockLogger };
+			const _options = { logger: mockLogger };
 
 			// Act
 			sink = new PinoSinkAdapter(mockLogger);
@@ -58,7 +58,7 @@ describe('PinoSinkAdapter', () => {
 		it('should_use_custom_message_format_when_provided', () => {
 			// Arrange
 			const customFormat = (entry: LogEntry) => `Custom: ${entry.scope.methodName}`;
-			const options = { logger: mockLogger, messageFormat: customFormat };
+			const _options = { logger: mockLogger, messageFormat: customFormat };
 
 			// Act
 			sink = new PinoSinkAdapter(mockLogger);
@@ -432,7 +432,7 @@ describe('PinoSinkAdapter', () => {
 		it('should_not_throw_when_logger_flush_not_available', () => {
 			// Arrange
 			const loggerWithoutFlush = { ...mockLogger };
-			delete loggerWithoutFlush.flush;
+			loggerWithoutFlush.flush = undefined;
 			sink = new PinoSinkAdapter(loggerWithoutFlush);
 
 			// Act & Assert

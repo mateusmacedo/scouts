@@ -300,7 +300,7 @@ describe('DefaultRedactor', () => {
 		it('should_use_custom_function_mask', async () => {
 			// Arrange
 			const redactor = new DefaultRedactor({
-				mask: (value, path) => `[REDACTED_${path.join('_')}]`,
+				mask: (_value, path) => `[REDACTED_${path.join('_')}]`,
 			});
 			const input = { password: 'secret123' };
 

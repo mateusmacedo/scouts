@@ -189,7 +189,7 @@ describe('createComposedLogger', () => {
 			const logger = createComposedLogger({ redactor });
 
 			// Assert
-			expect(logger.getRedactor!()).toBe(redactor);
+			expect(logger.getRedactor?.()).toBe(redactor);
 		});
 	});
 
@@ -236,7 +236,7 @@ describe('createComposedLogger', () => {
 			expect(typeof (logger as any).getMetrics).toBe('function');
 			expect((logger as any).sink).toBeInstanceOf(require('../sink/sink.decorator').SinkDecorator);
 			expect((logger as any).sink.baseSink).toBe(sink);
-			expect(logger.getRedactor!()).toBe(redactor);
+			expect(logger.getRedactor?.()).toBe(redactor);
 		});
 
 		it('should_handle_partial_features_correctly', () => {
@@ -275,7 +275,7 @@ describe('createComposedLogger', () => {
 				require('../sink/sink.decorator').SinkDecorator
 			);
 			expect((childLogger as any).sink.baseSink).toBe(sink);
-			expect(childLogger.getRedactor!()).toBe(redactor);
+			expect(childLogger.getRedactor?.()).toBe(redactor);
 			expect(typeof (childLogger as any).getMetrics).toBe('function');
 		});
 
@@ -298,7 +298,7 @@ describe('createComposedLogger', () => {
 				require('../sink/sink.decorator').SinkDecorator
 			);
 			expect((childLogger as any).sink.baseSink).toBe(sink);
-			expect(childLogger.getRedactor!()).toBe(redactor);
+			expect(childLogger.getRedactor?.()).toBe(redactor);
 			expect(typeof (childLogger as any).getMetrics).toBe('function');
 		});
 
@@ -312,7 +312,7 @@ describe('createComposedLogger', () => {
 
 			// Assert
 			const parentMetrics = logger.getMetrics();
-			const childMetrics = childLogger.getMetrics!();
+			const childMetrics = childLogger.getMetrics?.();
 
 			// Child logger compartilha métricas com parent após implementação de propagação
 			expect(parentMetrics.logsWritten).toBe(1);

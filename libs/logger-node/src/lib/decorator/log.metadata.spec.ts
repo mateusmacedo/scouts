@@ -341,9 +341,7 @@ describe('Log Metadata', () => {
 			}
 
 			const original = TestClass.prototype.originalMethod;
-			const wrapper = function () {
-				return 'wrapped';
-			};
+			const wrapper = () => 'wrapped';
 
 			// Set up some metadata on the original
 			mockGetOwnMetadataKeys.mockReturnValue(['custom:metadata']);
