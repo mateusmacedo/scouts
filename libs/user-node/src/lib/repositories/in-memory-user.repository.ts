@@ -6,7 +6,7 @@ export class InMemoryUserRepository implements UserRepository {
 	private users: User[] = [];
 	private nextId = 1;
 
-	async create(data: CreateUserData): Promise<User> {
+	create(data: CreateUserData): Promise<User> {
 		const user: User = {
 			id: this.nextId.toString(),
 			name: data.name,
@@ -23,15 +23,15 @@ export class InMemoryUserRepository implements UserRepository {
 		return user;
 	}
 
-	async findById(id: string): Promise<User | null> {
+	findById(id: string): Promise<User | null> {
 		return this.users.find((user) => user.id === id) || null;
 	}
 
-	async findAll(): Promise<User[]> {
+	findAll(): Promise<User[]> {
 		return [...this.users];
 	}
 
-	async update(id: string, data: UpdateUserData): Promise<User | null> {
+	update(id: string, data: UpdateUserData): Promise<User | null> {
 		const userIndex = this.users.findIndex((user) => user.id === id);
 
 		if (userIndex === -1) {
@@ -48,7 +48,7 @@ export class InMemoryUserRepository implements UserRepository {
 		return updatedUser;
 	}
 
-	async delete(id: string): Promise<boolean> {
+	delete(id: string): Promise<boolean> {
 		const userIndex = this.users.findIndex((user) => user.id === id);
 
 		if (userIndex === -1) {

@@ -29,6 +29,13 @@
 			"options": {
 				"packageRoot": "dist/{projectRoot}"
 			}
+		},
+		"biome-check": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome check --formatter-enabled=true .",
+				"cwd": "{workspaceRoot}"
+			}
 		}
 	}
 }
