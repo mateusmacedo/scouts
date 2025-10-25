@@ -216,6 +216,27 @@ Executa comando com retry e exponential backoff.
 ./scripts/utils/retry-with-backoff.sh 3 5 "pnpm nx test"
 ```
 
+### `cleanup-obsolete-files.sh`
+Remove arquivos obsoletos/legados/temporários após otimizações.
+
+**Uso:**
+```bash
+./scripts/utils/cleanup-obsolete-files.sh [--dry-run] [--force]
+```
+
+**Parâmetros:**
+- `--dry-run`: Mostra o que seria removido sem remover
+- `--force`: Força remoção sem confirmação
+
+**Exemplo:**
+```bash
+# Ver o que seria removido
+./scripts/utils/cleanup-obsolete-files.sh --dry-run
+
+# Remover arquivos obsoletos
+./scripts/utils/cleanup-obsolete-files.sh
+```
+
 ### `detect-changed-projects.sh`
 Detecta projetos com mudanças reais (baseado em Nx affected).
 
