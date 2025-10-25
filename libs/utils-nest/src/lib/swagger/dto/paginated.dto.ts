@@ -19,4 +19,3 @@ export class PaginatedDto<T> {
 	data!: T[];
 	meta!: PaginationMeta;
 }
-

@@ -1,9 +1,9 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { createComposedLogger, createRedactor } from '@scouts/logger-node';
+import { AdvancedLoggerService } from './advanced-logger.service';
 import { LOGGER_OPTIONS_TOKEN, LOGGER_TOKEN } from './constants';
 import { NestLoggerModuleAsyncOptions, NestLoggerModuleOptions } from './logger.interface';
 import { NestLoggerService } from './nest-logger.service';
-import { AdvancedLoggerService } from './advanced-logger.service';
 
 /**
  * Dynamic module for NestJS Logger integration with @scouts/logger-node

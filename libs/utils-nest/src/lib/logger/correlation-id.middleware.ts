@@ -50,4 +50,3 @@ export class CorrelationIdMiddleware implements NestMiddleware {
 		return ensureCid();
 	}
 }
-

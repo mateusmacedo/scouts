@@ -269,4 +269,3 @@ export class SwaggerService {
 		return processedDocument;
 	}
 }
-
