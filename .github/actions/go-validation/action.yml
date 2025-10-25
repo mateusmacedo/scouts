@@ -14,6 +14,35 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install pnpm
+      run: |
+        echo "📦 Installing pnpm..."
+        npm install -g pnpm@9.15.0
+        echo "pnpm-version=$(pnpm --version)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Install Dependencies
+      run: |
+        echo "📦 Installing dependencies..."
+        pnpm install --frozen-lockfile
+        echo "✅ Dependencies installed"
+      shell: bash
+
     - name: Check Go projects exist
       run: |
         if [ ! -d "apps/user-go-service" ] && [ ! -d "libs/user-go" ]; then
