@@ -1,5 +1,5 @@
-import { Log } from '@scouts/logger-node';
 import { Controller, Get } from '@nestjs/common';
+import { Log } from '@scouts/logger-node';
 import { AppService } from './app.service';
 
 @Controller()

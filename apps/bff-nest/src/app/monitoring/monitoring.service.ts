@@ -1,6 +1,6 @@
+import { Inject, Injectable } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
 import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
-import { Inject, Injectable } from '@nestjs/common';
 
 export interface LoggerMetrics {
 	logsWritten: number;

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import {
 	CreateUserDto,
 	InMemoryUserRepository,
@@ -7,7 +8,6 @@ import {
 	UserService,
 } from '@scouts/user-node';
 import { AdvancedLoggerService, NestLoggerService } from '@scouts/utils-nest';
-import { Injectable } from '@nestjs/common';
 import { CreateUserDto as AppCreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto as AppUpdateUserDto } from './dto/update-user.dto';
 import { NotificationsService } from './notifications.service';

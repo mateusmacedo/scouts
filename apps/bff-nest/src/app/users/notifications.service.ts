@@ -1,7 +1,7 @@
-import { User } from '@scouts/user-node';
-import { AdvancedLoggerService } from '@scouts/utils-nest';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@scouts/user-node';
+import { AdvancedLoggerService } from '@scouts/utils-nest';
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom, retry, throwError, timer } from 'rxjs';
 

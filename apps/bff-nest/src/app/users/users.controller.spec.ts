@@ -1,5 +1,5 @@
-import { LoggerModule } from '@scouts/utils-nest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { LoggerModule } from '@scouts/utils-nest';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersController } from './users.controller';

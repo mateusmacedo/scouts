@@ -1,5 +1,5 @@
-import { LoggerModule } from '@scouts/utils-nest';
 import { Test, type TestingModule } from '@nestjs/testing';
+import { LoggerModule } from '@scouts/utils-nest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 

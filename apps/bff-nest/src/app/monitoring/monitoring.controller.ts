@@ -1,6 +1,6 @@
+import { Controller, Get, Post } from '@nestjs/common';
 import { Log, LogDebug, LogInfo } from '@scouts/logger-node';
 import { NestLoggerService } from '@scouts/utils-nest';
-import { Controller, Get, Post } from '@nestjs/common';
 import { MonitoringService } from './monitoring.service';
 
 @Controller('monitoring')

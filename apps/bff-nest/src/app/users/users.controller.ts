@@ -1,7 +1,7 @@
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import type { Logger } from '@scouts/logger-node';
 import { Log, LogDebug, LogInfo, LogWarn } from '@scouts/logger-node';
 import { LOGGER_TOKEN, NestLoggerService } from '@scouts/utils-nest';
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';

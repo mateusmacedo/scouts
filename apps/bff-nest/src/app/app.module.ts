@@ -1,6 +1,6 @@
-import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MonitoringController } from './monitoring/monitoring.controller';

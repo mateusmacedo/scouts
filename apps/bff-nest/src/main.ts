@@ -3,8 +3,8 @@
  * This is only a minimal backend to get started.
  */
 
-import { NestLoggerService } from '@scouts/utils-nest';
 import { NestFactory } from '@nestjs/core';
+import { NestLoggerService } from '@scouts/utils-nest';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {

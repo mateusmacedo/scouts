@@ -1,6 +1,6 @@
+import { Injectable } from '@nestjs/common';
 import { Log } from '@scouts/logger-node';
 import { nodeUser } from '@scouts/user-node';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {

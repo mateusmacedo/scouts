@@ -1,5 +1,5 @@
-import { LoggerModule } from '@scouts/utils-nest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { LoggerModule } from '@scouts/utils-nest';
 import { MonitoringController } from './monitoring.controller';
 import { LoggerMetrics, MonitoringService } from './monitoring.service';
 

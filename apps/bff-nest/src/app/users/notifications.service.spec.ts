@@ -1,7 +1,7 @@
-import { User } from '@scouts/user-node';
-import { AdvancedLoggerService } from '@scouts/utils-nest';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
+import { User } from '@scouts/user-node';
+import { AdvancedLoggerService } from '@scouts/utils-nest';
 import { AxiosError } from 'axios';
 import { of, throwError } from 'rxjs';
 import { NotificationsService } from './notifications.service';
