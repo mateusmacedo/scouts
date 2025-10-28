@@ -1,0 +1,57 @@
+{
+	"name": "@scouts/logger-node",
+	"version": "0.0.1",
+	"type": "commonjs",
+	"author": "Mateus Macedo Dos Anjos",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/logger-node"
+	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"default": "./src/index.js"
+		},
+		"./pino": {
+			"types": "./src/lib/sink/pino/index.d.ts",
+			"default": "./src/lib/sink/pino/index.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20.11 <21"
+	},
+	"keywords": [
+		"logger",
+		"pino",
+		"nx",
+		"monorepo"
+	],
+	"dependencies": {
+		"async-mutex": "^0.4.1",
+		"pino": "^9.0.0",
+		"reflect-metadata": "^0.1.13",
+		"tslib": "^2.3.0"
+	},
+	"peerDependencies": {
+		"ulid": "^2.3.0"
+	},
+	"peerDependenciesMeta": {
+		"ulid": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"express": "^4.18.0",
+		"@types/express": "^4.17.0",
+		"fastify": "^4.26.0"
+	}
+}
