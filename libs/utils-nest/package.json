@@ -1,0 +1,41 @@
+{
+	"name": "@scouts/utils-nest",
+	"version": "0.0.1",
+	"type": "commonjs",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/utils-nest"
+	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"author": "Mateus Macedo Dos Anjos",
+	"license": "MIT",
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20.11 <21"
+	},
+	"keywords": [
+		"nest",
+		"nestjs",
+		"utils",
+		"nx",
+		"monorepo"
+	],
+	"dependencies": {
+		"@scouts/logger-node": "workspace:*",
+		"express": "^4.19.2",
+		"js-yaml": "^4.1.0",
+		"tslib": "^2.3.0"
+	},
+	"peerDependencies": {
+		"@nestjs/axios": "^3.0.0",
+		"@nestjs/common": "^10.0.0",
+		"@nestjs/swagger": "^7.0.0",
+		"@nestjs/terminus": "^10.0.0"
+	}
+}
