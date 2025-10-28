@@ -1,0 +1,62 @@
+{
+	"name": "user-go-service",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"sourceRoot": "apps/user-go-service",
+	"tags": ["type:app", "scope:internal", "runtime:go", "layer:application", "visibility:private"],
+	"targets": {
+		"build": {
+			"executor": "@nx-go/nx-go:build",
+			"inputs": ["go", "sharedGlobals"],
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"main": "{projectRoot}/main.go",
+				"outputPath": "dist/apps/user-go-service"
+			}
+		},
+		"serve": {
+			"executor": "@nx-go/nx-go:serve",
+			"options": {
+				"main": "{projectRoot}/main.go"
+			}
+		},
+		"run": {
+			"executor": "@nx-go/nx-go:run",
+			"inputs": ["go", "sharedGlobals"],
+			"options": {
+				"cwd": "apps/user-go-service"
+			}
+		},
+		"test": {
+			"executor": "@nx-go/nx-go:test",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"lint": {
+			"executor": "@nx-go/nx-go:lint",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"vet": {
+			"executor": "@nx-go/nx-go:vet",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"fmt": {
+			"executor": "@nx-go/nx-go:fmt",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"tidy": {
+			"executor": "@nx-go/nx-go:tidy",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"sync-go-deps": {
+			"executor": "nx:run-commands",
+			"inputs": ["go", "sharedGlobals"],
+			"options": {
+				"command": "./scripts/sync-go-versions.sh",
+				"cwd": "{workspaceRoot}"
+			}
+		},
+		"nx-release-publish": {
+			"executor": "nx:noop"
+		}
+	}
+}
