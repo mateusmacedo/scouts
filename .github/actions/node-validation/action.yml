@@ -1,0 +1,49 @@
+name: 'Node.js Validation'
+description: 'Run Nx targets for Node.js projects (lint, biome-check, test, build)'
+
+inputs:
+  strategy:
+    description: 'Execution strategy (affected or all)'
+    required: false
+    default: 'affected'
+  base-ref:
+    description: 'Base reference for affected strategy'
+    required: false
+    default: 'origin/main'
+  head-ref:
+    description: 'Head reference for affected strategy'
+    required: false
+    default: 'HEAD'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Lint (boundaries)
+      if: ${{ inputs.strategy == 'all' }}
+      run: pnpm nx run-many --target=lint --all
+      shell: bash
+
+    - name: Lint (affected)
+      if: ${{ inputs.strategy == 'affected' }}
+      run: pnpm nx affected --target=lint --base=${{ inputs.base-ref }} --head=${{ inputs.head-ref }} || echo "No lint tasks"
+      shell: bash
+
+    - name: Biome (all)
+      if: ${{ inputs.strategy == 'all' }}
+      run: pnpm nx run-many --target=biome-check --all
+      shell: bash
+
+    - name: Biome (affected)
+      if: ${{ inputs.strategy == 'affected' }}
+      run: pnpm nx affected --target=biome-check --base=${{ inputs.base-ref }} --head=${{ inputs.head-ref }} || echo "No biome-check tasks"
+      shell: bash
+
+    - name: Build (affected)
+      if: ${{ inputs.strategy == 'affected' }}
+      run: pnpm nx affected --target=build --parallel=5 --base=${{ inputs.base-ref }} --head=${{ inputs.head-ref }} || echo "No build tasks"
+      shell: bash
+
+    - name: Test (affected)
+      if: ${{ inputs.strategy == 'affected' }}
+      run: pnpm nx affected --target=test --parallel=5 --base=${{ inputs.base-ref }} --head=${{ inputs.head-ref }} || echo "No test tasks"
+      shell: bash

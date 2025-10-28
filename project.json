@@ -1,0 +1,37 @@
+{
+  "name": "@scouts/source",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "local-registry": {
+      "executor": "@nx/js:verdaccio",
+      "cache": false,
+      "inputs": ["sharedGlobals"],
+      "outputs": [
+        "{projectRoot}/tmp/local-registry/storage",
+        "{projectRoot}/tmp/local-registry/.verdaccio-db"
+      ],
+      "options": {
+        "port": 4873,
+        "config": ".verdaccio/config.yml",
+        "storage": "tmp/local-registry/storage"
+      }
+    },
+    "local-registry:status": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node -e \"require('net').createConnection(4873,'127.0.0.1').on('connect',()=>{console.log('verdaccio: online')}).on('error',()=>{console.log('verdaccio: offline')})\"",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "local-registry:reset": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "inputs": ["sharedGlobals"],
+      "options": {
+        "command": "pnpm rimraf tmp/local-registry/storage tmp/local-registry/.verdaccio-db || true",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

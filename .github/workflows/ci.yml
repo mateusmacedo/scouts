@@ -1,0 +1,240 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  NODE_VERSION: '20.11'
+  PNPM_VERSION: '9.15.0'
+  GO_VERSION: '1.22.x'
+  NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare (toolchain, SHAs, caches)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      NX_BASE: ${{ steps.set-shas.outputs.base }}
+      NX_HEAD: ${{ steps.set-shas.outputs.head }}
+      GO_AFFECTED: ${{ steps.go-affected.outputs.has_go }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: tree:0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      # Cache pnpm store (melhor que node_modules em monorepo)
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - id: set-shas
+        name: Set Nx SHAs
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: main
+
+      # Cache do Nx (local) entre jobs para acelerar reexecuções
+      - name: Cache Nx local
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nxcache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nxcache-${{ runner.os }}-
+
+      # Gera grafo afetado e deixa como artefato (auditoria)
+      - name: Generate affected graph
+        run: |
+          pnpm nx graph --affected --file=affected-graph.html --base=${{ steps.set-shas.outputs.base }} --head=${{ steps.set-shas.outputs.head }} || true
+      - name: Upload affected graph
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected-graph
+          path: affected-graph.html
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # Descobrir se há projetos Go afetados (por tag)
+      - name: Detect affected Go projects
+        id: go-affected
+        shell: bash
+        run: |
+          # Lista projetos afetados com tratamento de erro
+          AFFECTED=""
+          if AFFECTED_OUTPUT=$(pnpm -s nx print-affected --select=projects --base='${{ steps.set-shas.outputs.base }}' --head='${{ steps.set-shas.outputs.head }}' 2>/dev/null); then
+            AFFECTED="$AFFECTED_OUTPUT"
+          fi
+          
+          if [ -z "$AFFECTED" ]; then
+            echo "has_go=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Para cada projeto, checa tags (precisa Nx >=20)
+          has_go=false
+          for P in $(echo "$AFFECTED" | tr ',' ' '); do
+            # Pula projetos vazios
+            if [ -z "$P" ]; then
+              continue
+            fi
+            
+            # Verifica tags do projeto com tratamento de erro
+            if TAGS_OUTPUT=$(pnpm -s nx show project "$P" --json 2>/dev/null | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);console.log((j.tags||[]).join(','))}catch(e){console.log('')}})" 2>/dev/null); then
+              if echo "$TAGS_OUTPUT" | grep -q "runtime:go"; then
+                has_go=true
+                break
+              fi
+            fi
+          done
+          echo "has_go=$has_go" >> $GITHUB_OUTPUT
+
+  validate-node:
+    name: Validate (Node/TS)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Restore pnpm store
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .nx/cache
+          key: nxcache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nxcache-${{ runner.os }}-
+
+      - name: Lint (boundaries)
+        run: pnpm nx affected -t lint --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No lint tasks"
+
+      - name: Biome
+        run: pnpm nx affected -t biome-check --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No biome-check tasks"
+
+      - name: Build
+        run: pnpm nx affected -t build --parallel=5 --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No build tasks"
+
+      - name: Test
+        run: pnpm nx affected -t test --parallel=5 --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No test tasks"
+
+      - name: Save Nx cache
+        uses: actions/cache/save@v4
+        with:
+          path: .nx/cache
+          key: nxcache-${{ runner.os }}-${{ github.sha }}
+
+  validate-go:
+    name: Validate (Go)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: needs.prepare.outputs.GO_AFFECTED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Restore pnpm store
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .nx/cache
+          key: nxcache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            nxcache-${{ runner.os }}-
+
+      - name: Go vet / fmt / tidy via Nx targets
+        run: |
+          pnpm nx affected -t lint --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No go lint"
+          pnpm nx affected -t tidy --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No go tidy"
+          pnpm nx affected -t test --base=${{ needs.prepare.outputs.NX_BASE }} --head=${{ needs.prepare.outputs.NX_HEAD }} || echo "No go tests"
+
+      - name: Save Nx cache
+        uses: actions/cache/save@v4
+        with:
+          path: .nx/cache
+          key: nxcache-${{ runner.os }}-${{ github.sha }}

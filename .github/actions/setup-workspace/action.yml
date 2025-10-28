@@ -1,0 +1,59 @@
+name: 'Setup Workspace'
+description: 'Setup Node.js, Go, pnpm and Nx workspace'
+
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: true
+    default: '18'
+  go-version:
+    description: 'Go version'
+    required: true
+    default: '1.23'
+  pnpm-version:
+    description: 'pnpm version'
+    required: true
+    default: '9.15.0'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Install pnpm
+      run: |
+        npm install -g pnpm@${{ inputs.pnpm-version }}
+      shell: bash
+
+    - name: Configure pnpm
+      run: |
+        pnpm config set store-dir ~/.pnpm-store
+        pnpm config set cache-dir ~/.pnpm-cache
+      shell: bash
+
+    - name: Configure Go
+      run: |
+        go env -w GOPROXY=direct
+        go env -w GOSUMDB=off
+      shell: bash
+
+    - name: Install dependencies
+      run: |
+        pnpm install --frozen-lockfile
+      shell: bash
+
+    - name: Verify installations
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "Go version: $(go version)"
+        echo "pnpm version: $(pnpm --version)"
+        echo "Nx version: $(pnpm nx --version)"
+      shell: bash

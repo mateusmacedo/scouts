@@ -1,0 +1,87 @@
+name: Release Candidate (RC)
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+concurrency:
+  group: rc-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20.11'
+  PNPM_VERSION: '9.15.0'
+  PREID: 'rc'
+
+jobs:
+  rc-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: true
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+          key: pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-${{ runner.os }}-${{ env.NODE_VERSION }}-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set Nx SHAs (base/head)
+        id: shas
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: main
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          error-on-no-successful-workflow: false
+          set-environment-variables-for-job: true
+
+      - name: Configure GitHub Actions bot identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # Validação rápida (não bloqueia RC)
+      - name: Quick Validate (affected)
+        run: |
+          pnpm nx affected -t lint  --base=${{ steps.shas.outputs.base }} --head=${{ steps.shas.outputs.head }} || true
+          pnpm nx affected -t test  --base=${{ steps.shas.outputs.base }} --head=${{ steps.shas.outputs.head }} || true
+          pnpm nx affected -t build --base=${{ steps.shas.outputs.base }} --head=${{ steps.shas.outputs.head }} --parallel=5 || true
+
+      # RC: pré-release + changelog, sem tag e sem publish
+      - name: Version RC (no tag, no publish)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm nx release version --preid "$PREID" --git-tag=false --git-push=true
