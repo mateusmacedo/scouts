@@ -1,0 +1,31 @@
+{
+	"name": "@scouts/biome-base",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "library",
+	"sourceRoot": "libs/biome-base",
+	"tags": [
+		"type:lib",
+		"scope:internal",
+		"runtime:universal",
+		"layer:infrastructure",
+		"visibility:internal"
+	],
+	"targets": {
+		"biome-check": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome check --formatter-enabled=true .",
+				"cwd": "{workspaceRoot}"
+			},
+			"inputs": ["sharedGlobals"]
+		},
+		"pack": {
+			"executor": "nx:run-commands",
+			"outputs": ["{projectRoot}/.pack"],
+			"options": {
+				"command": "pnpm pack --pack-destination .pack",
+				"cwd": "libs/biome-base"
+			}
+		}
+	}
+}

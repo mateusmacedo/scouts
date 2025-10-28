@@ -1,0 +1,29 @@
+{
+	"name": "@scouts/biome-base",
+	"version": "0.0.1",
+	"author": "Mateus Macedo Dos Anjos",
+	"license": "MIT",
+	"type": "commonjs",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/biome-base"
+	},
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"peerDependencies": {
+		"@biomejs/biome": "^2.2.6"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20.11 <21"
+	},
+	"files": [
+		"biome.json",
+		"README.md",
+		"LICENSE*",
+		"CHANGELOG.md"
+	]
+}
