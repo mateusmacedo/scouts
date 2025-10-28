@@ -1,5 +1,5 @@
-import type { Logger } from '@scouts/logger-node';
 import { Inject, Injectable } from '@nestjs/common';
+import type { Logger } from '@scouts/logger-node';
 import { LOGGER_TOKEN } from './constants';
 
 /**

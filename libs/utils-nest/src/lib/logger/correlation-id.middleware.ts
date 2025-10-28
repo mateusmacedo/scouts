@@ -1,5 +1,5 @@
-import { ensureCid, runWithCid } from '@scouts/logger-node';
 import { Injectable, NestMiddleware } from '@nestjs/common';
+import { ensureCid, runWithCid } from '@scouts/logger-node';
 import { NextFunction, Request, Response } from 'express';
 
 /**

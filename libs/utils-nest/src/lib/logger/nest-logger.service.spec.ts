@@ -1,5 +1,5 @@
-import type { Logger } from '@scouts/logger-node';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Logger } from '@scouts/logger-node';
 import { LOGGER_TOKEN } from './constants';
 import { NestLoggerService } from './nest-logger.service';
 

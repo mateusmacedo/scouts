@@ -1,5 +1,5 @@
-import { createComposedLogger, createRedactor } from '@scouts/logger-node';
 import { DynamicModule, Module } from '@nestjs/common';
+import { createComposedLogger, createRedactor } from '@scouts/logger-node';
 import { AdvancedLoggerService } from './advanced-logger.service';
 import { LOGGER_OPTIONS_TOKEN, LOGGER_TOKEN } from './constants';
 import { NestLoggerModuleAsyncOptions, NestLoggerModuleOptions } from './logger.interface';

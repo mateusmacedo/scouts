@@ -1,5 +1,5 @@
-import { LogLevel } from '@scouts/logger-node';
 import { DynamicModule, Type } from '@nestjs/common';
+import { LogLevel } from '@scouts/logger-node';
 
 /**
  * Configuration options for NestJS Logger Module
