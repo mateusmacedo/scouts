@@ -1,0 +1,12 @@
+{
+	"name": "bff-nest",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"build": "nx build bff-nest",
+		"serve": "nx serve bff-nest",
+		"dev": "nx serve bff-nest",
+		"test": "nx test bff-nest",
+		"lint": "nx lint bff-nest"
+	}
+}

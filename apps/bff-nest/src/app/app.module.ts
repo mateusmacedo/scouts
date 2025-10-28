@@ -1,0 +1,37 @@
+import { CorrelationIdMiddleware, HealthModule, LoggerModule } from '@scouts/utils-nest';
+import { HttpModule } from '@nestjs/axios';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { MonitoringController } from './monitoring/monitoring.controller';
+import { MonitoringService } from './monitoring/monitoring.service';
+import { NotificationsService } from './users/notifications.service';
+import { UsersController } from './users/users.controller';
+import { UsersService } from './users/users.service';
+
+@Module({
+	imports: [
+		HttpModule.register({
+			baseURL: process.env['EXPRESS_NOTIFIER_URL'] || 'http://localhost:3001',
+			timeout: 10000,
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		}),
+		HealthModule.forRoot(), // Configuração básica sem indicadores customizados
+		LoggerModule.forRoot({
+			service: 'bff-nest',
+			environment: process.env.NODE_ENV,
+			version: '1.0.0',
+			enableMetrics: true,
+			redactKeys: ['password', 'token', 'cardNumber'],
+		}),
+	],
+	controllers: [AppController, UsersController, MonitoringController],
+	providers: [AppService, UsersService, NotificationsService, MonitoringService],
+})
+export class AppModule implements NestModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+	}
+}
