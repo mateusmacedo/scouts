@@ -1,0 +1,12 @@
+{
+	"name": "notifier-express",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"build": "nx build notifier-express",
+		"serve": "nx serve notifier-express",
+		"dev": "nx serve notifier-express",
+		"lint": "nx lint notifier-express",
+		"test": "nx test notifier-express"
+	}
+}
