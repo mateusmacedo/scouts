@@ -1,0 +1,48 @@
+{
+	"name": "scouts/user-go",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "library",
+	"sourceRoot": "libs/user-go",
+	"tags": ["type:lib", "scope:internal", "runtime:go", "layer:domain", "visibility:public"],
+	"targets": {
+		"run": {
+			"executor": "@nx-go/nx-go:run",
+			"inputs": ["go", "sharedGlobals"],
+			"options": {
+				"cwd": "libs/user-go"
+			}
+		},
+		"test": {
+			"executor": "@nx-go/nx-go:test",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"lint": {
+			"executor": "@nx-go/nx-go:lint",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"vet": {
+			"executor": "@nx-go/nx-go:vet",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"fmt": {
+			"executor": "@nx-go/nx-go:fmt",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"tidy": {
+			"executor": "@nx-go/nx-go:tidy",
+			"inputs": ["go", "sharedGlobals"]
+		},
+		"nx-release-publish": {
+			"executor": "nx:noop"
+		}
+	},
+	"release": {
+		"version": {
+			"generator": "@nx/js:release-version",
+			"generatorOptions": {
+				"currentVersionResolver": "git-tag",
+				"specifierSource": "prompt"
+			}
+		}
+	}
+}
