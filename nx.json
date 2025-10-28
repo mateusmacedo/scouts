@@ -1,0 +1,354 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "sources": [
+      "{projectRoot}/**/*"
+    ],
+    "assets": [
+      "{projectRoot}/**/*.{json,graphql,proto,yaml,yml,html,css,scss,svg,png,jpg,jpeg,ico}",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/**/*.stories.[jt]s?(x)",
+      "!{projectRoot}/**/*.story.[jt]s?(x)"
+    ],
+    "configs": [
+      "{projectRoot}/tsconfig.json",
+      "{projectRoot}/tsconfig.*.json",
+      "{projectRoot}/.eslintrc.json",
+      "{projectRoot}/eslint.config.mjs",
+      "{projectRoot}/jest.config.[jt]s",
+      "{projectRoot}/vitest.config.[jt]s",
+      "{projectRoot}/webpack.config.[cmjt]s",
+      "{projectRoot}/rspack.config.[cmjt]s",
+      "{projectRoot}/vite.config.[cmjt]s",
+      "{projectRoot}/nx.json"
+    ],
+    "pkgMeta": [
+      "{projectRoot}/package.json",
+      "{projectRoot}/README.md",
+      "{projectRoot}/CHANGELOG.md",
+      "{projectRoot}/LICENSE*"
+    ],
+    "testing": [
+      "{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?",
+      "{projectRoot}/jest.config.[jt]s",
+      "{projectRoot}/tsconfig.spec.json",
+      "{projectRoot}/src/test-setup.[jt]s",
+      "{projectRoot}/test-setup.[jt]s"
+    ],
+    "linting": [
+      "{projectRoot}/**/*.[jt]s?(x)",
+      "{projectRoot}/.eslintrc.json",
+      "{projectRoot}/eslint.config.mjs",
+      "{projectRoot}/tsconfig.json",
+      "{projectRoot}/tsconfig.*.json"
+    ],
+    "go": [
+      "{projectRoot}/**/*.go",
+      "{projectRoot}/go.mod",
+      "{projectRoot}/go.sum",
+      "{workspaceRoot}/go.work",
+      "{workspaceRoot}/go.work.sum"
+    ],
+    "docker": [
+      "{projectRoot}/Dockerfile",
+      "{projectRoot}/.dockerignore",
+      "{projectRoot}/docker-compose.yml"
+    ],
+    "certificates": [
+      "{workspaceRoot}/docs/certificates/**/*.md"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/biome.json",
+      "{workspaceRoot}/eslint.config.mjs",
+      "{workspaceRoot}/jest.config.ts",
+      "{workspaceRoot}/jest.preset.js",
+      "{workspaceRoot}/go.work",
+      "{workspaceRoot}/go.work.sum",
+      "{workspaceRoot}/.npmrc",
+      "{workspaceRoot}/.nvmrc",
+      "{workspaceRoot}/.node-version",
+      "{workspaceRoot}/.tool-versions",
+      "{workspaceRoot}/.env",
+      "{workspaceRoot}/.env.*"
+    ],
+    "toolchain": [
+      { "runtime": "node -v" },
+      { "runtime": "pnpm -v" },
+      { "runtime": "go version" },
+      { "env": "NODE_ENV" },
+      { "env": "NX_TASK_TARGET_CONFIGURATION" }
+    ],
+    "default": [
+      "sources",
+      "assets",
+      "configs",
+      "pkgMeta",
+      "sharedGlobals",
+      "toolchain"
+    ],
+    "production": [
+      "sources",
+      "assets",
+      "pkgMeta",
+      "sharedGlobals",
+      "toolchain",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/**/*.stories.[jt]s?(x)",
+      "!{projectRoot}/**/*.story.[jt]s?(x)",
+      "!{projectRoot}/**/*.md"
+    ]
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/webpack/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "buildDepsTargetName": "build-deps",
+        "watchDepsTargetName": "watch-deps"
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      },
+      "exclude": [
+        "*-e2e/**/*"
+      ]
+    },
+    "@nx-go/nx-go",
+    "@nx/eslint/plugin"
+  ],
+  "generators": {
+    "@nx/eslint:lint": {
+      "options": {
+        "lintFilePatterns": [
+          "{projectRoot}/**/*.{ts,tsx,js,jsx}"
+        ]
+      }
+    }
+  },
+  "targetDefaults": {
+    "@nx/js:tsc": {
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": [
+        "types"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "options": {
+        "parallel": true
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "@nx/webpack:webpack": {
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "@nx/node:node": {
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "parallel": true
+      }
+    },
+    "types": {
+      "cache": true,
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/dist/types"
+      ]
+    },
+    "test": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^production",
+        "testing",
+        "sharedGlobals"
+      ],
+      "outputs": [
+        "{options.coverageDirectory}"
+      ],
+      "options": {
+        "coverage": true,
+        "coverageReporters": [
+          "text",
+          "lcov",
+          "html"
+        ],
+        "coverageThreshold": {
+          "global": {
+            "branches": 70,
+            "functions": 70,
+            "lines": 70,
+            "statements": 70
+          }
+        },
+        "parallel": true
+      }
+    },
+    "lint": {
+      "cache": true,
+      "inputs": [
+        "linting",
+        "^linting",
+        "sharedGlobals"
+      ],
+      "options": {
+        "parallel": true
+      }
+    },
+    "check-boundaries": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "sharedGlobals"
+      ],
+      "options": {
+        "command": "nx graph --file=graph.json && nx graph --affected --file=affected-graph.json",
+        "parallel": true
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default"
+      ],
+      "options": {
+        "command": "biome format --write .",
+        "parallel": true
+      }
+    },
+    "biome-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "default",
+        "sharedGlobals"
+      ],
+      "options": {
+        "command": "biome check --formatter-enabled=true .",
+        "cwd": "{workspaceRoot}",
+        "parallel": true
+      }
+    },
+    "serve": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false
+    },
+    "tidy": {
+      "cache": true,
+      "inputs": [
+        "go",
+        "sharedGlobals"
+      ]
+    },
+    "sync-go-deps": {
+      "cache": false,
+      "inputs": [
+        "go",
+        "sharedGlobals"
+      ]
+    }
+  },
+  "cacheDirectory": ".nx/cache",
+  "neverConnectToCloud": true,
+  "parallel": 5,
+  "defaultBase": "main",
+  "release": {
+    "projects": [
+      "@scouts/*",
+      "!@scouts/source",
+      "scouts/*"
+    ],
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "{projectName}@{version}",
+    "git": {
+      "commit": true,
+      "commitMessage": "🔖 chore(release): publish {version}",
+      "tag": true,
+      "tagMessage": "🔖 chore(release): tag {tagName}",
+      "push": true
+    },
+    "version": {
+      "preVersionCommand": "pnpm nx affected -t build --parallel=5",
+      "generator": "@nx/js:release-version",
+      "generatorOptions": {
+        "packageRoot": "{projectRoot}",
+        "currentVersionResolver": "git-tag",
+        "fallbackCurrentVersionResolver": "disk",
+        "specifierSource": "conventional-commits"
+      }
+    },
+    "changelog": {
+      "projectChangelogs": {
+        "createRelease": "github",
+        "entryWhenNoChanges": "This was a version bump only, there were no code changes.",
+        "file": "{projectRoot}/CHANGELOG.md",
+        "renderOptions": {
+          "includeAuthors": true,
+          "includeCommits": true,
+          "includeScopes": true
+        }
+      }
+    }
+  }
+}

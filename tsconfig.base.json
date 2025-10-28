@@ -1,0 +1,31 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@scouts/logger-node": ["libs/logger-node/src/index.ts"],
+      "@scouts/user-node": ["libs/user-node/src/index.ts"],
+      "@scouts/utils-nest": ["libs/utils-nest/src/index.ts"]
+    },
+
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "verbatimModuleSyntax": false,
+    "useDefineForClassFields": true
+  },
+  "exclude": ["node_modules", "tmp"]
+}
