@@ -1,0 +1,34 @@
+{
+	"name": "@scouts/user-node",
+	"version": "0.0.1",
+	"type": "commonjs",
+	"author": "Mateus Macedo Dos Anjos",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mateusmacedo/scouts.git",
+		"directory": "libs/user-node"
+	},
+	"main": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20.11 <21"
+	},
+	"keywords": [
+		"user",
+		"domain",
+		"nestjs",
+		"nx",
+		"monorepo"
+	],
+	"dependencies": {
+		"@nestjs/common": "^10.0.2",
+		"class-validator": "^0.14.0",
+		"tslib": "^2.3.0"
+	}
+}

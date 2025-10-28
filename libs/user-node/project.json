@@ -1,0 +1,56 @@
+{
+	"name": "@scouts/user-node",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/user-node/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"generatorOptions": {
+				"packageRoot": "dist/{projectRoot}",
+				"currentVersionResolver": "git-tag",
+				"fallbackCurrentVersionResolver": "disk"
+			}
+		}
+	},
+	"tags": ["type:lib", "scope:internal", "runtime:node", "layer:domain", "visibility:public"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/libs/user-node",
+				"tsConfig": "libs/user-node/tsconfig.lib.json",
+				"packageJson": "libs/user-node/package.json",
+				"main": "libs/user-node/src/index.ts",
+				"generatePackageJson": true,
+				"updateBuildableProjectDepsInPackageJson": true,
+				"assets": [
+					"libs/user-node/*.md",
+					{
+						"input": "libs/user-node",
+						"glob": "LICENSE*",
+						"output": "."
+					},
+					{
+						"input": "libs/user-node",
+						"glob": "CHANGELOG.md",
+						"output": "."
+					}
+				]
+			}
+		},
+		"nx-release-publish": {
+			"dependsOn": ["build"],
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"biome-check": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "biome check --formatter-enabled=true .",
+				"cwd": "{workspaceRoot}"
+			}
+		}
+	}
+}
